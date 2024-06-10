@@ -92,6 +92,7 @@ To set up this project locally, follow these steps:
 ## Profiles
 
 **UserProfile**:
+
 🧑‍💼 Stores user details and relations to skills, experiences, educations, endorsements, groups, connections, notifications, and certifications.
 
 ## Skill, Experience, Education, Endorsement:
