@@ -10,7 +10,8 @@ Welcome to the Django LMS project! This project aims to provide a comprehensive 
 
 ## Project Under Development....🥶🥱😴
 <img src="https://github.com/AbdullahBakir97/AbdullahBakir97/blob/main/assets/tech.gif" alt="Tech" width="100"> 
-- **Note**: This project is currently under development. Stay tuned for upcoming features and enhancements.
+
+**Note**: This project is currently under development. Stay tuned for upcoming features and enhancements.
 
 # Overview
 
