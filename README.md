@@ -2,24 +2,6 @@
 
 Welcome to the Django LMS project! This project aims to provide a comprehensive learning management system with features like user profiles, messaging, notifications, job listings, groups, followers, events, courses, connections, companies, and certifications.
 
-## Table of Contents
-- [Overview](#overview)
-- [Features](#features)
-  - [Profiles](#profiles)
-  - [Notifications](#notifications)
-  - [Messaging](#messaging)
-  - [Blog](#blog)
-  - [Jobs](#jobs)
-  - [Groups](#groups)
-  - [Followers](#followers)
-  - [Events](#events)
-  - [Courses](#courses)
-  - [Connections](#connections)
-  - [Companies](#companies)
-  - [Certifications](#certifications)
-- [Setup](#setup)
-- [Contributing](#contributing)
-- [License](#license)
 
 # Overview
 
