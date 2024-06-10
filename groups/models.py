@@ -1,6 +1,6 @@
 from django.db import models
 from profiles.models import UserProfile
-from messaging.models import Share
+from messaging.models import Share, Tag
 
 class Group(models.Model):
     name = models.CharField(max_length=255)
@@ -12,6 +12,7 @@ class Group(models.Model):
     tags = models.CharField(max_length=100, blank=True)
     cover_image = models.ImageField(upload_to='group_covers/', blank=True, null=True)
     shares = models.ManyToManyField(Share, related_name='group_shares', blank=True)
+    tags = models.ManyToManyField(Tag, related_name='tagged_groups', blank=True)
 
     def __str__(self):
         return self.name

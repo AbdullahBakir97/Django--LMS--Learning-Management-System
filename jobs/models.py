@@ -1,7 +1,7 @@
 from django.db import models
 from companies.models import Company
 from profiles.models import UserProfile, Skill, Experience, Education, Endorsement  
-from messaging.models import Share
+from messaging.models import Share, Tag
 
 class JobListing(models.Model):
     company = models.ForeignKey(Company, related_name='job_listings', on_delete=models.CASCADE)
@@ -20,6 +20,7 @@ class JobListing(models.Model):
     applications = models.ManyToManyField('JobApplication', related_name='job_listings', blank=True)
     notifications = models.ManyToManyField('JobNotification', related_name='job_listings', blank=True)
     shares = models.ManyToManyField(Share, related_name='job_listings', blank=True)
+    tags = models.ManyToManyField(Tag, related_name='tagged_jobs', blank=True)
     
 
     def __str__(self):

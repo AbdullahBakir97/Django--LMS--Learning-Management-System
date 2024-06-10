@@ -1,7 +1,7 @@
 from django.db import models
 from profiles.models import UserProfile
 from groups.models import Group
-from messaging.models import Reaction, Share
+from messaging.models import Reaction, Share, Tag
 
 class Post(models.Model):
     author = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
@@ -13,6 +13,7 @@ class Post(models.Model):
     reactions = models.ManyToManyField(Reaction, related_name='post_reactions', blank=True)
     comments = models.ManyToManyField('Comment', related_name='post_comments', blank=True)
     shares = models.ManyToManyField(Share, related_name='post_shares', blank=True)
+    tags = models.ManyToManyField(Tag,related_name='post_tags', null=True)
 
     def __str__(self):
         return self.content[:20]

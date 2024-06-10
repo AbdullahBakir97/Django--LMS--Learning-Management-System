@@ -7,6 +7,12 @@ from groups.models import Group
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 
+class Tag(models.Model):
+    name = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.name
+
 class Share(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True)
     shared_at = models.DateTimeField(auto_now_add=True)
