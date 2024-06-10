@@ -88,62 +88,62 @@ To set up this project locally, follow these steps:
 
 # Models
 
-## Profiles
+### Profiles
 
-### UserProfile:
+**UserProfile**:
 🧑‍💼 Stores user details and relations to skills, experiences, educations, endorsements, groups, connections, notifications, and certifications.
 
 ### Skill, Experience, Education, Endorsement:
 📚 Auxiliary models to store user skills, work experience, educational background, and endorsements from other users.
 
-## Notifications
+### Notifications
 
-### NotificationType, Notification, NotificationTemplate:
+**NotificationType, Notification, NotificationTemplate**:
 🔔 Models to manage different types of notifications, notification instances, and templates for notification messages.
 
-## Messaging
+### Messaging
 
-### Tag, Share, Reaction, ChatRoom, Message:
+**Tag, Share, Reaction, ChatRoom, Message**:
 💬 Models to handle tags, shares, reactions, chat rooms, and messages between users.
 
-## Jobs
+### Jobs
 
-### JobListing, JobApplication, JobNotification:
+**JobListing, JobApplication, JobNotification**:
 💼 Models for managing job listings, job applications, and notifications related to job activities.
 
-## Groups
+### Groups
 
-### Group, GroupMembership:
+**Group, GroupMembership**:
 👥 Models to manage user groups, group memberships, and group activities.
 
-## Followers
+### Followers
 
-### Follower, FollowRequest, FollowNotification:
+**Follower, FollowRequest, FollowNotification**:
 🔗 Models to manage followers, follow requests, and notifications related to following activities.
 
-## Events
+### Events
 
-### Event:
+**Event**:
 📅 Model to manage events organized by users, including event details and attendees.
 
-## Courses
+### Courses
 
-### Course, CourseEnrollment, CourseCompletion:
+**Course, CourseEnrollment, CourseCompletion**:
 🎓 Models to manage courses, course enrollments, and course completions, including certificates.
 
-## Connections
+### Connections
 
-### ConnectionRequest, Connection, Recommendation:
+**ConnectionRequest, Connection, Recommendation**:
 🤝 Models to manage connection requests, established connections, and recommendations between users.
 
-## Companies
+### Companies
 
-### Company, CompanyUpdate:
+**Company, CompanyUpdate**:
 🏢 Models to manage company profiles, company members, followers, and updates.
 
-## Certifications
+### Certifications
 
-### Certification:
+**Certification**:
 📜 Model to manage user certifications, related jobs, and related courses.
 
 # Contributing
