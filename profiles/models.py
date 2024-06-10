@@ -1,41 +1,57 @@
-# profiles/models.py
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
-from companies.models import Company
+
+class User(AbstractUser):
+    userId = models.CharField(max_length=22, unique=True, default=uuid.uuid4, editable=False)
+    profile_picture = models.ImageField(upload_to="users_images/", null=True, blank=True)
+    cover_photo = models.ImageField(upload_to="cover_photos/", null=True, blank=True)
+
+    def __str__(self):
+        return self.username
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     bio = models.TextField(blank=True)
-    location = models.CharField(max_length=100, blank=True)
-    profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True)
-    cover_photo = models.ImageField(upload_to='cover_photos/', blank=True)
-    is_private = models.BooleanField(default=False)
     headline = models.CharField(max_length=255, blank=True)
+    location = models.CharField(max_length=100, blank=True)
+    is_private = models.BooleanField(default=False)
     joined_date = models.DateTimeField(default=timezone.now)
-
-    followers = models.ManyToManyField("self", related_name='following', symmetrical=False, blank=True)
+    followers = models.ManyToManyField("self", through='Follower', related_name='following', symmetrical=False)
 
     def __str__(self):
         return self.user.username
 
     def follow(self, profile):
         if not self.is_following(profile):
-            self.following.add(profile)
-            profile.followers.add(self)
+            if profile.is_private:
+                FollowRequest.objects.create(from_user=self, to_user=profile)
+            else:
+                Follower.objects.create(user=profile, follower=self)
 
     def unfollow(self, profile):
-        if self.is_following(profile):
-            self.following.remove(profile)
-            profile.followers.remove(self)
+        Follower.objects.filter(user=profile, follower=self).delete()
 
     def is_following(self, profile):
-        return self.following.filter(id=profile.id).exists()
+        return Follower.objects.filter(user=profile, follower=self).exists()
+
+    def has_follow_request(self, profile):
+        return FollowRequest.objects.filter(from_user=self, to_user=profile).exists()
+
+    def accept_follow_request(self, profile):
+        follow_request = FollowRequest.objects.filter(from_user=profile, to_user=self).first()
+        if follow_request:
+            follow_request.accept()
+
+    def reject_follow_request(self, profile):
+        follow_request = FollowRequest.objects.filter(from_user=profile, to_user=self).first()
+        if follow_request:
+            follow_request.reject()
 
 class Experience(models.Model):
     user = models.ForeignKey(UserProfile, related_name='experiences', on_delete=models.CASCADE)
-    company = models.ForeignKey(Company, related_name='employees', on_delete=models.SET_NULL, null=True)
     title = models.CharField(max_length=255)
+    company = models.ForeignKey('companies.Company', related_name='employees', on_delete=models.SET_NULL, null=True)
     description = models.TextField(blank=True)
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
@@ -59,6 +75,7 @@ class Education(models.Model):
 class Skill(models.Model):
     name = models.CharField(max_length=100)
     users = models.ManyToManyField(UserProfile, related_name='skills')
+    proficiency = models.CharField(max_length=50)
 
     def __str__(self):
         return self.name
