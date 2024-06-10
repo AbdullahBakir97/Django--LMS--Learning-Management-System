@@ -30,3 +30,13 @@ class JobApplication(models.Model):
 
     def __str__(self):
         return f'{self.applicant.user.username} applied for {self.job_listing.title}'
+    
+    
+class JobNotification(models.Model):
+    job_listing = models.ForeignKey(JobListing, related_name='notifications', on_delete=models.CASCADE)
+    user = models.ForeignKey(UserProfile, related_name='job_notifications', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'{self.user.user.username} received a notification for {self.job_listing.title}'
