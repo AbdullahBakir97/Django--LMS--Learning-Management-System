@@ -8,6 +8,9 @@
 
 Welcome to the Django LMS project! This project aims to provide a comprehensive learning management system with features like user profiles, messaging, notifications, job listings, groups, followers, events, courses, connections, companies, and certifications.
 
+## Project Under Development....🥶🥱😴
+<img src="https://github.com/AbdullahBakir97/AbdullahBakir97/blob/main/assets/tech.gif" alt="Tech" width="100"> 
+**Technical development**
 
 # Overview
 
