@@ -1,9 +1,14 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
+from companies.models import CompanyUpdate
+from jobs.models import JobApplication, JobListing
+from followers.models import Follower, FollowRequest, FollowNotification
+from notifications.models import Notification
+from shortuuidfield import ShortUUIDField
 
 class User(AbstractUser):
-    userId = models.CharField(max_length=22, unique=True, default=uuid.uuid4, editable=False)
+    userId = ShortUUIDField()
     profile_picture = models.ImageField(upload_to="users_images/", null=True, blank=True)
     cover_photo = models.ImageField(upload_to="cover_photos/", null=True, blank=True)
 
@@ -18,7 +23,17 @@ class UserProfile(models.Model):
     is_private = models.BooleanField(default=False)
     joined_date = models.DateTimeField(default=timezone.now)
     followers = models.ManyToManyField("self", through='Follower', related_name='following', symmetrical=False)
-
+    skills = models.ManyToManyField('Skill', related_name='users_skills', blank=True)
+    experiences = models.ManyToManyField('Experience', related_name='users_experiences', blank=True)
+    educations = models.ManyToManyField('Education', related_name='users_educations', blank=True)
+    endorsements = models.ManyToManyField('Endorsement', related_name='users_endorsements', blank=True)
+    job_applications = models.ManyToManyField(JobApplication, related_name='users_job_applications', blank=True)
+    job_listings = models.ManyToManyField(JobListing, related_name='users_job_listings', blank=True)
+    notifications = models.ManyToManyField(Notification, related_name='users_notifications', blank=True)
+    followers = models.ManyToManyField(Follower, related_name='users_followers', blank=True)
+    follow_requests = models.ManyToManyField(FollowRequest, related_name='users_follow_requests', blank=True)
+    
+    
     def __str__(self):
         return self.user.username
 
