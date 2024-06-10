@@ -10,6 +10,7 @@ Welcome to the Django LMS project! This project aims to provide a comprehensive 
   - [Profiles](#profiles)
   - [Notifications](#notifications)
   - [Messaging](#messaging)
+  - [Blog](#blog)
   - [Jobs](#jobs)
   - [Groups](#groups)
   - [Followers](#followers)
