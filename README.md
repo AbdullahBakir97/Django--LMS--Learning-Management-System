@@ -24,7 +24,7 @@ Welcome to the Django LMS project! This project aims to provide a comprehensive 
 
 # Overview
 
-Django LMS is a sophisticated learning management system crafted using Django, a high-level Python web framework. Our platform is meticulously engineered to provide users with a seamless experience in managing various aspects of their educational and professional journeys. Whether you're an educator, a student, or a professional seeking growth opportunities, Django LMS offers a comprehensive suite of features to meet your needs.
+Django LMS is a sophisticated learning management system crafted using Django, a high-level Python web framework. LMS platform is meticulously engineered to provide users with a seamless experience in managing various aspects of their educational and professional journeys. Whether you're an educator, a student, or a professional seeking growth opportunities, Django LMS offers a comprehensive suite of features to meet your needs.
 
 ## Features
 
