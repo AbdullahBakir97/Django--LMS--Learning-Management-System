@@ -2,6 +2,7 @@ from django.db import models
 from profiles.models import UserProfile
 from messaging.models import Reaction, Share, Tag
 from posts.models import Comment
+from certifications.models import Certification
 
 class Course(models.Model):
     title = models.CharField(max_length=255)
@@ -29,7 +30,7 @@ class CourseCompletion(models.Model):
     student = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     completed_at = models.DateTimeField(auto_now_add=True)
     certificate_url = models.URLField()
-    certificate = models.ForeignKey(Certificate, on_delete=models.SET_NULL, null=True, blank=True)
+    certificate = models.ForeignKey(Certification, on_delete=models.SET_NULL, null=True, blank=True)
     tags = models.ManyToManyField(Tag, related_name='tagged_courses_completion', blank=True)
 
     def __str__(self):
