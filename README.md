@@ -106,6 +106,11 @@ To set up this project locally, follow these steps:
 **Tag, Share, Reaction, ChatRoom, Message**:
 💬 Models to handle tags, shares, reactions, chat rooms, and messages between users.
 
+## Blog
+
+**Post, Comment**:
+💬 Models to handle posts, comments, tags, shares, reactions, and related interactions.
+
 ## Jobs
 
 **JobListing, JobApplication, JobNotification**:
@@ -145,6 +150,8 @@ To set up this project locally, follow these steps:
 
 **Certification**:
 📜 Model to manage user certifications, related jobs, and related courses.
+
+
 
 # Contributing
 Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTING.md) for more information.
