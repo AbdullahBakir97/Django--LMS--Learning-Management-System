@@ -5,7 +5,6 @@ Welcome to the Django LMS project! This project aims to provide a comprehensive 
 ## Table of Contents
 - [Overview](#overview)
 - [Features](#features)
-- [Setup](#setup)
   - [Profiles](#profiles)
   - [Notifications](#notifications)
   - [Messaging](#messaging)
@@ -18,6 +17,7 @@ Welcome to the Django LMS project! This project aims to provide a comprehensive 
   - [Connections](#connections)
   - [Companies](#companies)
   - [Certifications](#certifications)
+- [Setup](#setup)
 - [Contributing](#contributing)
 - [License](#license)
 
