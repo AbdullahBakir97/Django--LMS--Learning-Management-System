@@ -1,6 +1,7 @@
 from django.db import models
 from companies.models import Company
 from profiles.models import UserProfile, Skill, Experience, Education, Endorsement  
+from messaging.models import Share
 
 class JobListing(models.Model):
     company = models.ForeignKey(Company, related_name='job_listings', on_delete=models.CASCADE)
@@ -16,6 +17,10 @@ class JobListing(models.Model):
     employment_type = models.CharField(max_length=50,choices=[('full_time', 'Full Time'), ('part_time', 'Part Time'), ('education', 'Education'), ('contract', 'Contract')], blank=True)
     experience_level = models.CharField(max_length=50,choices=[('entry_level', 'Entry Level'), ('mid_level', 'Mid Level'), ('senior_level', 'Senior Level')], blank=True)
     skills_required = models.ManyToManyField(Skill, related_name='jobs', blank=True)
+    applications = models.ManyToManyField('JobApplication', related_name='job_listings', blank=True)
+    notifications = models.ManyToManyField('JobNotification', related_name='job_listings', blank=True)
+    shares = models.ManyToManyField(Share, related_name='job_listings', blank=True)
+    
 
     def __str__(self):
         return self.title
@@ -27,6 +32,7 @@ class JobApplication(models.Model):
     cover_letter = models.TextField(blank=True)
     applied_date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=[('applied', 'Applied'), ('reviewed', 'Reviewed'), ('interview', 'Interview'), ('offered', 'Offered'), ('rejected', 'Rejected')], default='applied')
+    shares = models.ManyToManyField('Share', related_name='job_applications', blank=True)
 
     def __str__(self):
         return f'{self.applicant.user.username} applied for {self.job_listing.title}'
@@ -37,6 +43,7 @@ class JobNotification(models.Model):
     user = models.ForeignKey(UserProfile, related_name='job_notifications', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     read = models.BooleanField(default=False)
+    shares = models.ManyToManyField('Share', related_name='job_notifications', blank=True)
 
     def __str__(self):
         return f'{self.user.user.username} received a notification for {self.job_listing.title}'

@@ -6,6 +6,7 @@ from jobs.models import JobApplication, JobListing
 from followers.models import Follower, FollowRequest, FollowNotification
 from notifications.models import Notification
 from shortuuidfield import ShortUUIDField
+from messaging.models import Reaction, Share
 
 class User(AbstractUser):
     userId = ShortUUIDField()
@@ -32,6 +33,7 @@ class UserProfile(models.Model):
     notifications = models.ManyToManyField(Notification, related_name='users_notifications', blank=True)
     followers = models.ManyToManyField(Follower, related_name='users_followers', blank=True)
     follow_requests = models.ManyToManyField(FollowRequest, related_name='users_follow_requests', blank=True)
+    shares = models.ManyToManyField(Share, related_name='users_shares', blank=True)
     
     
     def __str__(self):
@@ -71,6 +73,7 @@ class Experience(models.Model):
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
     is_current = models.BooleanField(default=False)
+    shares = models.ManyToManyField(Share, related_name='experience_shares', blank=True)
 
     def __str__(self):
         return f'{self.title} at {self.company.name if self.company else "N/A"}'
@@ -83,6 +86,7 @@ class Education(models.Model):
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
     is_current = models.BooleanField(default=False)
+    shares = models.ManyToManyField(Share, related_name='education_shares', blank=True)
 
     def __str__(self):
         return f'{self.degree} in {self.field_of_study} from {self.institution}'
@@ -91,6 +95,13 @@ class Skill(models.Model):
     name = models.CharField(max_length=100)
     users = models.ManyToManyField(UserProfile, related_name='skills')
     proficiency = models.CharField(max_length=50)
+    shares = models.ManyToManyField(Share, related_name='skill_shares', blank=True)
+    endorsements = models.ManyToManyField('Endorsement', related_name='users_endorsements', blank=True)
+    job_applications = models.ManyToManyField(JobApplication, related_name='users_job_applications', blank=True)
+    job_listings = models.ManyToManyField(JobListing, related_name='users_job_listings', blank=True)
+    notifications = models.ManyToManyField(Notification, related_name='users_notifications', blank=True)
+    verified_from = models.ManyToManyField('Verification', related_name='users_verified_from', blank=True)
+    verified_to = models.ManyToManyField('Verification', related_name='users_verified_to', blank=True)
 
     def __str__(self):
         return self.name
@@ -99,6 +110,7 @@ class Endorsement(models.Model):
     skill = models.ForeignKey(Skill, related_name='endorsements', on_delete=models.CASCADE)
     endorsed_by = models.ForeignKey(UserProfile, related_name='given_endorsements', on_delete=models.CASCADE)
     endorsed_user = models.ForeignKey(UserProfile, related_name='received_endorsements', on_delete=models.CASCADE)
+    shares = models.ManyToManyField(Share, related_name='endorsement_shares', blank=True)
 
     def __str__(self):
         return f'{self.endorsed_by.user.username} endorsed {self.endorsed_user.user.username} for {self.skill.name}'

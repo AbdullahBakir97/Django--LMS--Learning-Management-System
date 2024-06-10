@@ -16,7 +16,7 @@ class Follower(models.Model):
 
     @staticmethod
     def get_followers(user):
-        return UserProfile.objects.filter(user_followers__user=user)
+        return Follower.objects.filter(user=user)
 
 class FollowRequest(models.Model):
     from_user = models.ForeignKey(UserProfile, related_name='follow_requests_sent', on_delete=models.CASCADE)

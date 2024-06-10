@@ -1,5 +1,6 @@
 from django.db import models
 from profiles.models import UserProfile
+from messaging.models import Share
 
 
 NOTIFICATION_TYPE = [
@@ -29,6 +30,7 @@ class Notification(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
     notification_type = models.ForeignKey(NotificationType, on_delete=models.CASCADE)
+    shares = models.ManyToManyField(Share, related_name='notifications', blank=True)
 
     def __str__(self):
         return f"{self.notification_type.type_name} Notification for {self.recipient.user.username}"
