@@ -39,8 +39,18 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'django_notifications',
+    'django_celery_beat',
+    'django_redis_cache',
+    'django_crispy_forms',
     'rest_framework',
     'corsheaders',
+    'ckeditor',
+    
+    # my apps
     'messaging',
     'notifications',
     'posts',
@@ -52,14 +62,7 @@ INSTALLED_APPS = [
     'connections',
     'companies',
     'certifications',
-    'django_celery_beat',
-    'django_redis_cache',
-    'django_crispy_forms',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'django_notifications',
-    'ckeditor',
+    
 ]
 
 MIDDLEWARE = [
