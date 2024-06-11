@@ -2,7 +2,8 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
-from .models import UserProfile, Skill, Experience, Education, Endorsement, Follower, FollowRequest
+from .models import UserProfile, Skill, Experience, Education, Endorsement
+from followers.models import Follower, FollowRequest, FollowNotification
 from notifications.models import Notification
 
 User = get_user_model()
