@@ -1,10 +1,11 @@
 from django.db import models
 from profiles.models import UserProfile
-from messaging.models import Share, Tag
+from activity.models import Reaction, Share, Tag, Category
 
 class Group(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
+    categories = models.ManyToManyField(Category, related_name='groupes_categories')
     members = models.ManyToManyField(UserProfile, through='GroupMembership', related_name='groups')
     created_at = models.DateTimeField(auto_now_add=True)
     group_type = models.CharField(max_length=20, choices=[('public', 'Public'), ('private', 'Private')], default='public')

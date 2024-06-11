@@ -114,3 +114,21 @@ class Endorsement(models.Model):
 
     def __str__(self):
         return f'{self.endorsed_by.user.username} endorsed {self.endorsed_user.user.username} for {self.skill.name}'
+    
+class Achievement(models.Model):
+    user = models.ForeignKey(UserProfile, related_name='achievements', on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    date_achieved = models.DateField()
+
+    def __str__(self):
+        return self.title
+    
+class Portfolio(models.Model):
+    user = models.ForeignKey(UserProfile, related_name='portfolio', on_delete=models.CASCADE)
+    project_name = models.CharField(max_length=255)
+    description = models.TextField()
+    project_url = models.URLField()
+
+    def __str__(self):
+        return self.project_name

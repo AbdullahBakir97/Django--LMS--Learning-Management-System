@@ -1,12 +1,15 @@
 from django.db import models
 from companies.models import Company
-from profiles.models import UserProfile, Skill, Experience, Education, Endorsement  
-from messaging.models import Share, Tag
+from profiles.models import User, UserProfile, Skill, Experience, Education, Endorsement  
+from activity.models import Attachment, Reaction, Share, Tag, Category
+from django.contrib.contenttypes.fields import GenericRelation
 
 class JobListing(models.Model):
     company = models.ForeignKey(Company, related_name='job_listings', on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     description = models.TextField()
+    attachments = GenericRelation(Attachment)
+    categories = models.ManyToManyField(Category, related_name='jobs_categories')
     location = models.CharField(max_length=255)
     posted_date = models.DateTimeField(auto_now_add=True)
     closing_date = models.DateTimeField()
@@ -30,6 +33,7 @@ class JobApplication(models.Model):
     job_listing = models.ForeignKey(JobListing, related_name='applications', on_delete=models.CASCADE)
     applicant = models.ForeignKey(UserProfile, related_name='job_applications', on_delete=models.CASCADE)
     resume = models.FileField(upload_to='resumes/')
+    attachments = GenericRelation(Attachment)
     cover_letter = models.TextField(blank=True)
     applied_date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=[('applied', 'Applied'), ('reviewed', 'Reviewed'), ('interview', 'Interview'), ('offered', 'Offered'), ('rejected', 'Rejected')], default='applied')

@@ -1,5 +1,8 @@
 from django.db import models
 from profiles.models import UserProfile
+from activity.models import Attachment, Category
+from django.contrib.contenttypes.fields import GenericRelation
+
 
 class Company(models.Model):
     name = models.CharField(max_length=255)
@@ -7,6 +10,8 @@ class Company(models.Model):
     location = models.CharField(max_length=255, blank=True)
     industry = models.CharField(max_length=255, blank=True)
     description = models.TextField(blank=True)
+    attachments = GenericRelation(Attachment)
+    categories = models.ManyToManyField(Category, related_name='companies_categories')
     logo = models.ImageField(upload_to='company_logos/', blank=True, null=True)
     founded_date = models.DateField(null=True, blank=True)
     employee_count = models.IntegerField(default=0)
@@ -19,9 +24,10 @@ class Company(models.Model):
     
     
 class CompanyUpdate(models.Model):
-    company = models.ForeignKey(Company, related_name='updates', on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, related_name='company_updates', on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     content = models.TextField()
+    attachments = GenericRelation(Attachment)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

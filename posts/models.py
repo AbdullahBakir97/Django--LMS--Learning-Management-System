@@ -1,12 +1,16 @@
 from django.db import models
 from profiles.models import UserProfile
 from groups.models import Group
-from messaging.models import Reaction, Share, Tag
+from activity.models import Attachment, Reaction, Share, Tag, Category
+from django.contrib.contenttypes.fields import GenericRelation
 
 class Post(models.Model):
     author = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='posts', null=True, blank=True)
     content = models.TextField()
+    attachments = GenericRelation(Attachment)
+    visibility = models.CharField(max_length=20, choices=[('public', 'Public'), ('private', 'Private')], default='public')
+    categories = models.ManyToManyField(Category, related_name='posts_categories')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     likes = models.ManyToManyField(UserProfile, related_name='liked_posts', blank=True)
@@ -22,6 +26,8 @@ class Comment(models.Model):
     post = models.ForeignKey(Post, related_name='comments', on_delete=models.CASCADE)
     author = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     content = models.TextField()
+    attachments = GenericRelation(Attachment)
+    visibility = models.CharField(max_length=20, choices=[('public', 'Public'), ('private', 'Private')], default='public')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     parent_comment = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')

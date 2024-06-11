@@ -76,21 +76,26 @@ def send_profile_update_notification(sender, instance, created, **kwargs):
 def update_skill_rank(sender, instance, created, **kwargs):
     if created:
         # Implement logic to update skill rank
-        pass
+        instance.skill.update_rank()
+        print(f"Skill rank updated for skill: {instance.skill.name}")
+        
 
 # Signal to trigger actions when a user changes their profile picture
 @receiver(post_save, sender=UserProfile)
 def profile_picture_updated(sender, instance, created, **kwargs):
     if not created and instance.picture != instance._picture:
         # Implement actions such as resizing, cropping, or updating references to the new picture
-        pass
+        instance.resize_profile_picture()
+        print(f"Profile picture updated for user: {instance.user.username}")
+        
 
 # Signal to trigger actions when a user changes the visibility settings of their profile
 @receiver(post_save, sender=UserProfile)
 def profile_visibility_changed(sender, instance, created, **kwargs):
     if not created and instance.visibility != instance._visibility:
         # Implement actions such as updating visibility flags or notifying connected users
-        pass
+        instance.update_visibility()
+        print(f"Profile visibility changed for user: {instance.user.username}")
 
 # Signal to send notifications when skills receive endorsements
 @receiver(post_save, sender=Endorsement)

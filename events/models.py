@@ -1,10 +1,15 @@
 from django.db import models
 from profiles.models import UserProfile
+from activity.models import Attachment, Category
+from django.contrib.contenttypes.fields import GenericRelation
+
 
 class Event(models.Model):
     organizer = models.ForeignKey(UserProfile, related_name='organized_events', on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     description = models.TextField()
+    attachments = GenericRelation(Attachment)
+    categories = models.ManyToManyField(Category, related_name='events_categoories')
     location = models.CharField(max_length=255)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
