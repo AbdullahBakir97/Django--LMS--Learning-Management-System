@@ -2,10 +2,11 @@
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from django.urls import path
+from activity.consumers import ActivityConsumer, ReactionConsumer, ShareConsumer
 from profiles.consumers import ProfileConsumer
 from messaging.consumers import ChatConsumer
 from notifications.consumers import NotificationConsumer
-from posts.consumers import PostConsumer, CommentConsumer, ReactionConsumer, ShareConsumer
+from posts.consumers import PostConsumer, CommentConsumer
 from jobs.consumers import JobListingConsumer, JobApplicationConsumer
 from groups.consumers import GroupConsumer, GroupMembershipConsumer
 from followers.consumers import FollowerConsumer, FollowRequestConsumer
@@ -20,7 +21,7 @@ application = ProtocolTypeRouter({
         URLRouter([
             path("ws/profiles/", ProfileConsumer.as_asgi()),
             path("ws/messaging/", ChatConsumer.as_asgi()),
-            path("ws/notifications/", NotificationConsumer.as_asgi()),
+            path("ws/notifications/$", NotificationConsumer.as_asgi()),
             path("ws/posts/", PostConsumer.as_asgi()),
             path("ws/comments/", CommentConsumer.as_asgi()),
             path("ws/reactions/", ReactionConsumer.as_asgi()),
@@ -41,6 +42,7 @@ application = ProtocolTypeRouter({
             path("ws/companies/", CompanyConsumer.as_asgi()),
             path("ws/company_updates/", CompanyUpdateConsumer.as_asgi()),
             path("ws/certifications/", CertificationConsumer.as_asgi()),
+            path("ws/activity/", ActivityConsumer.as_asgi()),
         ])
     ),
 })

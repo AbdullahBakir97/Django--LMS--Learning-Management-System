@@ -2,7 +2,7 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from .models import Post, Comment
-from activity.models import Raction, Tag, Share
+from activity.models import Reaction, Tag, Share
 
 # Signal to update post count for a user when a new post is created
 @receiver(post_save, sender=Post)

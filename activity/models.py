@@ -2,8 +2,9 @@ from django.db import models
 from profiles.models import UserProfile
 from shortuuidfield import ShortUUIDField
 from posts.models import Post, Comment
-from jobs.models import JobPost
+from jobs.models import JobListing
 from groups.models import Group
+from messaging.models import Message
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 
@@ -44,10 +45,10 @@ class Reaction(models.Model):
     ]
     type = models.CharField(max_length=20, choices=REACTION_CHOICES)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
-    message = models.ForeignKey('Message', on_delete=models.CASCADE)
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, null=True, blank=True)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, null=True, blank=True)
     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, null=True, blank=True)
-    job_post = models.ForeignKey(JobPost, on_delete=models.CASCADE, null=True, blank=True)
+    job_post = models.ForeignKey(JobListing, on_delete=models.CASCADE, null=True, blank=True)
     group = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
     
     

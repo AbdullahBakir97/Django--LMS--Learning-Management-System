@@ -9,6 +9,12 @@ NOTIFICATION_TYPE = [
     ('job_listing', 'Job Listing'),
     ('message', 'Message'),
     ('follow', 'Follow'),
+    ('connection', 'Connection'),
+    ('reaction', 'Reaction'),
+    ('post', 'Posts'),
+    ('share', 'Share'),
+    ('tag', 'Tag'),
+    ('comment', 'Comment'),
     ('endorsement', 'Endorsement'),
     ('skill', 'Skill'),
     ('experience', 'Experience'),
@@ -23,7 +29,7 @@ class NotificationType(models.Model):
         return self.type_name
 
 class Notification(models.Model):
-    recipient = models.ForeignKey(UserProfile, related_name='notifications', on_delete=models.CASCADE)
+    recipient = models.ForeignKey(UserProfile, related_name='notifications_recipient', on_delete=models.CASCADE)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
@@ -32,8 +38,8 @@ class Notification(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
     notification_type = models.ForeignKey(NotificationType, on_delete=models.CASCADE)
-    shares = models.ManyToManyField(Share, related_name='notifications', blank=True)
-    priority = models.IntegerField(default=0)  # Priority of the notification
+    shares = models.ManyToManyField(Share, related_name='notifications_shares', blank=True)
+    priority = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

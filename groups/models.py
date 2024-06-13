@@ -6,14 +6,14 @@ class Group(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
     categories = models.ManyToManyField(Category, related_name='groupes_categories')
-    members = models.ManyToManyField(UserProfile, through='GroupMembership', related_name='groups')
+    members = models.ManyToManyField(UserProfile, through='GroupMembership', related_name='groups', db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     group_type = models.CharField(max_length=20, choices=[('public', 'Public'), ('private', 'Private')], default='public')
     privacy_level = models.CharField(max_length=20, choices=[('low', 'Low'), ('medium', 'Medium'), ('high', 'High')], default='medium')
     tags = models.CharField(max_length=100, blank=True)
     cover_image = models.ImageField(upload_to='group_covers/', blank=True, null=True)
-    shares = models.ManyToManyField(Share, related_name='group_shares', blank=True)
-    tags = models.ManyToManyField(Tag, related_name='tagged_groups', blank=True)
+    shares = models.ManyToManyField(Share, related_name='group_shares', blank=True, db_index=True)
+    tags = models.ManyToManyField(Tag, related_name='tagged_groups', blank=True, db_index=True)
 
     def __str__(self):
         return self.name

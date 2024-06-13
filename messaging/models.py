@@ -11,7 +11,7 @@ from activity.models import Attachment, Reaction, Share, Tag
 
 class ChatRoom(models.Model):
     roomId = ShortUUIDField()
-    members = models.ManyToManyField(UserProfile, related_name='chatrooms')
+    members = models.ManyToManyField(UserProfile, related_name='chatrooms', db_index=True)
     name = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -33,17 +33,17 @@ class Message(models.Model):
         (FILE, 'File Attachment'),
     ]
     
-    chat = models.ForeignKey(ChatRoom, on_delete=models.CASCADE)
-    sender = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    chat = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, db_index=True)
+    sender = models.ForeignKey(UserProfile, on_delete=models.CASCADE, db_index=True)
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
     message_type = models.CharField(max_length=20, choices=MESSAGE_TYPE_CHOICES, default=TEXT)
-    attachments = models.ManyToManyField(Attachment, related_name='message_attachments', upload_to='message_attachments/', blank=True, null=True)
+    attachments = models.ManyToManyField(Attachment, related_name='message_attachments', upload_to='message_attachments/', blank=True, null=True, db_index=True)
     parent_message = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
     is_edited = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
-    reactions = models.ManyToManyField(Reaction, related_name='message_reactions')
+    reactions = models.ManyToManyField(Reaction, on_delete=models.CASCADE, related_name='message_reactions', db_index=True)
     shares = models.ManyToManyField(Share, related_name='message_shares', blank=True)
     
     
