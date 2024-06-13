@@ -4,14 +4,18 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 
+
 # Inline classes if necessary
 class AchievementsInline(admin.TabularInline):
     model = Achievement
     extra = 1
 
+
 class EndorsementsInline(admin.TabularInline):
     model = Endorsement
+    fk_name = 'endorsed_user'
     extra = 1
+
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
@@ -41,19 +45,22 @@ class UserProfileAdmin(admin.ModelAdmin):
 
     export_to_csv.short_description = 'Export selected profiles to CSV'
 
+
 @admin.register(Experience)
 class ExperienceAdmin(admin.ModelAdmin):
     list_display = ('title', 'user', 'company', 'start_date', 'end_date')
-    list_filter = ('user', 'company', 'start_date', 'end_date')
+    list_filter = ('user__user__username', 'company__name', 'start_date', 'end_date')
     search_fields = ('title', 'user__user__username', 'company__name')
     date_hierarchy = 'start_date'
+
 
 @admin.register(Education)
 class EducationAdmin(admin.ModelAdmin):
     list_display = ('degree', 'user', 'institution', 'field_of_study', 'start_date', 'end_date')
-    list_filter = ('user', 'institution', 'field_of_study', 'start_date', 'end_date')
+    list_filter = ('user__user__username', 'institution', 'field_of_study', 'start_date', 'end_date')
     search_fields = ('degree', 'user__user__username', 'institution', 'field_of_study')
     date_hierarchy = 'start_date'
+
 
 @admin.register(Skill)
 class SkillAdmin(admin.ModelAdmin):
@@ -62,16 +69,19 @@ class SkillAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     filter_horizontal = ('users',)
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related('users')
+
     def get_users_count(self, obj):
         return obj.users.count()
     get_users_count.short_description = 'Users Count'
 
+
 @admin.register(Endorsement)
 class EndorsementAdmin(admin.ModelAdmin):
-    list_display = ('skill', 'endorsed_by', 'endorsed_user', 'created_at')
+    list_display = ('skill', 'endorsed_by', 'endorsed_user', 'created_at_display')
     list_filter = ('skill', 'endorsed_by', 'endorsed_user')
     search_fields = ('skill__name', 'endorsed_by__user__username', 'endorsed_user__user__username')
-    date_hierarchy = 'created_at'
     filter_horizontal = ('shares',)
     actions = ['export_to_csv']
 
@@ -81,6 +91,11 @@ class EndorsementAdmin(admin.ModelAdmin):
 
     export_to_csv.short_description = 'Export selected endorsements to CSV'
 
+    def created_at_display(self, obj):
+        return obj.created_at
+    created_at_display.short_description = 'Created At'
+
+
 @admin.register(Achievement)
 class AchievementAdmin(admin.ModelAdmin):
     list_display = ('title', 'user', 'date_achieved')
@@ -88,11 +103,11 @@ class AchievementAdmin(admin.ModelAdmin):
     search_fields = ('title', 'user__user__username')
     date_hierarchy = 'date_achieved'
 
+
 @admin.register(Portfolio)
 class PortfolioAdmin(admin.ModelAdmin):
-    list_display = ('project_name', 'user', 'project_url', 'created_at')
+    list_display = ('project_name', 'user', 'project_url', 'created_at_display')
     search_fields = ('project_name', 'user__user__username')
-    date_hierarchy = 'created_at'
     actions = ['mark_as_featured']
 
     def mark_as_featured(self, request, queryset):
@@ -100,3 +115,7 @@ class PortfolioAdmin(admin.ModelAdmin):
         self.message_user(request, f'{updated} portfolio(s) marked as featured.')
 
     mark_as_featured.short_description = 'Mark selected as featured'
+
+    def created_at_display(self, obj):
+        return obj.created_at
+    created_at_display.short_description = 'Created At'

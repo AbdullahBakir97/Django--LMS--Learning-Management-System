@@ -10,7 +10,7 @@ class ChatRoomAdmin(admin.ModelAdmin):
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
     list_display = ('sender', 'chat', 'content', 'timestamp', 'is_read')
-    list_filter = ('chat__roomId', 'sender', 'timestamp', 'is_read', 'message_type')
+    list_filter = ('chat', 'sender', 'timestamp', 'is_read', 'message_type')
     search_fields = ('sender__username', 'chat__roomId', 'content')
     date_hierarchy = 'timestamp'
     filter_horizontal = ('attachments', 'reactions', 'shares')  # Allows for easier selection of related objects
@@ -22,12 +22,12 @@ class MessageAdmin(admin.ModelAdmin):
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'sender':
-            kwargs['queryset'] = db_field.remote_field.model.objects.select_related('user')
+            kwargs['queryset'] = db_field.remote_field.model.objects.all()
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
-        if db_field.name == 'attachments' or db_field.name == 'reactions' or db_field.name == 'shares':
-            kwargs['queryset'] = db_field.remote_field.model.objects.select_related('content_object')
+        if db_field.name in ('attachments', 'reactions', 'shares'):
+            kwargs['queryset'] = db_field.remote_field.model.objects.all()
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
     def save_related(self, request, form, formsets, change):

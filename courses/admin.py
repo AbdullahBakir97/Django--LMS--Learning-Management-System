@@ -9,7 +9,8 @@ from activity.models import Attachment
 class AttachmentInline(GenericTabularInline):
     model = Attachment
     extra = 1
-
+    ct_field = 'content_type'
+    ct_fk_field = 'object_id'
 # Inline for CourseEnrollment in UserProfileAdmin
 class CourseEnrollmentInline(admin.TabularInline):
     model = CourseEnrollment
@@ -30,7 +31,7 @@ class CourseAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Course Information', {
-            'fields': ('title', 'description', 'instructor', 'attachments', 'categories', 'tags')
+            'fields': ('title', 'description', 'instructor', 'categories', 'tags')
         }),
         ('Related Content', {
             'fields': ('shares', 'comments', 'reactions')
@@ -69,6 +70,4 @@ class CourseCompletionAdmin(admin.ModelAdmin):
     list_filter = ('completed_at',)
     search_fields = ('course__title', 'student__user__username')
 
-# Register models
-admin.site.register(Comment)
-admin.site.register(Certification)
+

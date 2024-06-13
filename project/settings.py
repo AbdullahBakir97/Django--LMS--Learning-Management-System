@@ -83,7 +83,6 @@ AUTH_USER_MODEL = 'profiles.User'
 # Allauth
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_back',
     'allauth.account.auth_backends.AuthenticationBackend',
 )
 

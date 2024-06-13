@@ -96,6 +96,16 @@ class NotificationService:
     @staticmethod
     def get_unread_notifications(user):
         return Notification.objects.filter(recipient=user, is_read=False)
+    
+    @staticmethod
+    def create_default_notification_settings(user_profile):
+        notification_types = NotificationType.objects.all()
+        for notification_type in notification_types:
+            NotificationSettings.objects.get_or_create(
+                user=user_profile.user,
+                notification_type=notification_type,
+                defaults={'is_enabled': True}
+            )
 
     @staticmethod
     def update_notification_settings(user, notification_type_name, is_enabled):

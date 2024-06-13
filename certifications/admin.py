@@ -9,7 +9,7 @@ class AttachmentInline(GenericTabularInline):
     extra = 1
 
 
-admin.site.unregister(Certification)
+
 # ModelAdmin for Certification
 @admin.register(Certification)
 class CertificationAdmin(admin.ModelAdmin):

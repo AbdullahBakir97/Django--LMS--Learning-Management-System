@@ -4,17 +4,28 @@ from django.db.models import F
 from .models import User, UserProfile, Skill, Experience, Education, Endorsement
 from notifications.services import NotificationService
 from connections.models import Connection
+from django.core.exceptions import ObjectDoesNotExist
+
+@receiver(post_save, sender=User)
+def create_or_save_user_profile(sender, instance, created, **kwargs):
+        if created:
+            UserProfile.objects.create(user=instance)
+            print(f"Created UserProfile for {instance.username}")
+
 
 # Signal to create a user profile when a new user is created
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
-
-# Signal to save the user profile when the user is saved
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    instance.userprofile.save()
+        NotificationService.create_default_notification_settings(instance)
+        
+# # Signal to save the user profile when the user is saved
+# @receiver(post_save, sender=User)
+# def save_user_profile(sender, instance, created, **kwargs):
+#     if created:
+#         UserProfile.objects.create(user=instance)
+    # instance.userprofile.save()
 
 # Signal to update the endorsement count when an endorsement is created
 @receiver(post_save, sender=Endorsement)
