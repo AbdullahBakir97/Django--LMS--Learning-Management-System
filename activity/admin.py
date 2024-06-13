@@ -26,16 +26,22 @@ class ShareAdmin(admin.ModelAdmin):
 
 @admin.register(Reaction)
 class ReactionAdmin(admin.ModelAdmin):
-    list_display = ('type', 'user', 'content_object')
+    list_display = ('type', 'user', 'get_content_object', 'message', 'post', 'comment', 'job_post', 'group')
     list_filter = ('type', 'user')
     search_fields = ('user__username',)
+
+    def get_content_object(self, obj):
+        return obj.content_object
+
+    get_content_object.short_description = 'Content Object'  # Customize the column header
+    get_content_object.admin_order_field = 'content_object__id'  # Optionally, enable sorting by content object ID
 
 @admin.register(Attachment)
 class AttachmentAdmin(admin.ModelAdmin):
     list_display = ('attachment_type', 'uploaded_at', 'content_object')
     list_filter = ('attachment_type', 'uploaded_at')
     search_fields = ('content_object__name',)
-    inlines = [AttachmentInline]  # Include inline for related Attachments
+    inlines = [AttachmentInline]
 
 @admin.register(Thread)
 class ThreadAdmin(admin.ModelAdmin):

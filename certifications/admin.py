@@ -8,6 +8,8 @@ class AttachmentInline(GenericTabularInline):
     model = Attachment
     extra = 1
 
+
+admin.site.unregister(Certification)
 # ModelAdmin for Certification
 @admin.register(Certification)
 class CertificationAdmin(admin.ModelAdmin):
@@ -52,4 +54,3 @@ class CertificationAdmin(admin.ModelAdmin):
             return super().get_inline_instances(request, obj)
         return []
 
-admin.site.register(Category)

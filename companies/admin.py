@@ -60,6 +60,4 @@ class CompanyUpdateAdmin(admin.ModelAdmin):
             obj.company = Company.objects.get(id=form.data.get('company'))
         obj.save()
 
-# Register Category and Attachment models
-admin.site.register(Category)
-admin.site.register(Attachment)
+

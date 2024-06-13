@@ -6,6 +6,19 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.conf import settings
 
 class JobListing(models.Model):
+    EMPLOYMENT_TYPES = [
+        ('full_time', 'Full Time'),
+        ('part_time', 'Part Time'),
+        ('education', 'Education'),
+        ('contract', 'Contract'),
+    ]
+    
+    EXPERIENCE_LEVELS = [
+        ('entry_level', 'Entry Level'),
+        ('mid_level', 'Mid Level'),
+        ('senior_level', 'Senior Level'),
+    ]
+    
     company = models.ForeignKey('companies.Company', related_name='job_listings_companies', on_delete=models.CASCADE, db_index=True)
     title = models.CharField(max_length=255)
     description = models.TextField()
@@ -20,12 +33,12 @@ class JobListing(models.Model):
     responsibilities = models.TextField(blank=True)
     employment_type = models.CharField(
         max_length=50,
-        choices=[('full_time', 'Full Time'), ('part_time', 'Part Time'), ('education', 'Education'), ('contract', 'Contract')],
+        choices=EMPLOYMENT_TYPES,
         blank=True
     )
     experience_level = models.CharField(
         max_length=50,
-        choices=[('entry_level', 'Entry Level'), ('mid_level', 'Mid Level'), ('senior_level', 'Senior Level')],
+        choices=EXPERIENCE_LEVELS,
         blank=True
     )
     skills_required = models.ManyToManyField('profiles.Skill', related_name='required_jobs', blank=True, db_index=True)
@@ -38,6 +51,13 @@ class JobListing(models.Model):
         return self.title
 
 class JobApplication(models.Model):
+    STATUS_CHOICES = [
+        ('applied', 'Applied'),
+        ('reviewed', 'Reviewed'),
+        ('interview', 'Interview'),
+        ('offered', 'Offered'),
+        ('rejected', 'Rejected'),
+    ]
     job_listing = models.ForeignKey(JobListing, related_name='job_applications', on_delete=models.CASCADE, db_index=True)
     applicant = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='applications', on_delete=models.CASCADE, db_index=True)
     resume = models.FileField(upload_to='resumes/')
@@ -46,7 +66,7 @@ class JobApplication(models.Model):
     applied_date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(
         max_length=20,
-        choices=[('applied', 'Applied'), ('reviewed', 'Reviewed'), ('interview', 'Interview'), ('offered', 'Offered'), ('rejected', 'Rejected')],
+        choices=STATUS_CHOICES,
         default='applied'
     )
     shares = models.ManyToManyField('activity.Share', related_name='shared_applications', blank=True)
