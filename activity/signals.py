@@ -3,7 +3,7 @@ from django.db.models.signals import post_save, post_delete, m2m_changed
 from django.dispatch import receiver
 from profiles.models import UserProfile
 from posts.models import Post, Comment
-from jobs.models import JobPost
+from jobs.models import JobListing
 from groups.models import Group
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType

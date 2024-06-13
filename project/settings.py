@@ -31,8 +31,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'channels',
     'profiles',
+    'channels',
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -42,15 +42,16 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'django_notifications',
     'django_celery_beat',
-    'django_redis_cache',
-    'django_crispy_forms',
+    # 'django_redis_cache',
+    'crispy_forms',
     'rest_framework',
+    'rest_framework.authtoken',
     'corsheaders',
     'ckeditor',
     
     # my apps
+    'activity',
     'messaging',
     'notifications',
     'posts',
@@ -73,6 +74,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     'corsheaders.middleware.CorsMiddleware'
 ]
 

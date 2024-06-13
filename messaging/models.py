@@ -1,17 +1,16 @@
 from django.db import models
-from profiles.models import UserProfile
 from shortuuidfield import ShortUUIDField
-from posts.models import Post, Comment
-from jobs.models import JobPost
-from groups.models import Group
+# from posts.models import Post, Comment
+# from jobs.models import JobListing
+# from groups.models import Group
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from activity.models import Attachment, Reaction, Share, Tag
-
+# from activity.models import Attachment, Reaction, Share, Tag
+from django.conf import settings
 
 class ChatRoom(models.Model):
     roomId = ShortUUIDField()
-    members = models.ManyToManyField(UserProfile, related_name='chatrooms', db_index=True)
+    members = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='chatrooms', db_index=True)
     name = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -34,17 +33,17 @@ class Message(models.Model):
     ]
     
     chat = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, db_index=True)
-    sender = models.ForeignKey(UserProfile, on_delete=models.CASCADE, db_index=True)
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, db_index=True)
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
     message_type = models.CharField(max_length=20, choices=MESSAGE_TYPE_CHOICES, default=TEXT)
-    attachments = models.ManyToManyField(Attachment, related_name='message_attachments', upload_to='message_attachments/', blank=True, null=True, db_index=True)
+    attachments = models.ManyToManyField('activity.Attachment', related_name='message_attachments', blank=True, db_index=True)
     parent_message = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
     is_edited = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
-    reactions = models.ManyToManyField(Reaction, on_delete=models.CASCADE, related_name='message_reactions', db_index=True)
-    shares = models.ManyToManyField(Share, related_name='message_shares', blank=True)
+    reactions = models.ManyToManyField('activity.Reaction', related_name='message_reactions', db_index=True)
+    shares = models.ManyToManyField('activity.Share', related_name='message_shares', blank=True)
     
     
 

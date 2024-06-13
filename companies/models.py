@@ -1,7 +1,7 @@
 from django.db import models
-from profiles.models import UserProfile
 from activity.models import Attachment, Category
 from django.contrib.contenttypes.fields import GenericRelation
+from django.conf import settings
 
 
 class Company(models.Model):
@@ -16,8 +16,8 @@ class Company(models.Model):
     founded_date = models.DateField(null=True, blank=True)
     employee_count = models.IntegerField(default=0)
     revenue = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    members = models.ManyToManyField(UserProfile, related_name='member_companies')
-    followers = models.ManyToManyField(UserProfile, related_name='followed_companies')
+    members = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='member_companies')
+    followers = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='followed_companies')
 
     def __str__(self):
         return self.name

@@ -1,12 +1,11 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
-from companies.models import CompanyUpdate
-from jobs.models import JobApplication, JobListing
+# from jobs.models import JobApplication, JobListing
 from followers.models import Follower, FollowRequest, FollowNotification
-from notifications.models import Notification
+# from notifications.models import Notification
 from shortuuidfield import ShortUUIDField
-from messaging.models import Reaction, Share
+# from messaging.models import Reaction, Share
 
 class User(AbstractUser):
     userId = ShortUUIDField()
@@ -28,12 +27,12 @@ class UserProfile(models.Model):
     experiences = models.ManyToManyField('Experience', related_name='users_experiences', blank=True, db_index=True)
     educations = models.ManyToManyField('Education', related_name='users_educations', blank=True, db_index=True)
     endorsements = models.ManyToManyField('Endorsement', related_name='users_endorsements', blank=True, db_index=True)
-    job_applications = models.ManyToManyField(JobApplication, related_name='users_job_applications', blank=True)
-    job_listings = models.ManyToManyField(JobListing, related_name='users_job_listings', blank=True)
-    notifications = models.ManyToManyField(Notification, related_name='users_notifications', blank=True)
+    job_applications = models.ManyToManyField('jobs.JobApplication', related_name='profile_job_applications', blank=True)
+    job_listings = models.ManyToManyField('jobs.JobListing', related_name='profile_job_listings', blank=True)
+    notifications = models.ManyToManyField('notifications.Notification', related_name='profile_notifications', blank=True)
     followers = models.ManyToManyField(Follower, related_name='users_followers', blank=True)
     follow_requests = models.ManyToManyField(FollowRequest, related_name='users_follow_requests', blank=True)
-    shares = models.ManyToManyField(Share, related_name='users_shares', blank=True)
+    shares = models.ManyToManyField('activity.Share', related_name='users_shares', blank=True)
     
     
     def __str__(self):
@@ -95,51 +94,51 @@ class UserProfile(models.Model):
         )
 
 class Experience(models.Model):
-    user = models.ForeignKey(UserProfile, related_name='experiences', on_delete=models.CASCADE, db_index=True)
+    user = models.ForeignKey(UserProfile, related_name='user_experiences', on_delete=models.CASCADE, db_index=True)
     title = models.CharField(max_length=255)
     company = models.ForeignKey('companies.Company', related_name='employees', on_delete=models.SET_NULL, null=True, db_index=True)
     description = models.TextField(blank=True)
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
     is_current = models.BooleanField(default=False)
-    shares = models.ManyToManyField(Share, related_name='experience_shares', blank=True)
+    shares = models.ManyToManyField('activity.Share', related_name='experience_shares', blank=True)
 
     def __str__(self):
         return f'{self.title} at {self.company.name if self.company else "N/A"}'
 
 class Education(models.Model):
-    user = models.ForeignKey(UserProfile, related_name='educations', on_delete=models.CASCADE, db_index=True)
+    user = models.ForeignKey(UserProfile, related_name='user_educations', on_delete=models.CASCADE, db_index=True)
     institution = models.CharField(max_length=255)
     degree = models.CharField(max_length=255)
     field_of_study = models.CharField(max_length=255)
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
     is_current = models.BooleanField(default=False)
-    shares = models.ManyToManyField(Share, related_name='education_shares', blank=True)
+    shares = models.ManyToManyField('activity.Share', related_name='education_shares', blank=True)
 
     def __str__(self):
         return f'{self.degree} in {self.field_of_study} from {self.institution}'
 
 class Skill(models.Model):
     name = models.CharField(max_length=100)
-    users = models.ManyToManyField(UserProfile, related_name='skills', db_index=True)
+    users = models.ManyToManyField(UserProfile, related_name='user_skills', db_index=True)
     proficiency = models.CharField(max_length=50)
-    shares = models.ManyToManyField(Share, related_name='skill_shares', blank=True)
-    endorsements = models.ManyToManyField('Endorsement', related_name='users_endorsements', blank=True, db_index=True)
-    job_applications = models.ManyToManyField(JobApplication, related_name='users_job_applications', blank=True)
-    job_listings = models.ManyToManyField(JobListing, related_name='users_job_listings', blank=True)
-    notifications = models.ManyToManyField(Notification, related_name='users_notifications', blank=True)
-    verified_from = models.ManyToManyField('Verification', related_name='users_verified_from', blank=True)
-    verified_to = models.ManyToManyField('Verification', related_name='users_verified_to', blank=True)
+    shares = models.ManyToManyField('activity.Share', related_name='skill_shares', blank=True)
+    endorsements = models.ManyToManyField('Endorsement', related_name='endorsement_skills', blank=True, db_index=True)
+    job_applications = models.ManyToManyField('jobs.JobApplication', related_name='skill_job_applications', blank=True)
+    job_listings = models.ManyToManyField('jobs.JobListing', related_name='skill_job_listings', blank=True)
+    notifications = models.ManyToManyField('notifications.Notification', related_name='skill_notifications', blank=True)
+    verified_from = models.ManyToManyField(UserProfile, related_name='skill_verified_from', blank=True)
+    verified_to = models.ManyToManyField(UserProfile, related_name='skill_verified_to', blank=True)
 
     def __str__(self):
         return self.name
 
 class Endorsement(models.Model):
-    skill = models.ForeignKey(Skill, related_name='endorsements', on_delete=models.CASCADE, db_index=True)
+    skill = models.ForeignKey(Skill, related_name='skills_endorsements', on_delete=models.CASCADE, db_index=True)
     endorsed_by = models.ForeignKey(UserProfile, related_name='given_endorsements', on_delete=models.CASCADE, db_index=True)
     endorsed_user = models.ForeignKey(UserProfile, related_name='received_endorsements', on_delete=models.CASCADE, db_index=True)
-    shares = models.ManyToManyField(Share, related_name='endorsement_shares', blank=True)
+    shares = models.ManyToManyField('activity.Share', related_name='endorsement_shares', blank=True)
 
     def __str__(self):
         return f'{self.endorsed_by.user.username} endorsed {self.endorsed_user.user.username} for {self.skill.name}'

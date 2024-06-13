@@ -1,10 +1,10 @@
 from django.db import models
-from profiles.models import UserProfile
+from django.conf import settings
 from shortuuidfield import ShortUUIDField
-from posts.models import Post, Comment
-from jobs.models import JobListing
-from groups.models import Group
-from messaging.models import Message
+# from posts.models import Post, Comment
+# from jobs.models import JobListing
+# from groups.models import Group
+# from messaging.models import Message
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 
@@ -23,12 +23,12 @@ class Tag(models.Model):
     
     
 class Share(models.Model):
-    user = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     shared_at = models.DateTimeField(auto_now_add=True)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
-    shared_to = models.ManyToManyField(UserProfile, related_name='received_shares')
+    shared_to = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='received_shares')
     attachments = GenericRelation('Attachment')
 
     def __str__(self):
@@ -44,12 +44,12 @@ class Reaction(models.Model):
         ('insight', 'Insight')
     ]
     type = models.CharField(max_length=20, choices=REACTION_CHOICES)
-    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
-    message = models.ForeignKey(Message, on_delete=models.CASCADE, null=True, blank=True)
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, null=True, blank=True)
-    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, null=True, blank=True)
-    job_post = models.ForeignKey(JobListing, on_delete=models.CASCADE, null=True, blank=True)
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    message = models.ForeignKey('messaging.Message', on_delete=models.CASCADE, null=True, blank=True)
+    post = models.ForeignKey('posts.Post', on_delete=models.CASCADE, null=True, blank=True)
+    comment = models.ForeignKey('posts.Comment', on_delete=models.CASCADE, null=True, blank=True)
+    job_post = models.ForeignKey('jobs.JobListing', on_delete=models.CASCADE, null=True, blank=True)
+    group = models.ForeignKey('groups.Group', on_delete=models.CASCADE, null=True, blank=True)
     
     
 class Attachment(models.Model):
@@ -79,7 +79,7 @@ class Attachment(models.Model):
     
     
 class Thread(models.Model):
-    participants = models.ManyToManyField(UserProfile, related_name='threads')
+    participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='threads')
     subject = models.CharField(max_length=255)
     last_message_at = models.DateTimeField()
 
@@ -88,7 +88,7 @@ class Thread(models.Model):
     
     
 class UserActivity(models.Model):
-    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     activity_type = models.CharField(max_length=50)
     timestamp = models.DateTimeField(auto_now_add=True)
     details = models.TextField()
@@ -99,7 +99,7 @@ class UserActivity(models.Model):
     
     
 class UserStatistics(models.Model):
-    user = models.OneToOneField(UserProfile, on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     connections_count = models.IntegerField(default=0)
     posts_count = models.IntegerField(default=0)
     engagement_rate = models.FloatField(default=0.0)

@@ -1,10 +1,10 @@
 from django.db import models
-from profiles.models import UserProfile
 from django.utils import timezone
+from django.conf import settings
 
 class Follower(models.Model):
-    user = models.ForeignKey(UserProfile, related_name='user_followers', on_delete=models.CASCADE)
-    follower = models.ForeignKey(UserProfile, related_name='user_following', on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='user_followers', on_delete=models.CASCADE)
+    follower = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='user_following', on_delete=models.CASCADE)
     followed_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
@@ -19,8 +19,8 @@ class Follower(models.Model):
         return Follower.objects.filter(user=user)
 
 class FollowRequest(models.Model):
-    from_user = models.ForeignKey(UserProfile, related_name='follow_requests_sent', on_delete=models.CASCADE)
-    to_user = models.ForeignKey(UserProfile, related_name='follow_requests_received', on_delete=models.CASCADE)
+    from_user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='follow_requests_sent', on_delete=models.CASCADE)
+    to_user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='follow_requests_received', on_delete=models.CASCADE)
     status = models.CharField(max_length=10, choices=[('pending', 'Pending'), ('accepted', 'Accepted'), ('rejected', 'Rejected')], default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -39,7 +39,7 @@ class FollowRequest(models.Model):
         self.save()
 
 class FollowNotification(models.Model):
-    user = models.ForeignKey(UserProfile, related_name='follow_notifications', on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='follow_notifications', on_delete=models.CASCADE)
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
