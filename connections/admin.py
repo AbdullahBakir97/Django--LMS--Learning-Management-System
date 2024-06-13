@@ -38,6 +38,8 @@ class RecommendationAdmin(admin.ModelAdmin):
     list_display = ('recommended_by', 'recommended_user', 'content')
     search_fields = ('recommended_by__user__username', 'recommended_user__user__username')
 
+# Register models
+admin.site.register(UserProfile)
 
 # Register Inline models in UserProfileAdmin
 @admin.register(UserProfile)
