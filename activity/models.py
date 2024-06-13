@@ -1,10 +1,6 @@
 from django.db import models
 from django.conf import settings
 from shortuuidfield import ShortUUIDField
-# from posts.models import Post, Comment
-# from jobs.models import JobListing
-# from groups.models import Group
-# from messaging.models import Message
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 

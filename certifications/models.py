@@ -1,7 +1,5 @@
 from django.db import models
 from django.conf import settings
-# from jobs.models import JobListing
-# from courses.models import Course
 from activity.models import Attachment
 from django.contrib.contenttypes.fields import GenericRelation
 
