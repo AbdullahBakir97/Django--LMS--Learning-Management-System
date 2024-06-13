@@ -18,6 +18,9 @@ Welcome to the Django LMS project! This project aims to provide a comprehensive 
 Django LMS is a sophisticated learning management system crafted using Django, a high-level Python web framework. LMS platform is meticulously engineered to provide users with a seamless experience in managing various aspects of their educational and professional journeys. Whether you're an educator, a student, or a professional seeking growth opportunities, Django LMS offers a comprehensive suite of features to meet your needs.
 
 ## Features
+![scrnli_13_06_2024_22-49-11](https://github.com/AbdullahBakir97/Django--LMS--Learning-Management-System/assets/127149804/fd107a30-91ef-435b-9ef7-fcf41ba51ec5)
+![scrnli_13_06_2024_22-49-51](https://github.com/AbdullahBakir97/Django--LMS--Learning-Management-System/assets/127149804/5767e11a-c74e-49f6-8cfb-ae59face77d0)
+
 
 ### User Profiles
 - **👤 Detailed Profiles**: Users can create comprehensive profiles showcasing their skills, experiences, and endorsements.
