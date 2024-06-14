@@ -3,6 +3,7 @@ from django.conf import settings
 from shortuuidfield import ShortUUIDField
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
+from taggit.managers import TaggableManager
 
 
 class Category(models.Model):
@@ -12,10 +13,7 @@ class Category(models.Model):
     def __str__(self):
         return self.name
     
-    
-class Tag(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True, null=True)
+
     
     
 class Share(models.Model):
@@ -26,9 +24,15 @@ class Share(models.Model):
     content_object = GenericForeignKey('content_type', 'object_id')
     shared_to = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='received_shares')
     attachments = GenericRelation('Attachment')
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'shared_at']),
+            models.Index(fields=['content_type', 'object_id']),
+        ]
 
     def __str__(self):
-        return f"{self.user.user.username} shared {self.content_object} to {self.shared_to.all().count()} users"
+        return f"{self.user.username} shared {self.content_object} to {self.shared_to.count()} users"
 
 class Reaction(models.Model):
     REACTION_CHOICES = [

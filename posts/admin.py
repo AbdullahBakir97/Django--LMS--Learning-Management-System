@@ -1,14 +1,15 @@
 from django.contrib import admin
+from django import forms
+from taggit.forms import TagWidget
+from django.contrib.contenttypes.admin import GenericTabularInline
 from .models import Post, Comment
 from activity.models import Attachment
-from django.contrib.contenttypes.admin import GenericTabularInline
 
 # Inline for GenericRelation Attachment
 class AttachmentInline(GenericTabularInline):
     model = Attachment
     extra = 1
-    
-    
+
 # Inline for replies (child comments)
 class ReplyInline(admin.TabularInline):  # or admin.StackedInline if you prefer
     model = Comment
@@ -32,21 +33,29 @@ class ReplyInline(admin.TabularInline):  # or admin.StackedInline if you prefer
         else:
             return queryset.none()
 
+# Custom Admin Form for Post
+class PostAdminForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = '__all__'
+        widgets = {
+            'tags': TagWidget,
+        }
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
+    form = PostAdminForm
     list_display = ('id', 'author', 'content_preview', 'group', 'visibility', 'created_at')
     list_filter = ('visibility', 'created_at', 'author')
     search_fields = ('content', 'author__username', 'group__name')
     date_hierarchy = 'created_at'
-    filter_horizontal = ('categories', 'likes', 'reactions', 'comments', 'shares', 'tags')
     readonly_fields = ('created_at', 'updated_at')
     fieldsets = (
         (None, {
             'fields': ('author', 'group', 'content', 'visibility', 'categories')
         }),
         ('Advanced Options', {
-            'fields': ('likes', 'reactions', 'comments', 'shares', 'tags'),
+            'fields': ('likes', 'reactions', 'comments', 'shares'),
             'classes': ('collapse',),
         }),
         ('Timestamps', {
@@ -58,7 +67,6 @@ class PostAdmin(admin.ModelAdmin):
 
     def content_preview(self, obj):
         return obj.content[:50] + '...' if len(obj.content) > 50 else obj.content
-
     content_preview.short_description = 'Content'
 
 @admin.register(Comment)
@@ -86,5 +94,4 @@ class CommentAdmin(admin.ModelAdmin):
 
     def content_preview(self, obj):
         return obj.content[:50] + '...' if len(obj.content) > 50 else obj.content
-
     content_preview.short_description = 'Content'

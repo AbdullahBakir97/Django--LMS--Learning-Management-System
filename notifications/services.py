@@ -1,6 +1,6 @@
 from django.contrib.contenttypes.models import ContentType
 from .models import Notification, NotificationType, NotificationSettings, NotificationReadStatus
-from profiles.models import UserProfile
+from profiles.models import User ,UserProfile
 from django.utils import timezone
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
@@ -62,7 +62,7 @@ class NotificationService:
     @staticmethod
     def send_websocket_notification(notification):
         channel_layer = get_channel_layer()
-        group_name = f"notifications_{notification.recipient.user.username}"
+        group_name = f"notifications_{notification.recipient.username}"
         async_to_sync(channel_layer.group_send)(
             group_name,
             {
@@ -98,24 +98,36 @@ class NotificationService:
         return Notification.objects.filter(recipient=user, is_read=False)
     
     @staticmethod
-    def create_default_notification_settings(user_profile):
-        notification_types = NotificationType.objects.all()
-        for notification_type in notification_types:
-            NotificationSettings.objects.get_or_create(
-                user=user_profile.user,
-                notification_type=notification_type,
-                defaults={'is_enabled': True}
-            )
+    def create_default_notification_settings(instance):
+        
+    # Assuming PREDEFINED_TYPES is a list of type names
+        if not isinstance(instance, User):
+            raise ValueError("Expected instance to be a User instance.")
 
+        default_settings = NotificationType.PREDEFINED_TYPES
+
+        user = instance
+
+        for type_name in default_settings:
+            notification_type, created = NotificationType.objects.get_or_create(type_name=type_name)
+
+            # Make sure user is a User instance and not a string or other type
+            Notification.objects.get_or_create(recipient=user, notification_type=notification_type)
+            
     @staticmethod
-    def update_notification_settings(user, notification_type_name, is_enabled):
-        notification_type, created = NotificationType.objects.get_or_create(type_name=notification_type_name)
-        settings, created = NotificationSettings.objects.get_or_create(
-            user=user,
-            notification_type=notification_type
-        )
-        settings.is_enabled = is_enabled
-        settings.save()
+    def add_notification_setting(user, type_name):
+        notification_type, created = NotificationType.objects.get_or_create(type_name=type_name)
+        Notification.objects.get_or_create(user=user, notification_type=notification_type)
+
+        @staticmethod
+        def update_notification_settings(user, notification_type_name, is_enabled):
+            notification_type, created = NotificationType.objects.get_or_create(type_name=notification_type_name)
+            settings, created = NotificationSettings.objects.get_or_create(
+                user=user,
+                notification_type=notification_type
+            )
+            settings.is_enabled = is_enabled
+            settings.save()
 
     @staticmethod
     def is_notification_enabled(user, notification_type):

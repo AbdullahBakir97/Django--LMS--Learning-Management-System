@@ -2,7 +2,7 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from .models import Message, ChatRoom
 from notifications.models import Notification
-from activity.models import Reaction, Tag, Share
+from activity.models import Reaction, Share
 
 
 # Signal to send notifications when a new message is sent

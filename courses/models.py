@@ -2,6 +2,7 @@ from django.db import models
 from activity.models import Attachment
 # from posts.models import Comment
 # from certifications.models import Certification
+from taggit.managers import TaggableManager
 from django.contrib.contenttypes.fields import GenericRelation
 from django.conf import settings
 
@@ -16,7 +17,7 @@ class Course(models.Model):
     shares = models.ManyToManyField('activity.Share', related_name='course_shares', blank=True)
     comments = models.ManyToManyField('posts.Comment', related_name='course_comments', blank=True)
     reactions = models.ManyToManyField('activity.Reaction', related_name='course_reactions', blank=True)
-    tags = models.ManyToManyField('activity.Tag', related_name='tagged_courses', blank=True)
+    tags = TaggableManager()
 
     def __str__(self):
         return self.title
@@ -35,7 +36,7 @@ class CourseCompletion(models.Model):
     completed_at = models.DateTimeField(auto_now_add=True)
     certificate_url = models.URLField()
     certificate = models.ForeignKey('certifications.Certification', related_name='course_completions', on_delete=models.SET_NULL, null=True, blank=True)
-    tags = models.ManyToManyField('activity.Tag', related_name='tagged_courses_completion', blank=True)
+    tags = TaggableManager()
 
     def __str__(self):
         return f"{self.student.user.username} completed {self.course.title}"

@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
-from activity.models import Reaction, Share, Tag, Category
+from activity.models import Reaction, Share, Category
+from taggit.managers import TaggableManager
 
 class Group(models.Model):
     name = models.CharField(max_length=255)
@@ -13,7 +14,7 @@ class Group(models.Model):
     tags = models.CharField(max_length=100, blank=True)
     cover_image = models.ImageField(upload_to='group_covers/', blank=True, null=True)
     shares = models.ManyToManyField(Share, related_name='group_shares', blank=True, db_index=True)
-    tags = models.ManyToManyField(Tag, related_name='tagged_groups', blank=True, db_index=True)
+    tags = TaggableManager()
 
     def __str__(self):
         return self.name

@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 # from profiles.models import Skill, Experience, Education, Endorsement  
 from activity.models import Attachment
 from django.contrib.contenttypes.fields import GenericRelation
+from taggit.managers import TaggableManager
 from django.conf import settings
 
 class JobListing(models.Model):
@@ -45,7 +46,7 @@ class JobListing(models.Model):
     applications = models.ManyToManyField('JobApplication', related_name='applications_job_listings', blank=True, db_index=True)
     notifications = models.ManyToManyField('JobNotification', related_name='notifications_job_listings', blank=True, db_index=True)
     shares = models.ManyToManyField('activity.Share', related_name='shared_job_listings', blank=True)
-    tags = models.ManyToManyField('activity.Tag', related_name='tagged_job_listings', blank=True)
+    tags = TaggableManager()
 
     def __str__(self):
         return self.title

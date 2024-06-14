@@ -43,12 +43,13 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'django_celery_beat',
-    # 'django_redis_cache',
+    'django_redis',
     'crispy_forms',
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
     'ckeditor',
+    'taggit',
     
     # my apps
     'activity',
@@ -140,6 +141,18 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://localhost:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
 
 # JWT Authentication
 JWT_AUTH = {

@@ -1,9 +1,11 @@
 from django.contrib import admin
-from .models import Course, CourseEnrollment, CourseCompletion
+from django import forms
+from taggit.forms import TagWidget
 from django.contrib.contenttypes.admin import GenericTabularInline
-from posts.models import Comment
+from .models import Course, CourseEnrollment, CourseCompletion
 from certifications.models import Certification
 from activity.models import Attachment
+from posts.models import Comment
 
 # Inline for GenericRelation Attachment
 class AttachmentInline(GenericTabularInline):
@@ -11,6 +13,7 @@ class AttachmentInline(GenericTabularInline):
     extra = 1
     ct_field = 'content_type'
     ct_fk_field = 'object_id'
+
 # Inline for CourseEnrollment in UserProfileAdmin
 class CourseEnrollmentInline(admin.TabularInline):
     model = CourseEnrollment
@@ -23,8 +26,18 @@ class CourseCompletionInline(admin.TabularInline):
     extra = 1
     readonly_fields = ('completed_at',)
 
+# Custom Admin Forms
+class CourseAdminForm(forms.ModelForm):
+    class Meta:
+        model = Course
+        fields = '__all__'
+        widgets = {
+            'tags': TagWidget,
+        }
+
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
+    form = CourseAdminForm
     list_display = ('title', 'instructor', 'get_students_count', 'get_completions_count')
     list_filter = ('instructor', 'categories')
     search_fields = ('title', 'instructor__username')
@@ -38,7 +51,6 @@ class CourseAdmin(admin.ModelAdmin):
         }),
     )
 
-    filter_horizontal = ('categories', 'tags')
     inlines = [AttachmentInline, CourseEnrollmentInline, CourseCompletionInline]
 
     def get_queryset(self, request):

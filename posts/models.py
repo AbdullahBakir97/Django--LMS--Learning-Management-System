@@ -3,11 +3,12 @@ from django.conf import settings
 # from groups.models import Group
 from activity.models import Attachment
 from django.contrib.contenttypes.fields import GenericRelation
+from taggit.managers import TaggableManager
 
 class Post(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, db_index=True)
     group = models.ForeignKey('groups.Group', on_delete=models.CASCADE, related_name='posts', null=True, blank=True, db_index=True)
-    content = models.TextField()
+    content = models.TextField(max_length=5000)
     attachments = GenericRelation(Attachment)
     visibility = models.CharField(max_length=20, choices=[('public', 'Public'), ('private', 'Private')], default='public')
     categories = models.ManyToManyField('activity.Category', related_name='posts_categories')
@@ -17,7 +18,7 @@ class Post(models.Model):
     reactions = models.ManyToManyField('activity.Reaction', related_name='post_reactions', blank=True, db_index=True)
     comments = models.ManyToManyField('Comment', related_name='post_comments', blank=True, db_index=True)
     shares = models.ManyToManyField('activity.Share', related_name='post_shares', blank=True, db_index=True)
-    tags = models.ManyToManyField('activity.Tag',related_name='post_tags', blank=True, db_index=True)
+    tags = TaggableManager()
 
     def __str__(self):
         return self.content[:20]
@@ -25,7 +26,7 @@ class Post(models.Model):
 class Comment(models.Model):
     post = models.ForeignKey(Post, related_name='comments_posts', on_delete=models.CASCADE, db_index=True)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, db_index=True)
-    content = models.TextField()
+    content = models.TextField(max_length=2000)
     attachments = GenericRelation(Attachment)
     visibility = models.CharField(max_length=20, choices=[('public', 'Public'), ('private', 'Private')], default='public')
     created_at = models.DateTimeField(auto_now_add=True)

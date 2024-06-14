@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import Group, GroupMembership
 from django.conf import settings
 from django.utils.html import format_html
-from activity.models import Share, Tag, Category
+from activity.models import Share, Category
 
 # Inline for GroupMembership
 class GroupMembershipInline(admin.TabularInline):

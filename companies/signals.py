@@ -2,7 +2,7 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from .models import Company, CompanyUpdate
 from profiles.models import User, UserProfile
-from notifications.models import Notification
+from notifications.models import Notification, NotificationType
 
 # Signal to create a company profile when a new user is created
 @receiver(post_save, sender=UserProfile)
@@ -36,15 +36,18 @@ def update_member_count(sender, instance, **kwargs):
     company.save()
 
 # Signal to delete associated company updates when a company is deleted
-@receiver(post_delete, sender=Company)
-def delete_associated_company_updates(sender, instance, **kwargs):
-    CompanyUpdate.objects.filter(company=instance).delete()
-
-# Signal to notify admins when a new company is created
 @receiver(post_save, sender=Company)
 def notify_admins_on_company_creation(sender, instance, created, **kwargs):
     if created:
+        notification_message = f"A new company '{instance.name}' has been created."
+        notification_type = NotificationType.objects.get_or_create(type_name='company_creation')[0]
         admin_profiles = UserProfile.objects.filter(user__is_staff=True)
-        notification_message = f"New company created: {instance.name}"
+
         for admin_profile in admin_profiles:
-            Notification.objects.create(user=admin_profile, message=notification_message)
+            Notification.objects.create(
+                recipient=admin_profile.user,
+                content_object=instance,
+                content=notification_message,
+                url=f'/companies/{instance.id}/',
+                notification_type=notification_type
+            )

@@ -1,8 +1,9 @@
 from django.contrib import admin
 from .models import Notification, NotificationTemplate, NotificationSettings, NotificationReadStatus, NotificationType
-
+from .forms import NotificationTypeForm
 @admin.register(NotificationType)
 class NotificationTypeAdmin(admin.ModelAdmin):
+    form = NotificationTypeForm
     list_display = ('type_name',)
     search_fields = ('type_name',)
 

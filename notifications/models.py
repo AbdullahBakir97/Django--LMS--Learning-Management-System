@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
-from activity.models import Reaction, Share, Tag
+from activity.models import Reaction, Share
 from django.conf import settings
 
 NOTIFICATION_TYPE = [
@@ -23,13 +23,15 @@ NOTIFICATION_TYPE = [
 ]
 
 class NotificationType(models.Model):
-    type_name = models.CharField(max_length=50, unique=True)
+    PREDEFINED_TYPES = ['type1', 'type2']
+
+    type_name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.type_name
 
 class Notification(models.Model):
-    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='notifications_recipient', on_delete=models.CASCADE)
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
@@ -44,7 +46,7 @@ class Notification(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.notification_type.type_name} Notification for {self.recipient.user.username}"
+        return f"{self.notification_type.type_name} Notification for {self.recipient.username}"
 
 class NotificationTemplate(models.Model):
     notification_type = models.ForeignKey(NotificationType, on_delete=models.CASCADE)

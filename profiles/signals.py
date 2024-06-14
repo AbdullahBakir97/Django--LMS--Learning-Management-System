@@ -2,32 +2,38 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.db.models import F
 from .models import User, UserProfile, Skill, Experience, Education, Endorsement
-from notifications.services import NotificationService
+from notifications.services import NotificationService, Notification, NotificationType
 from connections.models import Connection
-from django.core.exceptions import ObjectDoesNotExist
 
-@receiver(post_save, sender=User)
-def create_or_save_user_profile(sender, instance, created, **kwargs):
-        if created:
-            UserProfile.objects.create(user=instance)
-            print(f"Created UserProfile for {instance.username}")
-
-
-# Signal to create a user profile when a new user is created
+# Signal to create a UserProfile when a new User is created
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
         NotificationService.create_default_notification_settings(instance)
-        
-# # Signal to save the user profile when the user is saved
-# @receiver(post_save, sender=User)
-# def save_user_profile(sender, instance, created, **kwargs):
-#     if created:
-#         UserProfile.objects.create(user=instance)
-    # instance.userprofile.save()
 
-# Signal to update the endorsement count when an endorsement is created
+
+@receiver(post_save, sender=UserProfile)
+def create_default_notification_settings(sender, instance, created, **kwargs):
+    """
+    Signal handler to create default notification settings for a new UserProfile.
+    """
+    if created:
+        if not isinstance(instance.user, User):
+            raise ValueError("Expected UserProfile's user field to be a User instance.")
+        
+        user = instance.user
+        
+        # Assuming PREDEFINED_TYPES is a list of type names for notifications
+        default_settings = NotificationType.PREDEFINED_TYPES
+        
+        for type_name in default_settings:
+            notification_type, _ = NotificationType.objects.get_or_create(type_name=type_name)
+            
+            # Create default notification settings for the user
+            Notification.objects.get_or_create(recipient=user, notification_type=notification_type)
+
+# Signal to update the endorsement count when an Endorsement is created
 @receiver(post_save, sender=Endorsement)
 def update_endorsement_count(sender, instance, created, **kwargs):
     if created:
@@ -35,7 +41,7 @@ def update_endorsement_count(sender, instance, created, **kwargs):
         instance.skill.endorsement_count = F('endorsement_count') + 1
         instance.skill.save(update_fields=['endorsement_count'])
 
-# Signal to decrease the endorsement count when an endorsement is deleted
+# Signal to decrease the endorsement count when an Endorsement is deleted
 @receiver(post_delete, sender=Endorsement)
 def decrease_endorsement_count(sender, instance, **kwargs):
     instance.skill.refresh_from_db()
@@ -50,7 +56,6 @@ def send_endorsement_notification(sender, instance, created, **kwargs):
             recipient=instance.skill.user_profile,
             content=f"Your skill '{instance.skill.name}' has been endorsed by {instance.endorsed_by.userprofile.get_full_name()}",
             notification_type_name='endorsement',
-            url='',  # Add relevant URL if needed
             content_object=instance,
             priority=0
         )
@@ -70,12 +75,10 @@ def delete_related_profile_data(sender, instance, **kwargs):
 @receiver(post_save, sender=[Experience, Education])
 def send_profile_update_notification(sender, instance, created, **kwargs):
     if created:
-        notification_message = f"New {sender.__name__} added to your profile."
         NotificationService.create_notification(
             recipient=instance.user_profile.user,
-            content=notification_message,
+            content=f"New {sender.__name__} added to your profile.",
             notification_type_name='profile_update',
-            url='',  # Add relevant URL if needed
             content_object=instance,
             priority=0
         )
@@ -84,9 +87,9 @@ def send_profile_update_notification(sender, instance, created, **kwargs):
 @receiver(post_save, sender=UserProfile)
 def log_profile_changes(sender, instance, created, **kwargs):
     if not created:
-        # Log profile changes here
+        # Implement logging of profile changes here
         pass
-    
+
 # Signal to update the rank of skills based on endorsements or other criteria
 @receiver(post_save, sender=Endorsement)
 def update_skill_rank(sender, instance, created, **kwargs):
@@ -96,7 +99,7 @@ def update_skill_rank(sender, instance, created, **kwargs):
 # Signal to trigger actions when a user changes their profile picture
 @receiver(post_save, sender=UserProfile)
 def profile_picture_updated(sender, instance, created, **kwargs):
-    if not created and instance.picture != instance._picture:
+    if not created and instance.profile_picture != instance.profile_picture:
         instance.resize_profile_picture()
 
 # Signal to trigger actions when a user changes the visibility settings of their profile
@@ -113,7 +116,6 @@ def send_skill_endorsement_notification(sender, instance, created, **kwargs):
             recipient=instance.endorsed_by.userprofile,
             content=f"{instance.endorsed_by.userprofile.get_full_name()} has endorsed your skill '{instance.skill.name}'.",
             notification_type_name='skill_endorsement',
-            url='',  # Add relevant URL if needed
             content_object=instance,
             priority=0
         )
@@ -126,7 +128,7 @@ def send_connection_notification(sender, instance, created, **kwargs):
             recipient=instance.connection,
             content=f"{instance.user.get_full_name()} has connected with you.",
             notification_type_name='connection',
-            url='',
             content_object=instance,
             priority=0
         )
+

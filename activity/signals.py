@@ -7,7 +7,7 @@ from jobs.models import JobListing
 from groups.models import Group
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
-from .models import Category, Tag, Share, Reaction, Attachment, Thread, UserActivity, UserStatistics, MarketingCampaign, LearningService, Analytics
+from .models import Category, Share, Reaction, Attachment, Thread, UserActivity, UserStatistics, MarketingCampaign, LearningService, Analytics
 
 
 @receiver(post_save, sender=Post)

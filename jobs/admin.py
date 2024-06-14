@@ -1,23 +1,33 @@
 from django.contrib import admin
-from .models import JobListing, JobApplication, JobNotification
+from django import forms
+from taggit.forms import TagWidget
 from django.contrib.contenttypes.admin import GenericTabularInline
+from .models import JobListing, JobApplication, JobNotification
 from activity.models import Attachment
-from django.urls import reverse
-from django.utils.safestring import mark_safe
 
 # Inline for Attachments
 class AttachmentInline(GenericTabularInline):
     model = Attachment
     extra = 1
 
+# Custom Admin Form for JobListing
+class JobListingAdminForm(forms.ModelForm):
+    class Meta:
+        model = JobListing
+        fields = '__all__'
+        widgets = {
+            'tags': TagWidget,
+        }
+
 @admin.register(JobListing)
 class JobListingAdmin(admin.ModelAdmin):
+    form = JobListingAdminForm
     list_display = ('title', 'company', 'location', 'posted_date', 'closing_date', 'is_active')
     list_filter = ('company', 'location', 'posted_date', 'closing_date', 'is_active', 'categories')
     search_fields = ('title', 'description', 'location', 'requirements', 'responsibilities')
     readonly_fields = ('posted_date',)
     inlines = (AttachmentInline,)
-    filter_horizontal = ('categories', 'skills_required', 'shares', 'tags')
+    filter_horizontal = ('categories', 'skills_required', 'shares')
 
 @admin.register(JobApplication)
 class JobApplicationAdmin(admin.ModelAdmin):
