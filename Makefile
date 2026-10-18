@@ -19,8 +19,8 @@ test:           ## backend and frontend unit tests
 	cd backend && pytest
 	cd frontend && pnpm test:unit --run
 
-e2e:            ## browser smoke test
-	cd frontend && pnpm test:e2e
+e2e:            ## browser journeys: needs `make dev`, `make seed` and DEMO_PASSWORD set
+	cd frontend && E2E_BACKEND=1 THROTTLE_AUTH=1000/min pnpm test:e2e
 
 lint:           ## every linter and type check CI runs
 	cd backend && ruff check . && ruff format --check .

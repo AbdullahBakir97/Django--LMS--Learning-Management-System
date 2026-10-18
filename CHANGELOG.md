@@ -35,9 +35,16 @@ All notable changes. The project follows [Semantic Versioning](https://semver.or
 - **Course analytics**: each instructor sees, per course, enrolments per week, completion rate
   and average time to finish, how many learners finished each lesson (where they stop), quiz
   pass rates and scores, and the learners with no progress in 14 days.
+- **Browser journeys in CI**: a new job seeds a real backend and runs search, posting with a
+  photo, moderation and analytics in Chromium on every push.
 
 ### Fixed
 
+- nginx refused uploads over 12 MB, so a post with four photos failed in production; it now
+  accepts 40 MB and Django still checks each file.
+- A moderator could deactivate another admin from a report; admin accounts are now managed only
+  in the admin site.
+- The weekly chart could trigger a browser "ResizeObserver loop" error while resizing.
 - Recommendation, badge and interview notifications had no icon in the app; a test now keeps
   the backend's notification kinds and the app's icons in step.
 

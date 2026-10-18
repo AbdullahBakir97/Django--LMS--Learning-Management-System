@@ -13,7 +13,11 @@ const plotW = computed(() => W.value - pad.left - pad.right)
 const plotH = H - pad.top - pad.bottom
 let observer: ResizeObserver | undefined
 onMounted(() => {
-  observer = new ResizeObserver(([entry]) => (W.value = Math.max(240, entry!.contentRect.width)))
+  // Resize on the next frame: changing size inside the callback loops the observer.
+  observer = new ResizeObserver(([entry]) => {
+    const width = Math.max(240, Math.round(entry!.contentRect.width))
+    requestAnimationFrame(() => (W.value = width))
+  })
   observer.observe(box.value!)
 })
 onBeforeUnmount(() => observer?.disconnect())

@@ -134,7 +134,7 @@ docs are at <http://localhost:8000/api/docs/>.
 | Command | Does |
 |---|---|
 | `make test` | backend pytest and frontend unit tests |
-| `make e2e` | Playwright smoke test against the dev server |
+| `make e2e` | Playwright journeys (search, posting a photo, moderation, analytics) against the seeded dev stack |
 | `make lint` / `make fmt` | ruff, ESLint, Prettier and vue-tsc |
 | `make schema` | write the OpenAPI schema, failing on any warning |
 | `make help` | every target |
