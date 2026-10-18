@@ -39,6 +39,9 @@ All notable changes. The project follows [Semantic Versioning](https://semver.or
   course unlocks when Stripe's signed webhook confirms the payment (retries are harmless).
   Free preview lessons stay open to everyone. Without Stripe keys, every course stays free.
   Demo: "Testing Django properly" costs $29.
+- **Refunds and promotion codes**: a full refund in the Stripe dashboard ends access to the
+  course; buyers can enter promotion codes made in Stripe, and orders record what was paid.
+- **Course revenue**: an instructor's analytics show what each course earned, net of refunds.
 - **Platform overview** for admins (`/overview`): people and sign-ups per week, enrolments
   per week and completion rate, revenue per currency for 30 days and all time, the courses with
   the most new learners, new posts, open jobs, and how many reported items wait for review.

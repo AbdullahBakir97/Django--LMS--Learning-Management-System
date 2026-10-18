@@ -43,6 +43,7 @@ def test_overview_counts(admin_client):
             buyer=learners[1],
             course=popular,
             amount_cents=amount,
+            paid_cents=amount,
             currency=currency,
             status="paid",
             paid_at=paid_at,

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { learning, type Course, type CourseAnalytics } from '@/api/learning'
+import { learning, money, type Course, type CourseAnalytics, type Revenue } from '@/api/learning'
 import Alert from '@/components/ui/Alert.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 import Card from '@/components/ui/Card.vue'
@@ -12,6 +12,7 @@ import { timeAgo } from '@/features/notifications/format'
 const props = defineProps<{ slug: string }>()
 const course = ref<Course | null>(null)
 const data = ref<CourseAnalytics | null>(null)
+const revenue = ref<Revenue[]>([])
 const error = ref('')
 
 watch(
@@ -19,7 +20,11 @@ watch(
   async (slug) => {
     error.value = ''
     try {
-      ;[course.value, data.value] = await Promise.all([learning.course(slug), learning.analytics(slug)])
+      ;[course.value, data.value, revenue.value] = await Promise.all([
+        learning.course(slug),
+        learning.analytics(slug),
+        learning.revenue(slug),
+      ])
     } catch {
       error.value = 'Analytics are only for the course’s instructor.'
     }
@@ -39,7 +44,7 @@ watch(
   <Alert v-if="error" tone="danger" class="mt-6">{{ error }}</Alert>
 
   <template v-else-if="data">
-    <dl class="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <dl class="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-[repeat(auto-fit,minmax(11rem,1fr))]">
       <Card class="grid gap-1 p-4">
         <dt class="text-sm text-muted">Enrolled</dt>
         <dd class="font-display text-3xl font-semibold tabular-nums">{{ data.enrolled }}</dd>
@@ -61,6 +66,16 @@ watch(
         <dt class="text-sm text-muted">Stalled</dt>
         <dd class="font-display text-3xl font-semibold tabular-nums">{{ data.stalled_count }}</dd>
         <dd class="text-xs text-muted">no progress in 14 days</dd>
+      </Card>
+      <Card v-for="r in revenue" :key="r.currency" class="grid gap-1 p-4">
+        <dt class="text-sm text-muted">Earned</dt>
+        <dd class="font-display text-3xl font-semibold tabular-nums">
+          {{ money(r.total_cents, r.currency) }}
+        </dd>
+        <dd class="text-xs text-muted">
+          {{ money(r.recent_cents, r.currency) }} in 30 days · {{ r.orders }}
+          {{ r.orders === 1 ? 'sale' : 'sales' }}
+        </dd>
       </Card>
     </dl>
 

@@ -13,7 +13,7 @@ notifications. Django REST Framework on PostgreSQL and Redis, with a Vue 3 front
 
 | Area | For learners | For instructors, organisers and employers |
 |---|---|---|
-| **Learning** | Catalogue of free and paid courses, card payment through Stripe Checkout, enrolment with prerequisites, lessons in markdown with video, quizzes, progress, a PDF certificate anyone can verify; installable on a phone, and lessons you opened stay readable offline | Course editor, lessons, quiz builder, publishing, pricing, course analytics: enrolments per week, where learners stop, quiz results, stalled learners |
+| **Learning** | Catalogue of free and paid courses, card payment through Stripe Checkout, enrolment with prerequisites, lessons in markdown with video, quizzes, progress, a PDF certificate anyone can verify; installable on a phone, and lessons you opened stay readable offline | Course editor, lessons, quiz builder, publishing, pricing, course analytics: enrolments per week, revenue, where learners stop, quiz results, stalled learners |
 | **Discussion** | Comments, replies and reactions on lessons and posts | Moderation of discussions on your own lessons and groups |
 | **Profiles** | Experience, education, skills and endorsements, a portfolio, badges earned along the way, recommendations from connections that you approve | |
 | **Network** | Follow, connect, people who share your skills | |
@@ -102,7 +102,7 @@ flowchart LR
     messaging -. events .-> notifications
   end
   subgraph Frontend
-    pages -- 174 --> api
+    pages -- 176 --> api
     features -- 158 --> api
     pages -- 101 --> components
     pages -- 75 --> features

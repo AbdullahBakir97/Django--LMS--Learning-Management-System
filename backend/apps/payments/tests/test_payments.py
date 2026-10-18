@@ -43,7 +43,7 @@ def deliver(payload: dict, key="whsec_test"):
     )
 
 
-def completed(session_id, amount=4900, currency="usd", status="paid"):
+def completed(session_id, amount=4900, currency="usd", status="paid", total=None):
     return {
         "id": "evt_1",
         "object": "event",
@@ -53,8 +53,10 @@ def completed(session_id, amount=4900, currency="usd", status="paid"):
                 "id": session_id,
                 "object": "checkout.session",
                 "payment_status": status,
-                "amount_total": amount,
+                "amount_subtotal": amount,
+                "amount_total": amount if total is None else total,
                 "currency": currency,
+                "payment_intent": f"pi_{session_id}",
             }
         },
     }
@@ -82,6 +84,7 @@ def test_checkout_creates_an_order_and_a_hosted_page(user, auth_client, course, 
     assert sent["client_reference_id"] == str(order.id)
     assert sent["line_items"][0]["price_data"]["unit_amount"] == 4900
     assert sent["success_url"].endswith(f"/courses/{course.slug}?paid=1")
+    assert sent["allow_promotion_codes"] is True
 
 
 @pytest.mark.django_db
@@ -149,3 +152,57 @@ def test_instructor_sets_a_price(course):
     assert (r.json()["price_cents"], r.json()["currency"]) == (1500, "usd"), (
         "currency is the site's"
     )
+
+
+def refunded(payment_intent, full=True):
+    return {
+        "id": "evt_2",
+        "object": "event",
+        "type": "charge.refunded",
+        "data": {
+            "object": {
+                "id": "ch_1",
+                "object": "charge",
+                "payment_intent": payment_intent,
+                "refunded": full,
+            }
+        },
+    }
+
+
+@pytest.mark.django_db
+def test_a_promotion_code_lowers_what_was_paid(user, auth_client, course, stripe_session):
+    auth_client.post("/api/payments/checkout/", {"course": course.slug})
+    assert deliver(completed("cs_test_1", total=2450)).status_code == 200
+    order = Order.objects.get()
+    assert (order.status, order.amount_cents, order.paid_cents) == ("paid", 4900, 2450)
+    assert order.payment_intent == "pi_cs_test_1"
+    assert Enrollment.objects.filter(student=user).exists()
+
+
+@pytest.mark.django_db
+def test_a_full_refund_ends_access(user, auth_client, course, stripe_session):
+    auth_client.post("/api/payments/checkout/", {"course": course.slug})
+    deliver(completed("cs_test_1"))
+    assert deliver(refunded("pi_cs_test_1", full=False)).status_code == 200
+    assert Enrollment.objects.filter(student=user).exists(), "a partial refund keeps access"
+    assert deliver(refunded("pi_cs_test_1")).status_code == 200
+    assert deliver(refunded("pi_cs_test_1")).status_code == 200, "retries are harmless"
+    assert Order.objects.get().status == "refunded"
+    assert not Enrollment.objects.filter(student=user).exists()
+    assert deliver(refunded("pi_unknown")).status_code == 200
+
+
+@pytest.mark.django_db
+def test_course_revenue_for_its_instructor(user, auth_client, course, stripe_session):
+    url = f"/api/payments/courses/{course.slug}/revenue/"
+    auth_client.post("/api/payments/checkout/", {"course": course.slug})
+    deliver(completed("cs_test_1", total=3900))
+    assert auth_client.get(url).status_code == 403
+    c = APIClient()
+    c.force_authenticate(course.instructor)
+    assert c.get(url).json() == [
+        {"currency": "usd", "total_cents": 3900, "recent_cents": 3900, "orders": 1}
+    ]
+    deliver(refunded("pi_cs_test_1"))
+    assert c.get(url).json() == [], "refunds come off the total"

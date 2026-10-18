@@ -55,6 +55,7 @@ def start_checkout(actor, course: Course) -> str:
                     },
                 }
             ],
+            allow_promotion_codes=True,  # codes are made in the Stripe dashboard
             success_url=f"{page}?paid=1",
             cancel_url=page,
         )
@@ -76,11 +77,15 @@ def parse_event(payload: bytes, signature: str | None):
 PAID_EVENTS = {"checkout.session.completed", "checkout.session.async_payment_succeeded"}
 
 
-@transaction.atomic
 def handle_event(event) -> None:
-    if event["type"] not in PAID_EVENTS:
-        return
-    session = event["data"]["object"]
+    if event["type"] in PAID_EVENTS:
+        _paid(event["data"]["object"])
+    elif event["type"] == "charge.refunded":
+        _refunded(event["data"]["object"])
+
+
+@transaction.atomic
+def _paid(session) -> None:
     if session["payment_status"] != "paid":
         return  # bank transfers etc. finish later with async_payment_succeeded
     order = (
@@ -89,20 +94,42 @@ def handle_event(event) -> None:
         .filter(checkout_session=session["id"])
         .first()
     )
-    if order is None or order.status == Order.Status.PAID:
+    if order is None or order.status != Order.Status.PENDING:
         return  # not ours, or Stripe retried a delivery we already handled
-    if session["amount_total"] != order.amount_cents or session["currency"] != order.currency:
+    # A promotion code lowers the total, never the subtotal: that must be the price we asked.
+    if session["amount_subtotal"] != order.amount_cents or session["currency"] != order.currency:
         # Answering an error would make Stripe retry forever; leave it pending for staff.
         log.error(
-            "Order %s paid %s %s, expected %s %s",
+            "Order %s: subtotal %s %s, expected %s %s",
             order.id,
-            session["amount_total"],
+            session["amount_subtotal"],
             session["currency"],
             order.amount_cents,
             order.currency,
         )
         return
     order.status = Order.Status.PAID
+    order.paid_cents = session["amount_total"]
+    order.payment_intent = session["payment_intent"]
     order.paid_at = timezone.now()
-    order.save(update_fields=["status", "paid_at", "updated_at"])
+    order.save(update_fields=["status", "paid_cents", "payment_intent", "paid_at", "updated_at"])
     learning.enroll(order.buyer, order.course, paid=True)
+
+
+@transaction.atomic
+def _refunded(charge) -> None:
+    """A full refund, made in the Stripe dashboard, ends access. Partial refunds change nothing."""
+    if not charge["refunded"] or not charge["payment_intent"]:
+        return
+    order = (
+        Order.objects.select_for_update()
+        .select_related("buyer", "course")
+        .filter(payment_intent=charge["payment_intent"], status=Order.Status.PAID)
+        .first()
+    )
+    if order is None:
+        return
+    order.status = Order.Status.REFUNDED
+    order.refunded_at = timezone.now()
+    order.save(update_fields=["status", "refunded_at", "updated_at"])
+    learning.unenroll(order.buyer, order.course)

@@ -58,6 +58,11 @@ def enroll(actor, course: Course, *, paid: bool = False) -> Enrollment:
     return enrollment
 
 
+def unenroll(student, course: Course) -> None:
+    """Payments, after a refund: access ends, and progress and any certificate go with it."""
+    Enrollment.objects.filter(course=course, student=student).delete()
+
+
 def _enrollment_or_403(actor, course: Course) -> Enrollment:
     enrollment = Enrollment.objects.filter(course=course, student=actor).first()
     if enrollment is None:

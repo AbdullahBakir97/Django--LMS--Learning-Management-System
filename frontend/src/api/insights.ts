@@ -1,4 +1,5 @@
 import { api } from './client'
+import type { Revenue } from './learning'
 
 export interface Week {
   week: string
@@ -16,7 +17,7 @@ export interface Overview {
   posts: number
   open_jobs: number
   open_reports: number
-  revenue: { currency: string; total_cents: number; recent_cents: number; orders: number }[]
+  revenue: Revenue[]
   weekly_signups: Week[]
   weekly_enrolments: Week[]
   top_courses: {

@@ -1,16 +1,11 @@
 from rest_framework import serializers
 
+from apps.payments.serializers import RevenueSerializer
+
 
 class WeekSerializer(serializers.Serializer):
     week = serializers.DateField()
     count = serializers.IntegerField()
-
-
-class RevenueSerializer(serializers.Serializer):
-    currency = serializers.CharField()
-    total_cents = serializers.IntegerField()
-    recent_cents = serializers.IntegerField()
-    orders = serializers.IntegerField()
 
 
 class TopCourseSerializer(serializers.Serializer):
