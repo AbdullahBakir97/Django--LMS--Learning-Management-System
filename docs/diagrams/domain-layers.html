@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LMS Domain Layers</title>
+  <meta name="description" content="Target domain map of the Django LMS: the bounded contexts, the layer each one lives in, and the one rule that keeps them from tangling.">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #bf4520;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', 'Noto Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body { font-family: var(--font-sans); background: var(--color-paper); color: var(--color-ink); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 3rem 1rem; }
+    .frame { max-width: 1320px; width: 100%; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-muted); margin-bottom: 0.5rem; }
+    h1 { font-family: var(--font-serif); font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; color: var(--color-ink); margin-bottom: 0.5rem; }
+    p.lede { font-family: var(--font-serif); font-style: italic; font-size: 1rem; color: var(--color-muted); margin-bottom: 1.5rem; }
+    svg { width: 100%; min-width: 1280px; display: block; }
+    @media print { .diagram-container { overflow-x: visible; } svg { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Layer stack · Django LMS</p>
+    <h1>Domain map: who may import whom</h1>
+    <p class="lede">Thirteen apps become nine bounded contexts in five layers. A context imports only from the layers below it; anything that needs to go up is an event.</p>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1280 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="lms-layers-title lms-layers-desc">
+        <title id="lms-layers-title">Django LMS domain layers</title>
+        <desc id="lms-layers-desc">Layer stack showing product contexts on top, social fabric and notifications beneath, the accounts and profiles context as the focal layer, then the platform kernel and infrastructure, with imports allowed only downward.</desc>
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#bf4520"/></marker>
+          <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+
+        <!-- Direction column (left margin) -->
+        <text x="48" y="60" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">IMPORTS</text>
+        <line x1="72" y1="72" x2="72" y2="488" stroke="rgba(45,49,66,0.30)" stroke-width="1" marker-end="url(#arrow)"/>
+        <text x="48" y="512" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">DOWN ONLY</text>
+
+        <!-- Stack outline -->
+        <line x1="120" y1="72" x2="1240" y2="72" stroke="rgba(45,49,66,0.12)" stroke-width="1"/>
+
+        <!-- L5 Product contexts (y 72..176, h 104) -->
+        <rect x="120" y="72" width="1120" height="104" fill="#ffffff"/>
+        <line x1="120" y1="176" x2="1240" y2="176" stroke="rgba(45,49,66,0.12)" stroke-width="1"/>
+        <text x="140" y="96" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">L5</text>
+        <text x="140" y="116" fill="#2d3142" font-size="14" font-weight="600" font-family="'Geist', sans-serif">Product</text>
+        <text x="140" y="132" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace">what users come for</text>
+        <!-- cells -->
+        <rect x="312" y="92" width="208" height="64" rx="6" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="416" y="118" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Learning</text>
+        <text x="416" y="136" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">courses · lessons · quizzes · certs</text>
+        <rect x="544" y="92" width="208" height="64" rx="6" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="648" y="118" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Community</text>
+        <text x="648" y="136" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">groups · posts · events</text>
+        <rect x="776" y="92" width="208" height="64" rx="6" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="880" y="118" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Career</text>
+        <text x="880" y="136" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">jobs · applications · companies</text>
+        <rect x="1008" y="92" width="208" height="64" rx="6" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="1112" y="118" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Messaging</text>
+        <text x="1112" y="136" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">conversations · live chat</text>
+
+        <!-- L4 Social fabric (y 176..280, h 104) -->
+        <rect x="120" y="176" width="1120" height="104" fill="#f5f5f5"/>
+        <line x1="120" y1="280" x2="1240" y2="280" stroke="rgba(45,49,66,0.12)" stroke-width="1"/>
+        <text x="140" y="200" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">L4</text>
+        <text x="140" y="220" fill="#2d3142" font-size="14" font-weight="600" font-family="'Geist', sans-serif">Social fabric</text>
+        <text x="140" y="236" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace">shared by every product</text>
+        <rect x="312" y="196" width="288" height="64" rx="6" fill="#ffffff" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="456" y="222" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Network</text>
+        <text x="456" y="240" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">follow · connect · recommend</text>
+        <rect x="624" y="196" width="288" height="64" rx="6" fill="#ffffff" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="768" y="222" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Engagement</text>
+        <text x="768" y="240" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">reactions · comments · shares · media · tags</text>
+        <rect x="936" y="196" width="280" height="64" rx="6" fill="#ffffff" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text x="1076" y="222" fill="#2d3142" font-size="12" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Notifications</text>
+        <text x="1076" y="240" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">in-app · email · push · digests</text>
+
+        <!-- L3 Identity (FOCAL) (y 280..352, h 72) -->
+        <rect x="120" y="280" width="1120" height="72" fill="rgba(191,69,32,0.08)"/>
+        <rect x="120" y="280" width="1120" height="72" fill="none" stroke="#bf4520" stroke-width="1"/>
+        <text x="140" y="304" fill="#bf4520" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em" font-weight="600">L3</text>
+        <text x="140" y="324" fill="#2d3142" font-size="14" font-weight="600" font-family="'Geist', sans-serif">Accounts &amp; Profiles</text>
+        <text x="140" y="340" fill="#bf4520" font-size="9" font-family="'Geist Mono', monospace">the only thing every layer above may touch</text>
+        <text x="1216" y="322" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.06em">user · roles · profile · skills · experience · education</text>
+
+        <!-- L2 Platform kernel (y 352..424, h 72) -->
+        <rect x="120" y="352" width="1120" height="72" fill="#ececec"/>
+        <line x1="120" y1="424" x2="1240" y2="424" stroke="rgba(45,49,66,0.12)" stroke-width="1"/>
+        <text x="140" y="376" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">L2</text>
+        <text x="140" y="396" fill="#2d3142" font-size="14" font-weight="600" font-family="'Geist', sans-serif">Platform kernel</text>
+        <text x="140" y="412" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace">core app · no business rules</text>
+        <text x="1216" y="394" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.06em">permissions · pagination · filters · domain events · realtime · tasks · audit</text>
+
+        <!-- L1 Infrastructure (y 424..496, h 72) -->
+        <rect x="120" y="424" width="1120" height="72" fill="#ececec"/>
+        <line x1="120" y1="496" x2="1240" y2="496" stroke="rgba(45,49,66,0.12)" stroke-width="1"/>
+        <text x="140" y="448" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">L1</text>
+        <text x="140" y="468" fill="#2d3142" font-size="14" font-weight="600" font-family="'Geist', sans-serif">Infrastructure</text>
+        <text x="140" y="484" fill="#4f5d75" font-size="9" font-family="'Geist Mono', monospace">swappable by settings</text>
+        <text x="1216" y="466" fill="#4f5d75" font-size="10" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.06em">PostgreSQL · Redis · object storage · Celery · SMTP</text>
+
+        <!-- Caption -->
+        <text x="120" y="548" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">THE RULE</text>
+        <text x="200" y="548" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif" font-style="italic">A Learning service may call Notifications and Accounts; Notifications may never import Learning. Upward needs (“course published”) are domain events the kernel delivers.</text>
+        <text x="120" y="572" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">TODAY</text>
+        <text x="200" y="572" fill="#4f5d75" font-size="8.5" font-family="'Geist', sans-serif" font-style="italic">profiles ⇄ notifications ⇄ activity ⇄ posts ⇄ messaging import each other in cycles; followers and connections are the same model twice.</text>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>

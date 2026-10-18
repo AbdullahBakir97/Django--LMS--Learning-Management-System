@@ -1,0 +1,13 @@
+# Runtime. Dev tooling is in requirements-dev.txt.
+Django>=5.1,<5.2
+djangorestframework>=3.15
+drf-spectacular>=0.27
+django-filter>=24.3
+django-cors-headers>=4.4
+channels>=4.1
+channels-redis>=4.2
+django-redis>=5.4
+celery>=5.4
+redis>=5.0
+psycopg[binary]>=3.2
+uvicorn[standard]>=0.30
