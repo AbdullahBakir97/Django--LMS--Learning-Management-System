@@ -2,7 +2,22 @@
 
 All notable changes. The project follows [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 2.0.0 (2026-10-18)
+
+Paid courses, analytics for instructors and admins, moderation, search, an installable app,
+and a security pass over the whole codebase. Upgrading from 1.x: see
+[docs/deployment.md](docs/deployment.md#upgrading-from-1x).
+
+### Changed (breaking for API clients)
+
+- `POST /api/auth/password/change/` needs `old_password`.
+- The refresh cookie's path is `/api/auth/` (it was `/api/auth/token/refresh/`).
+- `GET /api/profiles/{username}/` no longer includes `user.email`; deactivated accounts return
+  404. `GET /api/profiles/me/` still includes your own email.
+- `GET /api/courses/{slug}/lessons/` lists only lessons the reader may open.
+- `POST /api/courses/{slug}/enroll/` answers 402 for a paid course; buy it through
+  `POST /api/payments/checkout/`.
+- Deleting a course that has learners or orders answers 400.
 
 ### Added
 

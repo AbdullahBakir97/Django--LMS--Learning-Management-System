@@ -93,6 +93,20 @@ make prod-up      # rebuilds images; the migrate service runs before the app res
 To deploy published images instead of building on the server, replace each `build:` with
 `image: ghcr.io/<owner>/lms-backend:<version>` or `lms-web:<version>`; a `v*` tag publishes both.
 
+### Upgrading from 1.x
+
+`make prod-up` runs the migrations. Before you start:
+
+1. Add the new settings to `.env.production` (all optional, see [Settings](#settings)):
+   `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `PAYMENTS_CURRENCY`, and `NUM_PROXIES` if a load
+   balancer sits in front of nginx.
+2. Keep the new `beat` service running; daily and weekly digests depend on it.
+3. If you sell courses, set up the Stripe webhook as in [Paid courses](#paid-courses).
+4. Give at least one account the admin role, for moderation and the overview.
+5. API clients other than this app: read "Changed (breaking for API clients)" in the
+   [changelog](../CHANGELOG.md). People who are signed in stay signed in; their cookie moves to
+   the new path on the next refresh.
+
 ## Checklist
 
 - [ ] Every value in `.env.production` is set; the secret key and database password are random.

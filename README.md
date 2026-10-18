@@ -159,6 +159,16 @@ in [docs/deployment.md](docs/deployment.md).
 | `docs/` | Architecture, deployment, diagrams, screenshots |
 | `docker-compose.yml`, `docker-compose.prod.yml` | Local development, and a production-like stack |
 
+## Known limits
+
+Chosen on purpose, each with the point where it should change:
+
+- Lesson attachments are public URLs that only readers of the lesson see. Serve them through a
+  permission check, as résumés are, if a course's files must never leave it.
+- The admin overview is counted on each request. Cache it for a few minutes when it gets slow.
+- Group member lists are not paged. Page them before groups reach thousands of members.
+- Sign-up says when an email address is already registered; rate limits keep that slow to probe.
+
 ## Contributing
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/architecture.md](docs/architecture.md) first.
