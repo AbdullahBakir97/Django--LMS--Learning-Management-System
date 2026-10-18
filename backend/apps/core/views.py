@@ -1,9 +1,12 @@
 from django.core.cache import cache
 from django.db import connection
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework.fields import CharField
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from .realtime import issue_ticket
 
 
 class HealthView(APIView):
@@ -28,3 +31,11 @@ def _check(fn) -> bool:
     except Exception:
         return False
     return True
+
+
+class RealtimeTicketView(APIView):
+    """A 30-second ticket to open the events WebSocket: `/ws/events/?ticket=<ticket>`."""
+
+    @extend_schema(request=None, responses=inline_serializer("Ticket", {"ticket": CharField()}))
+    def post(self, request):
+        return Response({"ticket": issue_ticket(request.user)})

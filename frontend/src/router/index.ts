@@ -18,6 +18,11 @@ export const router = createRouter({
           component: () => import('@/pages/ProfilePage.vue'),
           props: true,
         },
+        {
+          path: 'notifications',
+          name: 'notifications',
+          component: () => import('@/pages/NotificationsPage.vue'),
+        },
         { path: 'courses', name: 'courses', component: () => import('@/pages/learning/CatalogPage.vue') },
         {
           path: 'courses/:slug',

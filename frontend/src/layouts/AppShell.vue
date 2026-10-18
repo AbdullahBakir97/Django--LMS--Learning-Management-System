@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import {
   PhHouse,
@@ -15,11 +15,19 @@ import BrandMark from '@/components/BrandMark.vue'
 import ThemeToggle from '@/components/ui/ThemeToggle.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 import { useSessionStore } from '@/stores/session'
+import { useNotificationsStore } from '@/stores/notifications'
+import NotificationBell from '@/features/notifications/NotificationBell.vue'
+import NotificationToasts from '@/features/notifications/NotificationToasts.vue'
 
 const session = useSessionStore()
 const router = useRouter()
 const route = useRoute()
 const navOpen = ref(false)
+
+// The shell only renders for a signed-in user, so its lifetime is the live connection's.
+const notifications = useNotificationsStore()
+void notifications.start()
+onUnmounted(() => notifications.stop())
 
 const items = computed(() => [
   { to: { name: 'home' }, label: 'Home', icon: PhHouse, exact: true },
@@ -113,7 +121,10 @@ async function signOut() {
           <PhList :size="22" weight="light" />
         </button>
         <span class="hidden lg:block" />
-        <ThemeToggle />
+        <div class="flex items-center gap-1">
+          <NotificationBell />
+          <ThemeToggle />
+        </div>
       </header>
       <main class="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
         <RouterView v-slot="{ Component }">
@@ -123,5 +134,6 @@ async function signOut() {
         </RouterView>
       </main>
     </div>
+    <NotificationToasts />
   </div>
 </template>

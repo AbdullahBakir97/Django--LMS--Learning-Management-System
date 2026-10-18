@@ -14,7 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+/lib/
 lib64/
 parts/
 sdist/
@@ -167,3 +167,7 @@ cython_debug/
 backend/media/
 backend/staticfiles/
 graphify-out/
+
+# Playwright output
+frontend/test-results/
+frontend/playwright-report/
