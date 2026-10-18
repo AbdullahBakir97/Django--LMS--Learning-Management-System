@@ -5,11 +5,12 @@ import Card from '@/components/ui/Card.vue'
 import { useSessionStore } from '@/stores/session'
 
 const session = useSessionStore()
-const soon = [
+const soon: { icon: unknown; title: string; text: string; to?: object }[] = [
   {
     icon: PhGraduationCap,
     title: 'Courses',
-    text: 'Lessons, quizzes and certificates. Arrives with the learning context.',
+    text: 'Lessons, quizzes and a verifiable certificate at the end.',
+    to: { name: 'courses' },
   },
   { icon: PhUsersThree, title: 'Network', text: 'Follow people, connect, and see what they share.' },
   { icon: PhBriefcase, title: 'Careers', text: 'Companies, job listings and applications.' },
@@ -23,10 +24,12 @@ const soon = [
     <RouterLink class="text-accent hover:underline" :to="{ name: 'my-profile' }">Edit profile</RouterLink>
   </p>
   <div class="mt-8 grid gap-4 sm:grid-cols-3">
-    <Card v-for="item in soon" :key="item.title" class="p-5">
-      <component :is="item.icon" :size="24" weight="light" class="text-accent" />
-      <h2 class="mt-3 text-lg font-semibold">{{ item.title }}</h2>
-      <p class="mt-1 text-sm text-muted">{{ item.text }}</p>
-    </Card>
+    <component :is="item.to ? RouterLink : 'div'" v-for="item in soon" :key="item.title" :to="item.to">
+      <Card class="h-full p-5">
+        <component :is="item.icon" :size="24" weight="light" class="text-accent" />
+        <h2 class="mt-3 text-lg font-semibold">{{ item.title }}</h2>
+        <p class="mt-1 text-sm text-muted">{{ item.text }}</p>
+      </Card>
+    </component>
   </div>
 </template>

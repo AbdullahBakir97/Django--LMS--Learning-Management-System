@@ -18,6 +18,43 @@ export const router = createRouter({
           component: () => import('@/pages/ProfilePage.vue'),
           props: true,
         },
+        { path: 'courses', name: 'courses', component: () => import('@/pages/learning/CatalogPage.vue') },
+        {
+          path: 'courses/:slug',
+          name: 'course',
+          component: () => import('@/pages/learning/CoursePage.vue'),
+          props: true,
+        },
+        {
+          path: 'courses/:slug/lessons/:id',
+          name: 'lesson',
+          component: () => import('@/pages/learning/LessonPage.vue'),
+          props: true,
+        },
+        {
+          path: 'learning',
+          name: 'my-learning',
+          component: () => import('@/pages/learning/MyLearningPage.vue'),
+        },
+        {
+          path: 'teach',
+          name: 'teach',
+          component: () => import('@/pages/learning/TeachPage.vue'),
+          meta: { instructorOnly: true },
+        },
+        {
+          path: 'teach/new',
+          name: 'course-new',
+          component: () => import('@/pages/learning/CourseEditorPage.vue'),
+          meta: { instructorOnly: true },
+        },
+        {
+          path: 'teach/:slug',
+          name: 'course-editor',
+          component: () => import('@/pages/learning/CourseEditorPage.vue'),
+          props: true,
+          meta: { instructorOnly: true },
+        },
       ],
     },
     {
@@ -51,6 +88,12 @@ export const router = createRouter({
         },
       ],
     },
+    {
+      path: '/certificates/:code',
+      name: 'certificate',
+      component: () => import('@/pages/learning/CertificatePage.vue'),
+      props: true,
+    },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/pages/NotFoundPage.vue') },
   ],
 })
@@ -59,6 +102,9 @@ router.beforeEach((to) => {
   const session = useSessionStore()
   if (to.meta.requiresAuth && !session.isAuthenticated) {
     return { name: 'login', query: to.fullPath !== '/' ? { next: to.fullPath } : {} }
+  }
+  if (to.meta.instructorOnly && !['instructor', 'admin'].includes(session.user?.role ?? '')) {
+    return { name: 'home' }
   }
   if (to.meta.guestOnly && session.isAuthenticated && to.name !== 'verify-email') {
     return { name: 'home' }
