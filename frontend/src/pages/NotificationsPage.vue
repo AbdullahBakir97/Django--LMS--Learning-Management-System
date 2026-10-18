@@ -8,6 +8,7 @@ import {
   type AppNotification,
   type NotificationKind,
   type NotificationPreferences,
+  type PreferencesPatch,
 } from '@/api/notifications'
 import { ApiError } from '@/api/client'
 import Button from '@/components/ui/Button.vue'
@@ -48,17 +49,29 @@ function open(n: AppNotification) {
 const prefs = ref<NotificationPreferences | null>(null)
 const prefsError = ref('')
 const saved = ref(false)
-onMounted(async () => (prefs.value = await api.preferences()))
 
-async function save(patch: Partial<Pick<NotificationPreferences, 'email_enabled' | 'muted_kinds'>>) {
+// Digest times and quiet hours are kept in the browser's own time zone.
+const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+const quiet = ref({ start: '', end: '' })
+onMounted(async () => {
+  const p = (prefs.value = await api.preferences())
+  quiet.value = { start: p.quiet_start?.slice(0, 5) ?? '', end: p.quiet_end?.slice(0, 5) ?? '' }
+})
+
+async function save(patch: PreferencesPatch) {
   prefsError.value = ''
   saved.value = false
   try {
-    prefs.value = await api.updatePreferences(patch)
+    prefs.value = await api.updatePreferences({ ...patch, timezone: zone })
     saved.value = true
   } catch (e) {
     prefsError.value = e instanceof ApiError ? (e.nonField ?? 'Could not save.') : 'Could not save.'
   }
+}
+
+function saveQuiet() {
+  const { start, end } = quiet.value
+  void save({ quiet_start: start || null, quiet_end: end || null })
 }
 
 function toggleKind(kind: NotificationKind, shown: boolean) {
@@ -167,7 +180,7 @@ function toggleKind(kind: NotificationKind, shown: boolean) {
         <span>
           <span class="block text-sm font-medium">Email for important updates</span>
           <span class="block text-sm text-muted"
-            >Today that means a finished course and its certificate.</span
+            >Finished courses, application updates and interview invitations.</span
           >
         </span>
         <input
@@ -177,6 +190,66 @@ function toggleKind(kind: NotificationKind, shown: boolean) {
           @change="save({ email_enabled: ($event.target as HTMLInputElement).checked })"
         />
       </label>
+      <div v-if="prefs.email_enabled" class="border-t border-line pt-5">
+        <fieldset class="grid gap-3">
+          <legend class="mb-3 text-sm font-medium">How email arrives</legend>
+          <label
+            v-for="opt in [
+              { v: 'off', l: 'Right away', h: 'One email for each important update.' },
+              { v: 'daily', l: 'Daily digest', h: 'Everything you have not read, at 08:00.' },
+              { v: 'weekly', l: 'Weekly digest', h: 'Everything you have not read, Mondays at 08:00.' },
+            ] as const"
+            :key="opt.v"
+            class="flex cursor-pointer items-start gap-3 text-sm"
+          >
+            <input
+              type="radio"
+              name="digest"
+              class="mt-0.5 size-4 accent-[var(--c-accent)]"
+              :checked="prefs.digest === opt.v"
+              @change="save({ digest: opt.v })"
+            />
+            <span
+              ><span class="block font-medium">{{ opt.l }}</span
+              ><span class="block text-muted">{{ opt.h }}</span></span
+            >
+          </label>
+        </fieldset>
+      </div>
+      <form
+        v-if="prefs.email_enabled && prefs.digest === 'off'"
+        class="grid gap-3 border-t border-line pt-5"
+        @submit.prevent="saveQuiet"
+      >
+        <span>
+          <span class="block text-sm font-medium">Quiet hours</span>
+          <span class="block text-sm text-muted"
+            >Email that would arrive in these hours waits until they end. Leave empty for none.</span
+          >
+        </span>
+        <div class="flex flex-wrap items-end gap-3">
+          <label class="grid gap-1.5 text-sm">
+            From
+            <input
+              id="quiet-start"
+              v-model="quiet.start"
+              type="time"
+              class="h-10 rounded-md bg-surface px-3 ring-1 ring-line-strong focus:ring-2 focus:ring-accent focus:outline-none"
+            />
+          </label>
+          <label class="grid gap-1.5 text-sm">
+            Until
+            <input
+              id="quiet-end"
+              v-model="quiet.end"
+              type="time"
+              class="h-10 rounded-md bg-surface px-3 ring-1 ring-line-strong focus:ring-2 focus:ring-accent focus:outline-none"
+            />
+          </label>
+          <Button type="submit" size="sm" variant="secondary">Save quiet hours</Button>
+        </div>
+      </form>
+      <p v-if="prefs.email_enabled" class="font-mono text-xs text-muted">Times are in {{ zone }}.</p>
       <div class="border-t border-line pt-5">
         <fieldset class="grid gap-3">
           <legend class="mb-3 text-sm font-medium">Show these notifications</legend>

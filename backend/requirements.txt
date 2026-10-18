@@ -18,3 +18,4 @@ django-allauth[socialaccount]>=65.0
 Pillow>=10.4
 drf-nested-routers>=0.94
 reportlab>=4.2
+tzdata>=2024.1  # time zones for digests and quiet hours, even on slim images

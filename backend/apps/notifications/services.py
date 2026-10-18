@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from apps.core.realtime import publish_to_user
 
+from . import schedule
 from .models import Notification, Preference
 from .serializers import NotificationSerializer
 from .tasks import send_notification_email
@@ -28,7 +29,12 @@ def notify(recipient_id, kind, title, *, body="", url="", actor_id=None) -> Noti
     payload = NotificationSerializer(notification).data
     transaction.on_commit(lambda: publish_to_user(recipient_id, "notification.created", payload))
     if kind in EMAIL_KINDS and (preference is None or preference.email_enabled):
-        transaction.on_commit(lambda: send_notification_email.delay(notification.id))
+        if preference and preference.digest != Preference.Digest.OFF:
+            return notification  # the next digest carries it
+        later = preference and schedule.quiet_until(preference, timezone.now())
+        transaction.on_commit(
+            lambda: send_notification_email.apply_async((notification.id,), eta=later or None)
+        )
     return notification
 
 

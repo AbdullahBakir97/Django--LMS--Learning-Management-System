@@ -8,6 +8,7 @@ The production stack is two images and four supporting services, described in
 | `web` | `frontend/Dockerfile` | nginx: serves the built app, proxies `/api`, `/ws`, `/admin`, `/static` to the backend, serves public media |
 | `backend` | `backend/Dockerfile` | the ASGI app (uvicorn, two workers): REST, WebSockets, admin, static files through WhiteNoise |
 | `worker` | `backend/Dockerfile` | Celery: certificate PDFs and email |
+| `beat` | `backend/Dockerfile` | the Celery scheduler: sends notification digests every hour, exactly one instance |
 | `migrate` | `backend/Dockerfile` | runs migrations once, before `backend` and `worker` start |
 | `postgres`, `redis` | official images | data; cache, channel layer and task broker |
 
