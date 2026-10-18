@@ -29,9 +29,9 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "corsheaders",
     "channels",
-    "core",
-    "accounts",
-    "profiles",
+    "apps.core",
+    "apps.accounts",
+    "apps.profiles",
 ]
 
 MIDDLEWARE = [
@@ -93,8 +93,8 @@ REST_AUTH = {
     "JWT_AUTH_SECURE": os.environ.get("JWT_COOKIE_SECURE", "1") == "1",
     "JWT_AUTH_SAMESITE": "Lax",
     "JWT_AUTH_RETURN_EXPIRATION": True,
-    "USER_DETAILS_SERIALIZER": "accounts.serializers.UserSerializer",
-    "REGISTER_SERIALIZER": "accounts.serializers.RegisterSerializer",
+    "USER_DETAILS_SERIALIZER": "apps.accounts.serializers.UserSerializer",
+    "REGISTER_SERIALIZER": "apps.accounts.serializers.RegisterSerializer",
 }
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
@@ -168,7 +168,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
-    "DEFAULT_PAGINATION_CLASS": "core.pagination.CursorPagination",
+    "DEFAULT_PAGINATION_CLASS": "apps.core.pagination.CursorPagination",
     "PAGE_SIZE": 20,
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
@@ -176,7 +176,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.OrderingFilter",
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "EXCEPTION_HANDLER": "core.exceptions.problem_details_exception_handler",
+    "EXCEPTION_HANDLER": "apps.core.exceptions.problem_details_exception_handler",
     "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.AnonRateThrottle"],
     "DEFAULT_THROTTLE_RATES": {"anon": "60/min"},
 }
@@ -192,7 +192,7 @@ SPECTACULAR_SETTINGS = {
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {"json": {"()": "core.logging.JsonFormatter"}},
+    "formatters": {"json": {"()": "apps.core.logging.JsonFormatter"}},
     "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "json"}},
     "root": {"handlers": ["console"], "level": os.environ.get("LOG_LEVEL", "INFO")},
     "loggers": {"django.request": {"level": "WARNING"}},

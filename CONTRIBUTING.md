@@ -15,9 +15,9 @@ pre-commit install              # ruff on every commit
 ## Make a change
 
 1. Branch from `main`: `feat/<topic>`, `fix/<topic>` or `chore/<topic>`.
-2. Keep the change inside one context (`backend/<context>/`) unless it is kernel work in
-   `backend/core/`. A context imports only from layers below it (see the domain map).
-3. Add or update tests next to the code (`backend/<context>/tests/`). Factories live in
+2. Keep the change inside one context (`backend/apps/<context>/`) unless it is kernel work in
+   `backend/apps/core/`. A context imports only from layers below it (see the domain map).
+3. Add or update tests next to the code (`backend/apps/<context>/tests/`). Factories live in
    `backend/conftest.py`.
 4. Run `make lint` and `make test`. CI runs the same checks against PostgreSQL and Redis.
 5. Open a pull request using the template. Describe what changed and how to verify it.

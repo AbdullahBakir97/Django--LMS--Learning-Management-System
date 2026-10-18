@@ -3,7 +3,7 @@ import re
 import pytest
 from django.core import mail
 
-from accounts.models import User
+from apps.accounts.models import User
 
 REGISTER = {
     "username": "amina",

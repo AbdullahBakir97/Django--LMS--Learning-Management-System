@@ -1,8 +1,8 @@
 import pytest
 from rest_framework.test import APIClient
 
+from apps.profiles.models import Profile, Skill
 from conftest import UserFactory
-from profiles.models import Profile, Skill
 
 
 @pytest.mark.django_db

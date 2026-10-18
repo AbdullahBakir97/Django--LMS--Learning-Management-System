@@ -31,7 +31,7 @@ Anything that must travel upward is a domain event the kernel delivers.
 ## Inside a context
 
 ```
-learning/
+backend/apps/learning/
   models.py        schema, constraints, indexes, ordering
   selectors.py     reads: querysets, filters, select_related, annotations
   services.py      writes: plain functions that take the acting user and raise domain errors

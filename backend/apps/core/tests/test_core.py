@@ -1,9 +1,9 @@
 import pytest
 from rest_framework.exceptions import NotFound, ValidationError
 
-from core import events
-from core.exceptions import problem_details_exception_handler
-from core.realtime import user_group
+from apps.core import events
+from apps.core.exceptions import problem_details_exception_handler
+from apps.core.realtime import user_group
 
 
 @pytest.mark.django_db
