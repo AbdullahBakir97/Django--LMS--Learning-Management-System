@@ -15,6 +15,9 @@ export type NotificationKind =
   | 'event_rsvp'
   | 'application_received'
   | 'application_update'
+  | 'recommendation_request'
+  | 'recommendation'
+  | 'achievement'
 
 export interface AppNotification {
   id: number
