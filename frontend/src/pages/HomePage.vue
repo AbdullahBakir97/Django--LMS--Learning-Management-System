@@ -1,35 +1,108 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { PhGraduationCap, PhUsersThree, PhBriefcase } from '@phosphor-icons/vue'
-import Card from '@/components/ui/Card.vue'
+import { PhLockSimple, PhUsersThree } from '@phosphor-icons/vue'
+import { community, cursorOf, type CommunityEvent, type Group, type Post } from '@/api/community'
 import { useSessionStore } from '@/stores/session'
+import Button from '@/components/ui/Button.vue'
+import Card from '@/components/ui/Card.vue'
+import PostComposer from '@/features/community/PostComposer.vue'
+import PostCard from '@/features/community/PostCard.vue'
+import EventCard from '@/features/community/EventCard.vue'
 
 const session = useSessionStore()
-const soon: { icon: unknown; title: string; text: string; to?: object }[] = [
-  {
-    icon: PhGraduationCap,
-    title: 'Courses',
-    text: 'Lessons, quizzes and a verifiable certificate at the end.',
-    to: { name: 'courses' },
-  },
-  { icon: PhUsersThree, title: 'Network', text: 'Follow people, connect, and see what they share.' },
-  { icon: PhBriefcase, title: 'Careers', text: 'Companies, job listings and applications.' },
-]
+const posts = ref<Post[]>([])
+const next = ref<string | null>(null)
+const groups = ref<Group[]>([])
+const events = ref<CommunityEvent[]>([])
+const loaded = ref(false)
+
+onMounted(async () => {
+  const [feed, mine, upcoming] = await Promise.all([
+    community.feed(),
+    community.groups({ mine: true }),
+    community.events({ when: 'upcoming' }),
+  ])
+  posts.value = feed.results
+  next.value = feed.next
+  groups.value = mine.results.filter((g) => g.my_status === 'active')
+  events.value = upcoming.results.slice(0, 3)
+  loaded.value = true
+})
+
+async function more() {
+  const page = await community.feed(cursorOf(next.value))
+  posts.value = [...posts.value, ...page.results]
+  next.value = page.next
+}
 </script>
 
 <template>
-  <h1 class="text-3xl font-semibold">Hello, {{ session.user?.first_name || session.user?.username }}</h1>
-  <p class="mt-1 max-w-prose text-muted">
-    Your account is live. Start with your profile so instructors and peers know who you are.
-    <RouterLink class="text-accent hover:underline" :to="{ name: 'my-profile' }">Edit profile</RouterLink>
-  </p>
-  <div class="mt-8 grid gap-4 sm:grid-cols-3">
-    <component :is="item.to ? RouterLink : 'div'" v-for="item in soon" :key="item.title" :to="item.to">
-      <Card class="h-full p-5">
-        <component :is="item.icon" :size="24" weight="light" class="text-accent" />
-        <h2 class="mt-3 text-lg font-semibold">{{ item.title }}</h2>
-        <p class="mt-1 text-sm text-muted">{{ item.text }}</p>
+  <div class="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+    <div class="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-4">
+      <h1 class="text-3xl font-semibold">Hello, {{ session.user?.first_name || session.user?.username }}</h1>
+      <PostComposer :groups="groups" @posted="posts.unshift($event)" />
+      <PostCard
+        v-for="(p, i) in posts"
+        :key="p.id"
+        :post="p"
+        @update="Object.assign(posts[i]!, $event)"
+        @removed="posts.splice(i, 1)"
+      />
+      <Card v-if="loaded && !posts.length" class="p-6 text-center">
+        <p class="font-medium">Your feed is quiet.</p>
+        <p class="mt-1 text-sm text-muted">
+          Posts from people you follow or are connected with, and from your groups, show up here.
+        </p>
+        <div class="mt-4 flex flex-wrap justify-center gap-2">
+          <RouterLink :to="{ name: 'network' }"
+            ><Button variant="secondary" size="sm">Find people</Button></RouterLink
+          >
+          <RouterLink :to="{ name: 'groups' }"
+            ><Button variant="secondary" size="sm">Browse groups</Button></RouterLink
+          >
+        </div>
       </Card>
-    </component>
+      <div v-if="next" class="flex justify-center">
+        <Button variant="ghost" @click="more">Show older posts</Button>
+      </div>
+    </div>
+
+    <aside class="grid min-w-0 content-start gap-8">
+      <section aria-labelledby="events-title">
+        <div class="mb-3 flex items-baseline justify-between">
+          <h2 id="events-title" class="font-semibold">Upcoming events</h2>
+          <RouterLink :to="{ name: 'events' }" class="text-sm text-accent hover:underline">All</RouterLink>
+        </div>
+        <div class="grid gap-3">
+          <EventCard v-for="(e, i) in events" :key="e.id" :event="e" @update="events[i] = $event" />
+          <p v-if="loaded && !events.length" class="text-sm text-muted">Nothing scheduled yet.</p>
+        </div>
+      </section>
+      <section aria-labelledby="groups-title">
+        <div class="mb-3 flex items-baseline justify-between">
+          <h2 id="groups-title" class="font-semibold">Your groups</h2>
+          <RouterLink :to="{ name: 'groups' }" class="text-sm text-accent hover:underline">Browse</RouterLink>
+        </div>
+        <ul class="grid gap-1">
+          <li v-for="g in groups" :key="g.slug">
+            <RouterLink
+              :to="{ name: 'group', params: { slug: g.slug } }"
+              class="flex items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-surface-2"
+            >
+              <component
+                :is="g.privacy === 'private' ? PhLockSimple : PhUsersThree"
+                :size="18"
+                weight="light"
+                class="text-muted"
+              />
+              <span class="min-w-0 flex-1 truncate">{{ g.name }}</span>
+              <span class="font-mono text-xs text-muted">{{ g.member_count }}</span>
+            </RouterLink>
+          </li>
+        </ul>
+        <p v-if="loaded && !groups.length" class="text-sm text-muted">You have not joined a group yet.</p>
+      </section>
+    </aside>
   </div>
 </template>

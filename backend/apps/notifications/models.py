@@ -16,6 +16,9 @@ class Notification(TimeStampedModel):
         CONNECTION_ACCEPTED = "connection_accepted", "Connection accepted"
         COMMENT = "comment", "Comment on your lesson"
         REPLY = "reply", "Reply to your comment"
+        GROUP_REQUEST = "group_request", "Request to join your group"
+        GROUP_APPROVED = "group_approved", "Group request approved"
+        EVENT_RSVP = "event_rsvp", "Someone is going to your event"
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"

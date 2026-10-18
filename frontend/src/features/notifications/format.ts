@@ -1,6 +1,9 @@
 import {
   PhArrowBendUpLeft,
   PhBell,
+  PhCalendarCheck,
+  PhDoorOpen,
+  PhUsersFour,
   PhCertificate,
   PhChatCircleText,
   PhHandshake,
@@ -20,6 +23,9 @@ export const kindIcon: Record<NotificationKind, typeof PhBell> = {
   connection_accepted: PhUsersThree,
   comment: PhChatCircleText,
   reply: PhArrowBendUpLeft,
+  group_request: PhDoorOpen,
+  group_approved: PhUsersFour,
+  event_rsvp: PhCalendarCheck,
 }
 
 const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })

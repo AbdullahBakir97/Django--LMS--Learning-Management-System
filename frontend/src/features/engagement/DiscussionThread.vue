@@ -9,7 +9,7 @@ import CommentComposer from './CommentComposer.vue'
 import CommentItem from './CommentItem.vue'
 import ReactionBar from './ReactionBar.vue'
 
-const props = defineProps<{ target: Target; title?: string }>()
+const props = defineProps<{ target: Target; title?: string; bare?: boolean }>()
 const comments = ref<Comment[]>([])
 const next = ref<string | null>(null)
 const reactions = ref<ReactionSummary>({ counts: {}, mine: null })
@@ -30,7 +30,10 @@ watch(
   () => `${props.target.key}:${props.target.id}`,
   async () => {
     replyingTo.value = null
-    await Promise.all([load(), engagement.reactions(props.target).then((r) => (reactions.value = r))])
+    await Promise.all([
+      load(),
+      props.bare ? null : engagement.reactions(props.target).then((r) => (reactions.value = r)),
+    ])
     if (location.hash.startsWith('#comment-')) {
       await nextTick()
       document.querySelector(location.hash)?.scrollIntoView({ block: 'center' })
@@ -65,8 +68,12 @@ function removed(comment: Comment, replyId?: number) {
 </script>
 
 <template>
-  <section class="grid gap-5" aria-labelledby="discussion-title">
-    <div class="flex flex-wrap items-center justify-between gap-3">
+  <section
+    class="grid gap-5"
+    :aria-labelledby="bare ? undefined : 'discussion-title'"
+    :aria-label="bare ? 'Comments' : undefined"
+  >
+    <div v-if="!bare" class="flex flex-wrap items-center justify-between gap-3">
       <h2 id="discussion-title" class="flex items-center gap-2 text-lg font-semibold">
         <PhChatsCircle :size="22" weight="light" class="text-muted" /> Discussion
         <span v-if="comments.length" class="font-mono text-sm font-normal text-muted">{{

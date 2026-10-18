@@ -10,6 +10,9 @@ export type NotificationKind =
   | 'connection_accepted'
   | 'comment'
   | 'reply'
+  | 'group_request'
+  | 'group_approved'
+  | 'event_rsvp'
 
 export interface AppNotification {
   id: number

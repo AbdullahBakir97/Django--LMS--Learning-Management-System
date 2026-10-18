@@ -18,8 +18,8 @@ The project is being rebuilt in phases, one pull request each. Done so far: the 
 foundation, accounts with JWT auth and email verification, profiles with experience, education,
 skills and endorsements, the Vue frontend, courses with lessons, quizzes, progress and
 certificates, live notifications over one WebSocket per user, and the network: follows,
-connections, suggestions, lesson discussions and reactions. Community, careers and messaging
-follow.
+connections, suggestions, lesson discussions and reactions, and community: a feed, groups with
+public or private membership, posts, and events with RSVPs. Careers and messaging follow.
 
 ## Codebase map
 
@@ -32,12 +32,15 @@ enrolments, follows and comments without importing the contexts that publish the
 ```mermaid
 flowchart LR
   subgraph Backend
-    config --> accounts & engagement & learning & network & notifications & profiles & core
-    notifications -- 18 --> core
+    config --> accounts & community & engagement & learning & network & notifications & profiles & core
+    notifications -- 21 --> core
     learning -- 15 --> core
+    community -- 14 --> engagement
+    community -- 12 --> core
     engagement -- 10 --> core
     network -- 9 --> core
     profiles -- 9 --> core
+    community -- 5 --> network
     learning -- 4 --> accounts
     profiles -- 3 --> accounts
     network -- 3 --> profiles
@@ -46,17 +49,18 @@ flowchart LR
     profiles -. events .-> notifications
     network -. events .-> notifications
     engagement -. events .-> notifications
+    community -. events .-> notifications
   end
   subgraph Frontend
-    pages -- 75 --> api
-    features -- 48 --> api
-    pages -- 45 --> components
-    router -- 38 --> pages
-    pages -- 23 --> features
-    features -- 18 --> components
-    pages -- 16 --> stores
+    pages -- 106 --> api
+    features -- 73 --> api
+    pages -- 63 --> components
+    router -- 48 --> pages
+    pages -- 36 --> features
+    features -- 26 --> components
+    pages -- 18 --> stores
     stores -- 10 --> api
-    layouts -- 5 --> components
+    features -- 6 --> stores
   end
   api -. REST and WebSocket .-> config
 ```

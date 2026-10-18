@@ -97,3 +97,39 @@ def on_commented(*, author_id, author_name, owner_id, parent_author_id, title, u
             url=url,
             actor_id=author_id,
         )
+
+
+@subscribe("community.membership_requested")
+def on_membership_requested(
+    *, group_name, group_slug, requester_id, requester_name, manager_ids, **_
+):
+    for manager_id in manager_ids:
+        notify(
+            manager_id,
+            Kind.GROUP_REQUEST,
+            f"{requester_name} asked to join {group_name}",
+            url=f"/groups/{group_slug}",
+            actor_id=requester_id,
+        )
+
+
+@subscribe("community.membership_approved")
+def on_membership_approved(*, group_name, group_slug, member_id, approver_id, **_):
+    notify(
+        member_id,
+        Kind.GROUP_APPROVED,
+        f"You are now a member of {group_name}",
+        url=f"/groups/{group_slug}",
+        actor_id=approver_id,
+    )
+
+
+@subscribe("community.event_rsvp")
+def on_event_rsvp(*, event_id, event_title, host_id, attendee_id, attendee_name, **_):
+    notify(
+        host_id,
+        Kind.EVENT_RSVP,
+        f"{attendee_name} is going to {event_title}",
+        url=f"/events/{event_id}",
+        actor_id=attendee_id,
+    )

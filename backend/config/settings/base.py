@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "apps.network",
     "apps.engagement",
     "apps.learning",
+    "apps.community",
     "apps.notifications",
 ]
 
