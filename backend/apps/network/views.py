@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
@@ -17,6 +18,8 @@ from .serializers import (
     RelationshipSerializer,
     SuggestionSerializer,
 )
+
+User = get_user_model()
 
 
 def person(username):
@@ -48,6 +51,8 @@ class FollowView(APIView):
 class FollowersView(generics.ListAPIView):
     """People following this user, newest first."""
 
+    queryset = Follow.objects.none()  # for the schema; get_queryset() scopes to the user
+
     serializer_class = FollowerSerializer
 
     def get_queryset(self):
@@ -59,6 +64,8 @@ class FollowersView(generics.ListAPIView):
 class FollowingView(generics.ListAPIView):
     """People this user follows, newest first."""
 
+    queryset = Follow.objects.none()  # for the schema; get_queryset() scopes to the user
+
     serializer_class = FollowingSerializer
 
     def get_queryset(self):
@@ -69,6 +76,8 @@ class FollowingView(generics.ListAPIView):
 
 class SuggestionsView(generics.ListAPIView):
     """People who share your skills and are not linked to you yet."""
+
+    queryset = User.objects.none()  # for the schema; get_queryset() scopes to the user
 
     serializer_class = SuggestionSerializer
     pagination_class = None
@@ -89,6 +98,8 @@ class SuggestionsView(generics.ListAPIView):
 )
 class ConnectionViewSet(mixins.ListModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     """Your connections and requests. Rows you are not part of are 404."""
+
+    queryset = Connection.objects.none()  # for the schema; get_queryset() scopes to the user
 
     serializer_class = ConnectionSerializer
     lookup_value_regex = r"\d+"

@@ -41,6 +41,14 @@ jobs:
         run: python manage.py check
       - name: Migrations are committed
         run: python manage.py makemigrations --check --dry-run
+      - name: API schema has no warnings
+        run: python manage.py spectacular --fail-on-warn --file /dev/null
+      - name: Production settings pass the deployment checklist
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.production
+          DJANGO_SECRET_KEY: ci-only-deploy-check-key-that-is-long-and-random-enough-0123456789abcdef
+          DJANGO_ALLOWED_HOSTS: lms.example.com
+        run: python manage.py check --deploy --fail-level WARNING
       - name: Tests
         run: pytest
 
@@ -72,3 +80,15 @@ jobs:
         run: pnpm build-only
       - name: Browser smoke test
         run: pnpm exec playwright install --with-deps chromium && pnpm test:e2e
+
+  images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Backend image builds
+        run: docker build -t lms-backend:ci backend
+      - name: Frontend image builds
+        run: docker build -t lms-web:ci frontend
+      - name: Backend image runs as a non-root user
+        run: test "$(docker run --rm lms-backend:ci id -u)" != "0"

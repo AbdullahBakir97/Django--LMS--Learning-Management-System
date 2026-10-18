@@ -56,6 +56,7 @@ class EducationViewSet(OwnEntriesViewSet):
 
 
 class ProfileSkillViewSet(mixins.ListModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    queryset = ProfileSkill.objects.none()  # for the schema; get_queryset() scopes to the user
     serializer_class = ProfileSkillSerializer
     pagination_class = None
 

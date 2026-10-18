@@ -6,6 +6,7 @@ import { community, cursorOf, type CommunityEvent, type Group, type Post } from 
 import { useSessionStore } from '@/stores/session'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
+import Alert from '@/components/ui/Alert.vue'
 import PostComposer from '@/features/community/PostComposer.vue'
 import PostCard from '@/features/community/PostCard.vue'
 import EventCard from '@/features/community/EventCard.vue'
@@ -17,17 +18,23 @@ const groups = ref<Group[]>([])
 const events = ref<CommunityEvent[]>([])
 const loaded = ref(false)
 
+const failed = ref(false)
+
 onMounted(async () => {
-  const [feed, mine, upcoming] = await Promise.all([
-    community.feed(),
-    community.groups({ mine: true }),
-    community.events({ when: 'upcoming' }),
-  ])
-  posts.value = feed.results
-  next.value = feed.next
-  groups.value = mine.results.filter((g) => g.my_status === 'active')
-  events.value = upcoming.results.slice(0, 3)
-  loaded.value = true
+  try {
+    const [feed, mine, upcoming] = await Promise.all([
+      community.feed(),
+      community.groups({ mine: true }),
+      community.events({ when: 'upcoming' }),
+    ])
+    posts.value = feed.results
+    next.value = feed.next
+    groups.value = mine.results.filter((g) => g.my_status === 'active')
+    events.value = upcoming.results.slice(0, 3)
+    loaded.value = true
+  } catch {
+    failed.value = true
+  }
 })
 
 async function more() {
@@ -42,6 +49,7 @@ async function more() {
     <div class="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-4">
       <h1 class="text-3xl font-semibold">Hello, {{ session.user?.first_name || session.user?.username }}</h1>
       <PostComposer :groups="groups" @posted="posts.unshift($event)" />
+      <Alert v-if="failed" tone="danger">Your feed did not load. Check your connection and reload.</Alert>
       <PostCard
         v-for="(p, i) in posts"
         :key="p.id"

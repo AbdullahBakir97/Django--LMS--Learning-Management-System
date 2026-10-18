@@ -1,0 +1,34 @@
+# Changelog
+
+All notable changes. The project follows [Semantic Versioning](https://semver.org/).
+
+## 1.0.0
+
+The rebuild: a modular monolith with nine bounded contexts, a Vue 3 app, and a production stack.
+
+### Added
+
+- **Foundation**: Django 5.1, DRF, PostgreSQL, Redis, Channels, Celery; RFC 9457 errors, cursor
+  paging, a domain event bus published after commit, one WebSocket per user, JSON logs, CI.
+- **Accounts and profiles**: email sign-in with verification, password reset, JWT with an
+  HttpOnly refresh cookie; profiles with experience, education, skills and endorsements.
+- **Frontend**: Vue 3, TypeScript, Pinia, Tailwind, a token-based design system with light and
+  dark themes, typed API client, Playwright smoke test.
+- **Learning**: courses, lessons, quizzes, enrolment with prerequisites, progress, PDF
+  certificates with public verification, and the course screens.
+- **Notifications**: in the app and live, email for important kinds, per-kind preferences.
+- **Network and engagement**: follows, connections, suggestions by shared skills; comments,
+  replies and reactions on any registered target, starting with lessons.
+- **Community**: feed, public and private groups with roles and approvals, posts, events with
+  capacity and RSVPs.
+- **Careers**: companies, jobs with skill matching, saved jobs, applications with private
+  résumés and a hiring pipeline.
+- **Messaging**: direct and group conversations, live delivery, typing indicators, read receipts.
+- **Release**: production images, nginx with a Content Security Policy, a production compose
+  file, rate limits, a deploy-settings check, an OpenAPI check, image builds in CI, a release
+  workflow, demo data, query-count and anonymous-access guards.
+
+### Removed
+
+- The legacy skeleton and its secrets. Owners must still rotate the old keys and purge the old
+  database and keys from git history; see SECURITY.md.

@@ -1,15 +1,15 @@
 from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from . import selectors, services
-from .models import Certificate, Enrollment, Lesson, LessonAttachment, Quiz
+from .models import Certificate, Course, Enrollment, Lesson, LessonAttachment, Quiz
 from .permissions import IsCourseOwner, IsInstructorOrReadOnly
 from .serializers import (
     CertificateSerializer,
@@ -28,6 +28,8 @@ from .serializers import (
 
 class CourseViewSet(viewsets.ModelViewSet):
     """Published courses for everyone signed in; drafts only for their instructor."""
+
+    queryset = Course.objects.none()  # for the schema; get_queryset() scopes to the user
 
     permission_classes = [IsInstructorOrReadOnly, IsCourseOwner]
     lookup_field = "slug"
@@ -51,13 +53,13 @@ class CourseViewSet(viewsets.ModelViewSet):
         return Response(CourseDetailSerializer(self.get_queryset().get(pk=course.pk)).data)
 
     @extend_schema(request=None, responses={201: ProgressSerializer})
-    @action(detail=True, methods=["post"], permission_classes=[])
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
     def enroll(self, request, slug=None):
         enrollment = services.enroll(request.user, self.get_object())
         return Response(ProgressSerializer(enrollment).data, status=status.HTTP_201_CREATED)
 
     @extend_schema(responses={200: ProgressSerializer, 204: None})
-    @action(detail=True, methods=["get"], permission_classes=[])
+    @action(detail=True, methods=["get"], permission_classes=[IsAuthenticated])
     def progress(self, request, slug=None):
         enrollment = selectors.enrollment_for(request.user, self.get_object())
         if enrollment is None:
@@ -65,8 +67,11 @@ class CourseViewSet(viewsets.ModelViewSet):
         return Response(ProgressSerializer(enrollment).data)
 
 
+@extend_schema(parameters=[OpenApiParameter("course_slug", str, OpenApiParameter.PATH)])
 class LessonViewSet(viewsets.ModelViewSet):
     """Nested under a course. Content is gated: enrolled, free preview, or the instructor."""
+
+    queryset = Lesson.objects.none()  # for the schema; get_queryset() scopes to the user
 
     serializer_class = LessonSerializer
     permission_classes = [IsInstructorOrReadOnly, IsCourseOwner]
@@ -114,7 +119,7 @@ class LessonViewSet(viewsets.ModelViewSet):
             raise ValidationError({"order": "Another lesson already has this position."})
 
     @extend_schema(request=None, responses=ProgressSerializer)
-    @action(detail=True, methods=["post"], permission_classes=[])
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
     def complete(self, request, course_slug=None, pk=None):
         enrollment = services.complete_lesson(request.user, self.get_object())
         return Response(
@@ -194,6 +199,7 @@ class QuizSubmitView(APIView):
 
 
 class MyEnrollmentsView(generics.ListAPIView):
+    queryset = Enrollment.objects.none()  # for the schema; get_queryset() scopes to the user
     serializer_class = EnrollmentSerializer
 
     def get_queryset(self):

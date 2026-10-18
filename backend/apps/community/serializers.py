@@ -29,7 +29,7 @@ class GroupSerializer(serializers.ModelSerializer):
         read_only_fields = ["slug"]
 
 
-class MemberSerializer(serializers.ModelSerializer):
+class GroupMemberSerializer(serializers.ModelSerializer):
     person = AuthorSerializer(source="user")
     user_id = serializers.IntegerField()
     headline = serializers.CharField(source="user.profile.headline", default="")

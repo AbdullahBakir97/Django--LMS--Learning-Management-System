@@ -38,7 +38,7 @@ class CompanyRefSerializer(serializers.ModelSerializer):
         fields = ["slug", "name", "logo", "location"]
 
 
-class MemberSerializer(serializers.ModelSerializer):
+class CompanyMemberSerializer(serializers.ModelSerializer):
     person = AuthorSerializer(source="user")
     user_id = serializers.IntegerField()
 

@@ -15,20 +15,24 @@ from dj_rest_auth.views import (
 from django.urls import path
 from rest_framework_simplejwt.views import TokenVerifyView
 
+from apps.core.throttling import AuthRateThrottle
+
 from .views import FrontendRedirectView
 
+limited = {"throttle_classes": [AuthRateThrottle]}
+
 urlpatterns = [
-    path("register/", RegisterView.as_view(), name="rest_register"),
-    path("verify-email/", VerifyEmailView.as_view(), name="rest_verify_email"),
-    path("resend-email/", ResendEmailVerificationView.as_view(), name="rest_resend_email"),
-    path("login/", LoginView.as_view(), name="rest_login"),
+    path("register/", RegisterView.as_view(**limited), name="rest_register"),
+    path("verify-email/", VerifyEmailView.as_view(**limited), name="rest_verify_email"),
+    path("resend-email/", ResendEmailVerificationView.as_view(**limited), name="rest_resend_email"),
+    path("login/", LoginView.as_view(**limited), name="rest_login"),
     path("logout/", LogoutView.as_view(), name="rest_logout"),
     path("user/", UserDetailsView.as_view(), name="rest_user_details"),
     path("password/change/", PasswordChangeView.as_view(), name="rest_password_change"),
-    path("password/reset/", PasswordResetView.as_view(), name="rest_password_reset"),
+    path("password/reset/", PasswordResetView.as_view(**limited), name="rest_password_reset"),
     path(
         "password/reset/confirm/",
-        PasswordResetConfirmView.as_view(),
+        PasswordResetConfirmView.as_view(**limited),
         name="rest_password_reset_confirm",
     ),
     path("token/refresh/", get_refresh_view().as_view(), name="token_refresh"),
