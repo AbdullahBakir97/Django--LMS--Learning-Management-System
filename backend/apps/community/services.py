@@ -54,10 +54,10 @@ def join(actor, group: Group) -> Membership:
     if existing:
         return existing
     private = group.privacy == Group.Privacy.PRIVATE
-    m = Membership.objects.create(
-        group=group, user=actor, status=Status.PENDING if private else Status.ACTIVE
+    m, created = Membership.objects.get_or_create(
+        group=group, user=actor, defaults={"status": Status.PENDING if private else Status.ACTIVE}
     )
-    if private:
+    if private and created:  # a double click must not notify the managers twice
         managers = list(
             Membership.objects.filter(
                 group=group, status=Status.ACTIVE, role__in=[Role.OWNER, Role.ADMIN]
@@ -121,6 +121,7 @@ def set_role(actor, group: Group, user_id, role: str) -> Membership:
 MAX_IMAGES = 4
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
 MAX_IMAGE_SIDE = 2000
+MAX_IMAGE_PIXELS = 40_000_000  # a 40 MP photo decodes to about 120 MB
 
 
 def _clean_image(upload) -> tuple[ContentFile, int, int]:
@@ -128,7 +129,10 @@ def _clean_image(upload) -> tuple[ContentFile, int, int]:
     if upload.size > MAX_IMAGE_BYTES:
         raise ValidationError({"images": "Each image must be 8 MB or smaller."})
     try:
-        with Image.open(upload) as img:
+        with Image.open(upload, formats=["JPEG", "PNG", "WEBP", "GIF"]) as img:
+            # Opening reads only the header: refuse huge canvases before decoding them.
+            if img.width * img.height > MAX_IMAGE_PIXELS:
+                raise ValidationError({"images": "That image is too large."})
             img = ImageOps.exif_transpose(img).convert("RGB")
             img.thumbnail((MAX_IMAGE_SIDE, MAX_IMAGE_SIDE))
             out = io.BytesIO()

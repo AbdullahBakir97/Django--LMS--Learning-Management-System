@@ -13,6 +13,14 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "username", "email", "role", "date_joined"]
 
 
+class PublicUserSerializer(UserSerializer):
+    """Someone else's account, as shown on their profile: no email address."""
+
+    class Meta(UserSerializer.Meta):
+        fields = [f for f in UserSerializer.Meta.fields if f != "email"]
+        read_only_fields = fields
+
+
 class RegisterSerializer(DefaultRegisterSerializer):
     """allauth only rejects emails with a *verified* address row; reject any existing user."""
 

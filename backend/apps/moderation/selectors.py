@@ -10,7 +10,7 @@ def queue(status: str = Report.Status.OPEN) -> list[dict]:
     """Reports grouped by what they are about, oldest first."""
     # shortcut: groups in Python and previews one object per group; fine for a moderation
     # queue of hundreds, move the grouping into SQL if it grows into thousands.
-    reports = Report.objects.filter(status=status).select_related("reporter", "resolved_by")
+    reports = Report.objects.filter(status=status).select_related("reporter__profile")
     groups: dict[tuple[str, int], list[Report]] = defaultdict(list)
     for r in reports.order_by("created_at"):
         groups[(r.kind, r.object_id)].append(r)

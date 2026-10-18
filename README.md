@@ -75,20 +75,20 @@ flowchart LR
   subgraph Backend
     config --> accounts & careers & community & engagement & learning & messaging & network & notifications & profiles & core
     notifications -- 31 --> core
-    learning -- 21 --> core
+    learning -- 24 --> core
+    careers -- 22 --> core
     profiles -- 20 --> core
-    careers -- 18 --> core
     community -- 16 --> engagement
     community -- 15 --> core
     network -- 13 --> core
     messaging -- 11 --> core
     engagement -- 10 --> core
     careers -- 6 --> profiles
+    profiles -- 5 --> accounts
     careers -- 5 --> engagement
     community -- 5 --> network
     messaging -- 5 --> engagement
     learning -- 4 --> accounts
-    profiles -- 3 --> accounts
     messaging -- 3 --> network
     network -- 3 --> profiles
     accounts -- 2 --> core

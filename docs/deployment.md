@@ -37,6 +37,7 @@ Everything comes from the environment. The ones that matter most:
 | `POSTGRES_PASSWORD` | long and random |
 | `EMAIL_*`, `DEFAULT_FROM_EMAIL` | SMTP for verification, password reset and notification email |
 | `THROTTLE_ANON`, `THROTTLE_USER`, `THROTTLE_AUTH` | rate limits, defaults 60, 600 and 10 per minute |
+| `NUM_PROXIES` | proxies in front of Django, default `1` (nginx in the image); add one per load balancer, or rate limits can be dodged with a forged `X-Forwarded-For` |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | paid courses; leave both empty and every course stays free to join |
 | `PAYMENTS_CURRENCY` | currency for new course prices, default `usd` |
 

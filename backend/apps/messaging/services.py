@@ -61,6 +61,10 @@ def _require_participant(actor, conversation_id) -> Participant:
 @transaction.atomic
 def send(actor, conversation: Conversation, body: str) -> Message:
     me = _require_participant(actor, conversation.id)
+    if not conversation.is_group:
+        other = conversation.participants.exclude(user=actor).select_related("user").first()
+        if other and not connected(actor, other.user):
+            raise PermissionDenied("You are no longer connected, so you cannot reply here.")
     if not body.strip():
         raise ValidationError({"body": "Write something first."})
     message = Message.objects.create(conversation=conversation, sender=actor, body=body.strip())

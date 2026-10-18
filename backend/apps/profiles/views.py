@@ -11,6 +11,7 @@ from .serializers import (
     AddSkillSerializer,
     EducationSerializer,
     ExperienceSerializer,
+    MyProfileSerializer,
     PortfolioItemSerializer,
     ProfileSerializer,
     ProfileSkillSerializer,
@@ -21,7 +22,7 @@ from .serializers import (
 class MyProfileView(generics.RetrieveUpdateAPIView):
     """GET or PATCH the signed-in user's profile."""
 
-    serializer_class = ProfileSerializer
+    serializer_class = MyProfileSerializer
 
     def get_object(self):
         return profile_queryset().get(user=self.request.user)
@@ -29,7 +30,7 @@ class MyProfileView(generics.RetrieveUpdateAPIView):
 
 class ProfileDetailView(generics.RetrieveAPIView):
     serializer_class = ProfileSerializer
-    queryset = profile_queryset()
+    queryset = profile_queryset().filter(user__is_active=True)
     lookup_field = "user__username"
     lookup_url_kwarg = "username"
 

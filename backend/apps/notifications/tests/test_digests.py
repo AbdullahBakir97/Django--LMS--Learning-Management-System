@@ -112,3 +112,46 @@ def test_every_kind_has_an_icon_in_the_app():
         re.findall(r"^  (\w+): Ph", (root / "features/notifications/format.ts").read_text(), re.M)
     )
     assert set(Kind.values) <= declared and set(Kind.values) <= icons
+
+
+@pytest.mark.django_db
+def test_a_held_email_is_dropped_if_read_or_switched_off_meanwhile(user, mailoutbox):
+    from apps.notifications.tasks import send_notification_email
+
+    seen = notify(user.id, Kind.COURSE_COMPLETED, "Seen in the app")
+    seen.read_at = seen.created_at
+    seen.save()
+    send_notification_email(seen.id)
+    muted = notify(user.id, Kind.COURSE_COMPLETED, "Email turned off later")
+    Preference.objects.create(user=user, email_enabled=False)
+    send_notification_email(muted.id)
+    assert mailoutbox == []
+
+
+@pytest.mark.django_db
+def test_one_failing_digest_does_not_stop_the_others(mailoutbox):
+    from conftest import UserFactory
+
+    readers = UserFactory.create_batch(3)
+    for u in readers:
+        Preference.objects.create(user=u, digest="daily")
+        notify(u.id, Kind.ENROLMENT, f"For {u.username}")
+    real = __import__("django.core.mail", fromlist=["send_mail"]).send_mail
+    calls = []
+
+    def flaky(subject, body, sender, to):
+        calls.append(to)
+        if len(calls) == 1:
+            raise OSError("SMTP down")
+        return real(subject, body, sender, to)
+
+    eight = datetime.now(UTC).replace(hour=8, minute=0)
+    with (
+        mock.patch("django.utils.timezone.now", return_value=eight),
+        mock.patch("apps.notifications.tasks.send_mail", flaky),
+    ):
+        assert send_digests() == 2
+        failed = Preference.objects.get(user__email=calls[0][0])
+        assert failed.last_digest_at is None, "retried by a re-run"
+        assert send_digests() == 1
+    assert len(mailoutbox) == 3

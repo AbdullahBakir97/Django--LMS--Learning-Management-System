@@ -179,3 +179,12 @@ def test_typing_goes_to_the_other_participants(user, auth_client, friend):
             await c.wait(timeout=3)
 
     async_to_sync(scenario)()
+
+
+@pytest.mark.django_db
+def test_removing_a_connection_stops_the_direct_conversation(user, auth_client, friend):
+    conversation = auth_client.post("/api/conversations/", {"usernames": ["sami"]}).json()
+    url = f"/api/conversations/{conversation['id']}/messages/"
+    assert auth_client.post(url, {"body": "hi"}).status_code == 201
+    Connection.objects.all().delete()
+    assert client_for(friend).post(url, {"body": "still here"}).status_code == 403

@@ -18,6 +18,9 @@ export const useSessionStore = defineStore('session', {
         // Offline: the service worker answers with the last signed-in user, if any,
         // so lessons read before stay readable. Writes fail until the network is back.
         this.user = await auth.me().catch(() => null)
+      } else {
+        // Online with no valid session: what an earlier user left offline must not show later.
+        clearOfflineData()
       }
     },
     async login(email: string, password: string) {

@@ -56,7 +56,15 @@ class PostImageSerializer(serializers.ModelSerializer):
 
 
 class SharedPostSerializer(serializers.ModelSerializer):
-    """The original inside a share: enough to show it, without its own counters."""
+    """The original inside a share: enough to show it, without its own counters.
+
+    Hidden once its group is not public, since the share is seen by people outside it.
+    """
+
+    def to_representation(self, post):
+        if post.group_id and post.group.privacy != Group.Privacy.PUBLIC:
+            return None
+        return super().to_representation(post)
 
     author = AuthorSerializer(read_only=True)
     group = GroupRefSerializer(read_only=True)
@@ -113,9 +121,13 @@ class PostSerializer(serializers.ModelSerializer):
         return obj.author_id == self.context["request"].user.id
 
     def get_can_delete(self, obj) -> bool:
-        from .services import can_moderate_post
+        managed = self.context.get("managed_groups")
+        if managed is None:
+            from .services import can_moderate_post
 
-        return can_moderate_post(self.context["request"].user, obj)
+            return can_moderate_post(self.context["request"].user, obj)
+        user = self.context["request"].user
+        return obj.author_id == user.id or user.role == "admin" or obj.group_id in managed
 
 
 class PostWriteSerializer(serializers.Serializer):

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.accounts.serializers import UserSerializer
+from apps.accounts.serializers import PublicUserSerializer, UserSerializer
 
 from .models import Achievement, Education, Experience, PortfolioItem, Profile, ProfileSkill, Skill
 
@@ -70,7 +70,7 @@ class AddSkillSerializer(serializers.Serializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = PublicUserSerializer(read_only=True)
     experiences = ExperienceSerializer(many=True, read_only=True)
     educations = EducationSerializer(many=True, read_only=True)
     skills = ProfileSkillSerializer(many=True, read_only=True)
@@ -96,3 +96,9 @@ class ProfileSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class MyProfileSerializer(ProfileSerializer):
+    """Your own profile: the same, with your email address."""
+
+    user = UserSerializer(read_only=True)

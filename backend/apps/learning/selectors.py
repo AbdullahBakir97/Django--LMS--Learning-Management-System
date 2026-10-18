@@ -1,13 +1,16 @@
-from django.db.models import Count, Prefetch, Q
+from django.db.models import OuterRef, Prefetch, Q
+
+from apps.core.stats import count_of
 
 from .models import Course, Enrollment, Lesson, Question
 
 
 def visible_courses(user):
     """Published courses, plus the drafts the user teaches."""
+    # Subqueries, not two Counts: joining lessons and enrolments multiplies the rows.
     qs = Course.objects.select_related("instructor").annotate(
-        lesson_count=Count("lessons", distinct=True),
-        enrollment_count=Count("enrollments", distinct=True),
+        lesson_count=count_of(Lesson.objects.filter(course=OuterRef("pk"))),
+        enrollment_count=count_of(Enrollment.objects.filter(course=OuterRef("pk"))),
     )
     return qs.filter(Q(status=Course.Status.PUBLISHED) | Q(instructor=user))
 

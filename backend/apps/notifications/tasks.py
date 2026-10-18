@@ -1,3 +1,5 @@
+import logging
+
 from celery import shared_task
 from django.conf import settings
 from django.core.mail import send_mail
@@ -6,11 +8,21 @@ from django.utils import timezone
 from . import schedule
 from .models import Notification, Preference
 
+logger = logging.getLogger(__name__)
+
 
 @shared_task
 def send_notification_email(notification_id: int) -> None:
     n = Notification.objects.select_related("recipient").filter(pk=notification_id).first()
-    if n is None:
+    if n is None or n.read_at:
+        return  # gone, or already read in the app while quiet hours held the email
+    # Settings may have changed while the email waited.
+    preference = Preference.objects.filter(user_id=n.recipient_id).first()
+    if preference and (
+        not preference.email_enabled
+        or n.kind in preference.muted_kinds
+        or preference.digest != Preference.Digest.OFF
+    ):
         return
     link = f"{settings.FRONTEND_URL}{n.url}" if n.url else settings.FRONTEND_URL
     body = "\n\n".join(part for part in (n.body, link) if part)
@@ -38,11 +50,15 @@ def send_digests() -> int:
             .exclude(kind__in=preference.muted_kinds)
             .order_by("-created_at")[:DIGEST_LIMIT]
         )
+        if items:
+            try:
+                _send_digest(preference, items)
+            except Exception:  # one bad address or SMTP hiccup must not stop everyone else's
+                logger.exception("digest failed", extra={"user": preference.user_id})
+                continue  # not marked sent, so a re-run of this hour retries it
+            sent += 1
         preference.last_digest_at = now
         preference.save(update_fields=["last_digest_at", "updated_at"])
-        if items:
-            _send_digest(preference, items)
-            sent += 1
     return sent
 
 
