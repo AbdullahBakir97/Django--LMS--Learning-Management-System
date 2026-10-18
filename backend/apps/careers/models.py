@@ -77,6 +77,20 @@ class CompanyFollower(TimeStampedModel):
         ]
 
 
+class CompanyUpdate(TimeStampedModel):
+    """News from a company's team: shown on its page and to the people who follow it."""
+
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="updates")
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    body = models.TextField(max_length=3000)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["company", "-created_at"], name="company_update_idx")]
+
+
 class Job(TimeStampedModel):
     class Status(models.TextChoices):
         DRAFT = "draft"

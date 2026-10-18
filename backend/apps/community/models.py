@@ -1,3 +1,5 @@
+import uuid
+
 from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
@@ -72,8 +74,13 @@ class Post(TimeStampedModel):
     group = models.ForeignKey(
         Group, null=True, blank=True, on_delete=models.CASCADE, related_name="posts"
     )
-    body = models.TextField(max_length=5000)
+    body = models.TextField(max_length=5000, blank=True)
     edited_at = models.DateTimeField(null=True, blank=True)
+    # A share points at the original post (sharing a share points at its original) and goes
+    # when the original goes.
+    shared_from = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.CASCADE, related_name="shares"
+    )
 
     class Meta:
         ordering = ["-created_at"]
@@ -81,6 +88,23 @@ class Post(TimeStampedModel):
 
     def __str__(self):
         return f"post {self.pk} by {self.author_id}"
+
+
+def post_image_path(instance, filename):
+    # shortcut: random names keep images in private groups unguessable, but /media/ is public;
+    # serve them through a permission-checked view (like résumés) if that is not enough.
+    return f"posts/{uuid.uuid4().hex}.jpg"
+
+
+class PostImage(TimeStampedModel):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="images")
+    image = models.ImageField(upload_to=post_image_path)
+    width = models.PositiveIntegerField()
+    height = models.PositiveIntegerField()
+    position = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["position"]
 
 
 class Event(TimeStampedModel):
@@ -126,3 +150,23 @@ class Attendance(TimeStampedModel):
 
     def __str__(self):
         return f"{self.user_id} {self.status} {self.event_id}"
+
+
+class EventFeedback(TimeStampedModel):
+    """After an event, someone who went rates it. The host reads the comments."""
+
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="feedback")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="event_feedback"
+    )
+    rating = models.PositiveSmallIntegerField()
+    comment = models.TextField(blank=True, max_length=2000)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["event", "user"], name="feedback_once"),
+            models.CheckConstraint(
+                condition=models.Q(rating__gte=1, rating__lte=5), name="feedback_rating_1_to_5"
+            ),
+        ]

@@ -1,8 +1,9 @@
-from django.db.models import Count, OuterRef, Q
+from django.db.models import Avg, Count, OuterRef, Q, Subquery
+from django.db.models.functions import Coalesce
 
 from apps.network.models import Connection, Follow
 
-from .models import Attendance, Event, Group, Membership, Post
+from .models import Attendance, Event, EventFeedback, Group, Membership, Post
 
 Active = Membership.Status.ACTIVE
 
@@ -40,7 +41,13 @@ def readable_groups(user):
 
 
 def posts_base():
-    return Post.objects.select_related("author__profile", "group")
+    return (
+        Post.objects.select_related(
+            "author__profile", "group", "shared_from__author__profile", "shared_from__group"
+        )
+        .prefetch_related("images", "shared_from__images")
+        .annotate(share_count=Count("shares", distinct=True))
+    )
 
 
 def feed_for(user):
@@ -69,6 +76,9 @@ def posts_by(author, viewer):
     )
 
 
+_feedback = EventFeedback.objects.filter(event=OuterRef("pk")).order_by().values("event")
+
+
 def events_visible(user):
     going = Attendance.objects.filter(event=OuterRef("pk"), user=user)
     return (
@@ -79,5 +89,11 @@ def events_visible(user):
                 "attendances", filter=Q(attendances__status=Attendance.Status.GOING), distinct=True
             ),
             my_status=going.values("status")[:1],
+            # Subqueries, not joins: a join here would multiply the going count.
+            rating=Subquery(_feedback.annotate(avg=Avg("rating")).values("avg")),
+            rating_count=Coalesce(Subquery(_feedback.annotate(n=Count("id")).values("n")), 0),
+            my_rating=EventFeedback.objects.filter(event=OuterRef("pk"), user=user).values(
+                "rating"
+            )[:1],
         )
     )

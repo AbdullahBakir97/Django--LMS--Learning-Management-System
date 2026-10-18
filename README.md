@@ -17,8 +17,8 @@ notifications. Django REST Framework on PostgreSQL and Redis, with a Vue 3 front
 | **Discussion** | Comments, replies and reactions on lessons and posts | Moderation of discussions on your own lessons and groups |
 | **Profiles** | Experience, education, skills and endorsements, a portfolio, badges earned along the way, recommendations from connections that you approve | |
 | **Network** | Follow, connect, people who share your skills | |
-| **Community** | A feed, public and private groups, events with RSVPs | Group roles and approvals, events with capacity |
-| **Careers** | Job search with skill match, saved jobs, applications with a private résumé, interview invitations to confirm and add to a calendar | Company pages, job posts, an applicant pipeline, interview scheduling |
+| **Community** | A feed with images and shares, public and private groups, events with RSVPs and ratings afterwards | Group roles and approvals, events with capacity, attendee feedback |
+| **Careers** | Job search with skill match, saved jobs, applications with a private résumé, interview invitations to confirm and add to a calendar | Company pages, job posts, an applicant pipeline, interview scheduling, company updates for followers |
 | **Messaging** | Direct and group conversations, live, with typing and read receipts | |
 | **Search** | One box for people, courses, groups, events, jobs and companies, with results as you type (Ctrl/⌘ K) | Drafts and private groups stay visible only to the people who can see them |
 | **Notifications** | Live in the app, email for what matters or a daily or weekly digest, quiet hours in your time zone, per-kind preferences | |
@@ -41,6 +41,8 @@ API is described by OpenAPI at `/api/docs/`.
 | A profile with portfolio, badges and recommendations | Interview invitations to confirm |
 | ![Offline](docs/screenshots/offline-mobile.png) | ![Search](docs/screenshots/search-light.png) |
 | A lesson read offline on a phone | Search across everything as you type |
+| ![Feed](docs/screenshots/feed-light.png) | |
+| The feed with images, a share and company news | |
 
 Light and dark themes, and every screen works at phone width. More in
 [docs/screenshots](docs/screenshots).
@@ -66,20 +68,20 @@ importing the contexts that publish them.
 flowchart LR
   subgraph Backend
     config --> accounts & careers & community & engagement & learning & messaging & network & notifications & profiles & core
-    notifications -- 29 --> core
+    notifications -- 30 --> core
     profiles -- 20 --> core
-    careers -- 17 --> core
+    careers -- 18 --> core
+    community -- 16 --> engagement
+    community -- 15 --> core
     learning -- 15 --> core
-    community -- 14 --> engagement
     network -- 13 --> core
-    community -- 12 --> core
     messaging -- 11 --> core
     engagement -- 10 --> core
     careers -- 6 --> profiles
+    careers -- 5 --> engagement
     community -- 5 --> network
     messaging -- 5 --> engagement
     learning -- 4 --> accounts
-    careers -- 4 --> engagement
     profiles -- 3 --> accounts
     messaging -- 3 --> network
     network -- 3 --> profiles
@@ -94,12 +96,12 @@ flowchart LR
     messaging -. events .-> notifications
   end
   subgraph Frontend
-    pages -- 156 --> api
-    features -- 138 --> api
+    pages -- 160 --> api
+    features -- 148 --> api
     pages -- 92 --> components
-    pages -- 64 --> features
+    pages -- 67 --> features
     router -- 62 --> pages
-    features -- 48 --> components
+    features -- 52 --> components
     pages -- 22 --> stores
     stores -- 14 --> api
     features -- 13 --> stores

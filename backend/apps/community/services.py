@@ -1,13 +1,17 @@
 """Writes with rules. Every function takes the acting user first."""
 
+import io
+
+from django.core.files.base import ContentFile
 from django.db import transaction
 from django.utils import timezone
+from PIL import Image, ImageOps
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from apps.core import events
 
 from . import events as names
-from .models import Attendance, Event, Group, Membership, Post
+from .models import Attendance, Event, EventFeedback, Group, Membership, Post, PostImage
 from .selectors import is_member, membership
 
 Role, Status = Membership.Role, Membership.Status
@@ -114,10 +118,59 @@ def set_role(actor, group: Group, user_id, role: str) -> Membership:
     return m
 
 
-def create_post(actor, body: str, group: Group | None = None) -> Post:
+MAX_IMAGES = 4
+MAX_IMAGE_BYTES = 8 * 1024 * 1024
+MAX_IMAGE_SIDE = 2000
+
+
+def _clean_image(upload) -> tuple[ContentFile, int, int]:
+    """Re-encode: drops EXIF (phone photos carry GPS), turns it upright, and caps its size."""
+    if upload.size > MAX_IMAGE_BYTES:
+        raise ValidationError({"images": "Each image must be 8 MB or smaller."})
+    try:
+        with Image.open(upload) as img:
+            img = ImageOps.exif_transpose(img).convert("RGB")
+            img.thumbnail((MAX_IMAGE_SIDE, MAX_IMAGE_SIDE))
+            out = io.BytesIO()
+            img.save(out, "JPEG", quality=85, optimize=True)
+    except (OSError, Image.DecompressionBombError):
+        raise ValidationError({"images": "That file is not an image we can read."}) from None
+    return ContentFile(out.getvalue(), name="image.jpg"), img.width, img.height
+
+
+@transaction.atomic
+def create_post(actor, body: str, group: Group | None = None, images=()) -> Post:
     if group is not None and not is_member(actor, group):
         raise PermissionDenied("Join the group to post in it.")
-    return Post.objects.create(author=actor, body=body, group=group)
+    if len(images) > MAX_IMAGES:
+        raise ValidationError({"images": f"Up to {MAX_IMAGES} images per post."})
+    if not body.strip() and not images:
+        raise ValidationError({"body": "Write something or add an image."})
+    cleaned = [_clean_image(upload) for upload in images]  # all checked before anything is saved
+    post = Post.objects.create(author=actor, body=body, group=group)
+    for position, (file, width, height) in enumerate(cleaned):
+        PostImage.objects.create(
+            post=post, image=file, width=width, height=height, position=position
+        )
+    return post
+
+
+def share_post(actor, post: Post, body: str = "") -> Post:
+    """Share to your own profile. Only posts anyone may read can travel."""
+    original = post.shared_from or post
+    if original.group_id and original.group.privacy != Group.Privacy.PUBLIC:
+        raise PermissionDenied("Posts in private groups stay in the group.")
+    share = Post.objects.create(author=actor, body=body, shared_from=original)
+    if original.author_id != actor.id:
+        events.publish(
+            names.POST_SHARED,
+            post_id=original.id,
+            share_id=share.id,
+            author_id=original.author_id,
+            sharer_id=actor.id,
+            sharer_name=_name(actor),
+        )
+    return share
 
 
 def edit_post(actor, post: Post, body: str) -> Post:
@@ -195,3 +248,15 @@ def rsvp(actor, event: Event, status: str) -> Attendance:
 
 def cancel_rsvp(actor, event: Event) -> None:
     Attendance.objects.filter(event=event, user=actor).delete()
+
+
+def give_feedback(actor, event: Event, rating: int, comment: str = "") -> EventFeedback:
+    if event.ends_at > timezone.now():
+        raise ValidationError("Feedback opens when the event is over.")
+    went = Attendance.objects.filter(event=event, user=actor, status=Attendance.Status.GOING)
+    if not went.exists():
+        raise PermissionDenied("Only people who went can rate an event.")
+    feedback, _ = EventFeedback.objects.update_or_create(
+        event=event, user=actor, defaults={"rating": rating, "comment": comment}
+    )
+    return feedback

@@ -9,6 +9,7 @@ router.register("companies", views.CompanyViewSet, basename="company")
 router.register("jobs", views.JobViewSet, basename="job")
 router.register("applications", views.ApplicationViewSet, basename="application")
 router.register("interviews", views.InterviewViewSet, basename="interview")
+router.register("company-updates", views.CompanyUpdateViewSet, basename="company-update")
 
 urlpatterns = [
     path(

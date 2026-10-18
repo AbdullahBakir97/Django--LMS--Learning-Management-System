@@ -32,17 +32,36 @@ export interface Member {
   created_at: string
 }
 
-export interface Post {
+export interface PostImage {
+  image: string
+  width: number
+  height: number
+}
+
+export interface SharedPost {
   id: number
   author: Author
   group: { slug: string; name: string; privacy: Privacy } | null
   body: string
-  edited: boolean
+  images: PostImage[]
   created_at: string
+}
+
+export interface Post extends SharedPost {
+  edited: boolean
   reactions: ReactionSummary
   comment_count: number
   can_edit: boolean
   can_delete: boolean
+  shared_from: SharedPost | null
+  share_count: number
+}
+
+export interface EventFeedback {
+  person: Author
+  rating: number
+  comment: string
+  created_at: string
 }
 
 export interface CommunityEvent {
@@ -59,6 +78,9 @@ export interface CommunityEvent {
   going_count: number
   my_status: 'going' | 'interested' | null
   can_edit: boolean
+  rating: number | null
+  rating_count: number
+  my_rating: number | null
   created_at: string
 }
 
@@ -79,8 +101,14 @@ export const community = {
   postsBy: (username: string, cursor?: string) =>
     api<Page<Post>>(`/posts/${qs({ author: username, cursor })}`),
   post: (id: number) => api<Post>(`/posts/${id}/`),
-  createPost: (body: string, groupSlug?: string | null) =>
-    api<Post>('/posts/', { method: 'POST', body: { body, group_slug: groupSlug ?? null } }),
+  createPost: (body: string, groupSlug?: string | null, images: File[] = []) => {
+    const form = new FormData()
+    form.append('body', body)
+    if (groupSlug) form.append('group_slug', groupSlug)
+    for (const image of images) form.append('images', image)
+    return api<Post>('/posts/', { method: 'POST', body: form })
+  },
+  sharePost: (id: number, body = '') => api<Post>(`/posts/${id}/share/`, { method: 'POST', body: { body } }),
   editPost: (id: number, body: string) => api<Post>(`/posts/${id}/`, { method: 'PATCH', body: { body } }),
   deletePost: (id: number) => api<void>(`/posts/${id}/`, { method: 'DELETE' }),
 
@@ -116,6 +144,9 @@ export const community = {
   rsvp: (id: number, status: 'going' | 'interested') =>
     api<CommunityEvent>(`/events/${id}/rsvp/`, { method: 'PUT', body: { status } }),
   cancelRsvp: (id: number) => api<CommunityEvent>(`/events/${id}/rsvp/`, { method: 'DELETE' }),
+  rateEvent: (id: number, rating: number, comment = '') =>
+    api<EventFeedback>(`/events/${id}/feedback/`, { method: 'PUT', body: { rating, comment } }),
+  eventFeedback: (id: number) => api<EventFeedback[]>(`/events/${id}/feedback/`),
 }
 
 export const cursorOf = (url: string | null) =>

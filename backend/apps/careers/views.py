@@ -12,13 +12,14 @@ from rest_framework.views import APIView
 
 from . import selectors, services
 from .ics import interview_ics
-from .models import Application, Company, Interview, Job
+from .models import Application, Company, CompanyUpdate, Interview, Job
 from .serializers import (
     AddMemberSerializer,
     ApplicationSerializer,
     ApplySerializer,
     CompanyMemberSerializer,
     CompanySerializer,
+    CompanyUpdateSerializer,
     InterviewReplySerializer,
     InterviewSerializer,
     JobSerializer,
@@ -26,6 +27,10 @@ from .serializers import (
 )
 
 User = get_user_model()
+
+
+def update_context(request, rows) -> dict:
+    return {"request": request, "team_update_ids": selectors.team_update_ids(request.user, rows)}
 
 
 class CompanyViewSet(viewsets.ModelViewSet):
@@ -61,6 +66,27 @@ class CompanyViewSet(viewsets.ModelViewSet):
         company = self.get_object()
         (services.follow if request.method == "POST" else services.unfollow)(request.user, company)
         return Response(self.get_serializer(self.get_queryset().get(pk=company.pk)).data)
+
+    @extend_schema(methods=["GET"], responses=CompanyUpdateSerializer(many=True))
+    @extend_schema(
+        methods=["POST"], request=CompanyUpdateSerializer, responses=CompanyUpdateSerializer
+    )
+    @action(detail=True, methods=["get", "post"], url_path="updates")
+    def updates(self, request, slug=None):
+        """News from this company. Its team posts here; followers see it on their home page."""
+        company = self.get_object()
+        if request.method == "POST":
+            data = CompanyUpdateSerializer(data=request.data)
+            data.is_valid(raise_exception=True)
+            update = services.post_update(request.user, company, data.validated_data["body"])
+            return Response(
+                CompanyUpdateSerializer(update, context=update_context(request, [update])).data,
+                status=status.HTTP_201_CREATED,
+            )
+        page = self.paginate_queryset(selectors.updates().filter(company=company))
+        return self.get_paginated_response(
+            CompanyUpdateSerializer(page, many=True, context=update_context(request, page)).data
+        )
 
     @extend_schema(methods=["GET"], responses=CompanyMemberSerializer(many=True))
     @extend_schema(methods=["POST"], request=AddMemberSerializer, responses=CompanyMemberSerializer)
@@ -296,3 +322,27 @@ class InterviewViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
         response = HttpResponse(interview_ics(self.get_object()), content_type="text/calendar")
         response["Content-Disposition"] = f'attachment; filename="interview-{pk}.ics"'
         return response
+
+
+class CompanyUpdateViewSet(
+    mixins.ListModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet
+):
+    """GET: news from the companies you follow. DELETE one your team posted."""
+
+    queryset = CompanyUpdate.objects.none()  # for the schema; get_queryset() scopes to the user
+    serializer_class = CompanyUpdateSerializer
+    lookup_value_regex = r"\d+"
+
+    def get_queryset(self):
+        if self.action == "list":
+            return selectors.updates_for_follower(self.request.user)
+        return selectors.updates()
+
+    def list(self, request):
+        page = self.paginate_queryset(self.get_queryset())
+        return self.get_paginated_response(
+            CompanyUpdateSerializer(page, many=True, context=update_context(request, page)).data
+        )
+
+    def perform_destroy(self, instance):
+        services.delete_update(self.request.user, instance)

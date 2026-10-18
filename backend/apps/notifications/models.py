@@ -26,6 +26,7 @@ class Notification(TimeStampedModel):
         ACHIEVEMENT = "achievement", "You earned a badge"
         INTERVIEW = "interview", "Interview invitation or change"
         INTERVIEW_REPLY = "interview_reply", "A candidate replied to an interview"
+        POST_SHARED = "post_shared", "Someone shared your post"
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"
