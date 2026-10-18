@@ -1,6 +1,6 @@
 from collections import Counter, defaultdict
 
-from django.db.models import Exists, OuterRef, Prefetch
+from django.db.models import Count, Exists, OuterRef, Prefetch
 
 from .models import Comment, Reaction
 
@@ -32,3 +32,15 @@ def reaction_summary(target_type: str, ids, user) -> dict:
     for target_id, c in counts.items():
         out[target_id]["counts"] = dict(c)
     return out
+
+
+def comment_counts(target_type: str, ids) -> dict:
+    """{target_id: number of live comments and replies} for many targets in one query."""
+    rows = (
+        Comment.objects.filter(
+            target_type=target_type, target_id__in=list(ids), deleted_at__isnull=True
+        )
+        .values("target_id")
+        .annotate(n=Count("id"))
+    )
+    return {r["target_id"]: r["n"] for r in rows}

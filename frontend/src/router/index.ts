@@ -19,6 +19,34 @@ export const router = createRouter({
           props: true,
         },
         {
+          path: 'groups',
+          name: 'groups',
+          component: () => import('@/pages/GroupsPage.vue'),
+        },
+        {
+          path: 'groups/:slug',
+          name: 'group',
+          component: () => import('@/pages/GroupPage.vue'),
+          props: true,
+        },
+        {
+          path: 'events',
+          name: 'events',
+          component: () => import('@/pages/EventsPage.vue'),
+        },
+        {
+          path: 'events/:id',
+          name: 'event',
+          component: () => import('@/pages/EventPage.vue'),
+          props: true,
+        },
+        {
+          path: 'posts/:id',
+          name: 'post',
+          component: () => import('@/pages/PostPage.vue'),
+          props: true,
+        },
+        {
           path: 'network',
           name: 'network',
           component: () => import('@/pages/NetworkPage.vue'),

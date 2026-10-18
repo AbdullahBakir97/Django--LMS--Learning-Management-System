@@ -11,6 +11,8 @@ import {
   PhGraduationCap,
   PhChalkboardTeacher,
   PhUsersThree,
+  PhUsersFour,
+  PhCalendarBlank,
 } from '@phosphor-icons/vue'
 import BrandMark from '@/components/BrandMark.vue'
 import ThemeToggle from '@/components/ui/ThemeToggle.vue'
@@ -31,10 +33,12 @@ void notifications.start()
 onUnmounted(() => notifications.stop())
 
 const items = computed(() => [
-  { to: { name: 'home' }, label: 'Home', icon: PhHouse, exact: true },
+  { to: { name: 'home' }, label: 'Home', icon: PhHouse, exact: true, also: ['post'] },
   { to: { name: 'courses' }, label: 'Courses', icon: PhBooks, also: ['course', 'lesson'] },
   { to: { name: 'my-learning' }, label: 'My learning', icon: PhGraduationCap },
   { to: { name: 'network' }, label: 'Network', icon: PhUsersThree },
+  { to: { name: 'groups' }, label: 'Groups', icon: PhUsersFour, also: ['group'] },
+  { to: { name: 'events' }, label: 'Events', icon: PhCalendarBlank, also: ['event'] },
   ...(['instructor', 'admin'].includes(session.user?.role ?? '')
     ? [
         {
