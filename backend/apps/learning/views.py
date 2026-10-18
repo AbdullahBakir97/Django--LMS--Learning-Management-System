@@ -79,7 +79,10 @@ class LessonViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return (
-            Lesson.objects.filter(course__slug=self.kwargs["course_slug"])
+            Lesson.objects.filter(
+                course__slug=self.kwargs["course_slug"],
+                course__in=selectors.visible_courses(self.request.user).values("pk"),
+            )
             .select_related("course", "quiz")
             .prefetch_related("attachments")
         )

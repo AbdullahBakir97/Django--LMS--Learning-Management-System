@@ -35,7 +35,7 @@ class Course(TimeStampedModel):
 
     class Meta:
         ordering = ["-published_at", "-created_at"]
-        indexes = [models.Index(fields=["status", "level"])]
+        indexes = [models.Index(fields=["status", "level"], name="course_status_level_idx")]
 
     def __str__(self):
         return self.title

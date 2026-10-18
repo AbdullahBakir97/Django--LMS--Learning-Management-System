@@ -93,6 +93,8 @@ def test_drafts_are_private_to_their_instructor(instructor, auth_client):
     assert client_for(instructor).get(f"/api/courses/{draft.slug}/").status_code == 200
     other = client_for(UserFactory(role="instructor"))
     assert other.patch(f"/api/courses/{draft.slug}/", {"title": "Hijack"}).status_code == 404
+    preview = LessonFactory(course=draft, is_free_preview=True)
+    assert auth_client.get(f"/api/courses/{draft.slug}/lessons/{preview.id}/").status_code == 404
 
 
 @pytest.mark.django_db
@@ -112,6 +114,8 @@ def test_enrollment_rules(course, auth_client, instructor):
 @pytest.mark.django_db
 def test_lesson_content_is_gated(course, auth_client):
     preview, locked = course.lessons.order_by("order")
+    assert auth_client.get(f"/api/courses/{course.slug}/").status_code == 200
+    assert auth_client.patch(f"/api/courses/{course.slug}/", {"title": "x"}).status_code == 403
     assert auth_client.get(f"/api/courses/{course.slug}/lessons/{preview.id}/").status_code == 200
     assert auth_client.get(f"/api/courses/{course.slug}/lessons/{locked.id}/").status_code == 403
     assert (
@@ -123,7 +127,9 @@ def test_lesson_content_is_gated(course, auth_client):
 
 
 @pytest.mark.django_db
-def test_completion_issues_certificate_and_verifies_publicly(course, auth_client, instructor, user):
+def test_completion_issues_certificate_and_verifies_publicly(
+    course, auth_client, instructor, user, django_capture_on_commit_callbacks
+):
     first, second = course.lessons.order_by("order")
     ic = client_for(instructor)
     assert ic.put(f"/api/lessons/{second.id}/quiz/", QUIZ, format="json").status_code == 201
@@ -147,9 +153,10 @@ def test_completion_issues_certificate_and_verifies_publicly(course, auth_client
     }
 
     right = {q["id"]: q["choices"][0]["id"] for q in quiz["questions"]}
-    response = auth_client.post(
-        f"/api/lessons/{second.id}/quiz/submit/", {"answers": right}, format="json"
-    )
+    with django_capture_on_commit_callbacks(execute=True):
+        response = auth_client.post(
+            f"/api/lessons/{second.id}/quiz/submit/", {"answers": right}, format="json"
+        )
     assert response.data["score"] == 100 and response.data["passed"]
 
     progress = auth_client.get(f"/api/courses/{course.slug}/progress/").data

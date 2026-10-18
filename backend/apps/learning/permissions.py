@@ -9,8 +9,13 @@ class IsInstructorOrReadOnly(BasePermission):
 
 
 class IsCourseOwner(BasePermission):
-    """Object-level: the course's instructor, or an admin. Views set `course_attr`."""
+    """Object-level writes: the course's instructor, or an admin. Views set `course_attr`.
+
+    Reads pass: visibility is decided by the querysets and the lesson gate.
+    """
 
     def has_object_permission(self, request, view, obj):
+        if request.method in SAFE_METHODS:
+            return True
         course = getattr(obj, getattr(view, "course_attr", "course"), obj)
         return course.instructor_id == request.user.id or request.user.role == "admin"
