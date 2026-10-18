@@ -80,3 +80,17 @@ export async function api<T = unknown>(
   }
   return data as T
 }
+
+/** A protected file (a résumé) as a Blob. `url` is the server path the API returned. */
+export async function apiBlob(url: string, retry = true): Promise<Blob> {
+  const absolute = new URL(url, BASE.startsWith('http') ? BASE : location.origin).toString()
+  const response = await fetch(absolute, {
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    credentials: 'include',
+  })
+  if (response.status === 401 && retry && (await refreshAccessToken())) return apiBlob(url, false)
+  if (!response.ok) {
+    throw new ApiError({ type: 'about:blank', title: response.statusText, status: response.status })
+  }
+  return response.blob()
+}

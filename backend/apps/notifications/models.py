@@ -19,6 +19,8 @@ class Notification(TimeStampedModel):
         GROUP_REQUEST = "group_request", "Request to join your group"
         GROUP_APPROVED = "group_approved", "Group request approved"
         EVENT_RSVP = "event_rsvp", "Someone is going to your event"
+        APPLICATION_RECEIVED = "application_received", "New application to your job"
+        APPLICATION_UPDATE = "application_update", "Your application changed status"
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"

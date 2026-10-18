@@ -13,6 +13,7 @@ import {
   PhUsersThree,
   PhUsersFour,
   PhCalendarBlank,
+  PhBriefcase,
 } from '@phosphor-icons/vue'
 import BrandMark from '@/components/BrandMark.vue'
 import ThemeToggle from '@/components/ui/ThemeToggle.vue'
@@ -39,6 +40,12 @@ const items = computed(() => [
   { to: { name: 'network' }, label: 'Network', icon: PhUsersThree },
   { to: { name: 'groups' }, label: 'Groups', icon: PhUsersFour, also: ['group'] },
   { to: { name: 'events' }, label: 'Events', icon: PhCalendarBlank, also: ['event'] },
+  {
+    to: { name: 'jobs' },
+    label: 'Jobs',
+    icon: PhBriefcase,
+    also: ['job', 'job-applications', 'applications', 'companies', 'company'],
+  },
   ...(['instructor', 'admin'].includes(session.user?.role ?? '')
     ? [
         {

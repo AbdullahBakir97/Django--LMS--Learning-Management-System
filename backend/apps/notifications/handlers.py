@@ -133,3 +133,25 @@ def on_event_rsvp(*, event_id, event_title, host_id, attendee_id, attendee_name,
         url=f"/events/{event_id}",
         actor_id=attendee_id,
     )
+
+
+@subscribe("careers.application_submitted")
+def on_application_submitted(*, job_id, job_title, applicant_id, applicant_name, team_ids, **_):
+    for member_id in team_ids:
+        notify(
+            member_id,
+            Kind.APPLICATION_RECEIVED,
+            f"{applicant_name} applied to {job_title}",
+            url=f"/jobs/{job_id}/applications",
+            actor_id=applicant_id,
+        )
+
+
+@subscribe("careers.application_status_changed")
+def on_application_status_changed(*, applicant_id, job_title, company_name, status_label, **_):
+    notify(
+        applicant_id,
+        Kind.APPLICATION_UPDATE,
+        f"{company_name}: your application for {job_title} is now “{status_label}”",
+        url="/applications",
+    )

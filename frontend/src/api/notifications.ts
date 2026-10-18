@@ -13,6 +13,8 @@ export type NotificationKind =
   | 'group_request'
   | 'group_approved'
   | 'event_rsvp'
+  | 'application_received'
+  | 'application_update'
 
 export interface AppNotification {
   id: number
