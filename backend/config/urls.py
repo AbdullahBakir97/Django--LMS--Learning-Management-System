@@ -11,6 +11,7 @@ urlpatterns = [
     path("api/", include("apps.core.urls")),
     path("api/auth/", include("apps.accounts.urls")),
     path("api/", include("apps.profiles.urls")),
+    path("api/", include("apps.learning.urls")),
 ]
 
 if settings.DEBUG:
