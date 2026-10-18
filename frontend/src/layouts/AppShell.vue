@@ -10,6 +10,7 @@ import {
   PhBooks,
   PhGraduationCap,
   PhChalkboardTeacher,
+  PhUsersThree,
 } from '@phosphor-icons/vue'
 import BrandMark from '@/components/BrandMark.vue'
 import ThemeToggle from '@/components/ui/ThemeToggle.vue'
@@ -33,6 +34,7 @@ const items = computed(() => [
   { to: { name: 'home' }, label: 'Home', icon: PhHouse, exact: true },
   { to: { name: 'courses' }, label: 'Courses', icon: PhBooks, also: ['course', 'lesson'] },
   { to: { name: 'my-learning' }, label: 'My learning', icon: PhGraduationCap },
+  { to: { name: 'network' }, label: 'Network', icon: PhUsersThree },
   ...(['instructor', 'admin'].includes(session.user?.role ?? '')
     ? [
         {

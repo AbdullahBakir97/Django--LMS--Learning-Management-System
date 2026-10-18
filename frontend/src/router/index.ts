@@ -19,6 +19,11 @@ export const router = createRouter({
           props: true,
         },
         {
+          path: 'network',
+          name: 'network',
+          component: () => import('@/pages/NetworkPage.vue'),
+        },
+        {
           path: 'notifications',
           name: 'notifications',
           component: () => import('@/pages/NotificationsPage.vue'),

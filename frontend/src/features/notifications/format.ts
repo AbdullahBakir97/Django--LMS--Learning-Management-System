@@ -1,10 +1,25 @@
-import { PhCertificate, PhHandsClapping, PhUserPlus, PhBell } from '@phosphor-icons/vue'
+import {
+  PhArrowBendUpLeft,
+  PhBell,
+  PhCertificate,
+  PhChatCircleText,
+  PhHandshake,
+  PhHandsClapping,
+  PhUserCirclePlus,
+  PhUserPlus,
+  PhUsersThree,
+} from '@phosphor-icons/vue'
 import type { NotificationKind } from '@/api/notifications'
 
 export const kindIcon: Record<NotificationKind, typeof PhBell> = {
   enrolment: PhUserPlus,
   course_completed: PhCertificate,
   endorsement: PhHandsClapping,
+  follow: PhUserCirclePlus,
+  connection_request: PhHandshake,
+  connection_accepted: PhUsersThree,
+  comment: PhChatCircleText,
+  reply: PhArrowBendUpLeft,
 }
 
 const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })

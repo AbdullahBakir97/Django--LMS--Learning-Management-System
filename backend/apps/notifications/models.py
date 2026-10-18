@@ -11,6 +11,11 @@ class Notification(TimeStampedModel):
         ENROLMENT = "enrolment", "New enrolment in your course"
         COURSE_COMPLETED = "course_completed", "Course completed"
         ENDORSEMENT = "endorsement", "Skill endorsed"
+        FOLLOW = "follow", "New follower"
+        CONNECTION_REQUEST = "connection_request", "Connection request"
+        CONNECTION_ACCEPTED = "connection_accepted", "Connection accepted"
+        COMMENT = "comment", "Comment on your lesson"
+        REPLY = "reply", "Reply to your comment"
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"

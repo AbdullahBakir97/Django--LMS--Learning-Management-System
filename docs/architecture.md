@@ -58,3 +58,16 @@ backend/apps/learning/
 - API: resource nouns, nested where ownership is natural, cursor pagination, django-filter,
   OpenAPI from drf-spectacular, errors as RFC 9457 problem documents.
 - Configuration from the environment. The same image runs locally, in CI and in production.
+
+## Engagement targets
+
+Comments and reactions live in `engagement` (L4), but what they attach to lives above it. A
+product context registers its models from `AppConfig.ready()`:
+
+```python
+registry.register("lesson", Lesson, can_view=..., owner_id=..., url=..., title=...)
+```
+
+The API addresses targets as `/api/engagement/<key>/<id>/comments/` and `.../reactions/`. The
+registry decides visibility (a gated lesson's discussion is a 404 to someone who cannot open the
+lesson), who may moderate (the owner), and what a notification links to.

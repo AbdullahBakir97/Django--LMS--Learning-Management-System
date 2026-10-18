@@ -37,6 +37,7 @@ const emit = defineEmits<{ endorse: [skillId: number] }>()
           ><PhLink :size="16" weight="light" />{{ profile.website.replace(/^https?:\/\//, '') }}</a
         >
       </p>
+      <div v-if="$slots.actions" class="mt-4"><slot name="actions" /></div>
     </div>
   </header>
 

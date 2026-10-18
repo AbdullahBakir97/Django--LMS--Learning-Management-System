@@ -32,6 +32,8 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.accounts",
     "apps.profiles",
+    "apps.network",
+    "apps.engagement",
     "apps.learning",
     "apps.notifications",
 ]

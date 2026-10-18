@@ -1,7 +1,15 @@
 import { api } from './client'
 import type { Page } from './learning'
 
-export type NotificationKind = 'enrolment' | 'course_completed' | 'endorsement'
+export type NotificationKind =
+  | 'enrolment'
+  | 'course_completed'
+  | 'endorsement'
+  | 'follow'
+  | 'connection_request'
+  | 'connection_accepted'
+  | 'comment'
+  | 'reply'
 
 export interface AppNotification {
   id: number
