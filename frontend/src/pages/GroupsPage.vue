@@ -123,6 +123,6 @@ function created(g: Group) {
   </section>
 
   <Dialog v-model:open="creating" title="New group">
-    <GroupForm @saved="created" />
+    <GroupForm v-if="creating" @saved="created" />
   </Dialog>
 </template>

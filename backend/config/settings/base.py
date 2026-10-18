@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "apps.learning",
     "apps.community",
     "apps.careers",
+    "apps.messaging",
     "apps.notifications",
 ]
 

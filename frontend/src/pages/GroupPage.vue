@@ -248,6 +248,7 @@ async function deleteGroup() {
 
     <Dialog v-model:open="editing" title="Group settings">
       <GroupForm
+        v-if="editing"
         :group="group"
         @saved="
           (g) => {
@@ -268,7 +269,7 @@ async function deleteGroup() {
       </div>
     </Dialog>
     <Dialog v-model:open="planning" title="New event">
-      <EventForm :group-slug="slug" @created="(e) => ((planning = false), events.push(e))" />
+      <EventForm v-if="planning" :group-slug="slug" @created="(e) => ((planning = false), events.push(e))" />
     </Dialog>
   </template>
 </template>

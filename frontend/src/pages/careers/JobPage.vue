@@ -137,10 +137,10 @@ async function run(fn: () => Promise<Job | unknown>) {
     </aside>
 
     <Dialog v-model:open="applying" :title="`Apply: ${job.title}`">
-      <ApplyForm :job-id="job.id" @applied="done" />
+      <ApplyForm v-if="applying" :job-id="job.id" @applied="done" />
     </Dialog>
     <Dialog v-model:open="editing" title="Edit job">
-      <JobForm :company-slug="job.company.slug" :job="job" @saved="done" />
+      <JobForm v-if="editing" :company-slug="job.company.slug" :job="job" @saved="done" />
     </Dialog>
   </div>
 </template>

@@ -5,6 +5,7 @@ a WebSocket. So it asks `POST /api/realtime/ticket/` for a signed ticket that li
 and connects to `/ws/events/?ticket=...`. The access token never appears in a URL or a log.
 """
 
+import json
 import logging
 from urllib.parse import parse_qs
 
@@ -19,6 +20,23 @@ from django.core import signing
 from django.urls import path
 
 logger = logging.getLogger(__name__)
+
+_inbound: dict = {}
+
+
+def on_client_message(kind: str):
+    """Register a handler for {"type": kind, ...} frames the SPA sends up the socket.
+
+    Handlers run in a thread with database access: handler(user, payload). Upper contexts
+    register here from AppConfig.ready(), so core never imports them.
+    """
+
+    def decorator(handler):
+        _inbound[kind] = handler
+        return handler
+
+    return decorator
+
 
 TICKET_SALT = "realtime.ticket"
 TICKET_MAX_AGE = 30
@@ -75,6 +93,22 @@ class UserEventsConsumer(AsyncJsonWebsocketConsumer):
     async def disconnect(self, code):
         if hasattr(self, "group"):
             await self.channel_layer.group_discard(self.group, self.channel_name)
+
+    @classmethod
+    async def decode_json(cls, text_data):
+        try:
+            return json.loads(text_data)
+        except (TypeError, ValueError):
+            return None  # a malformed frame is dropped, not fatal to the connection
+
+    async def receive_json(self, content, **kwargs):
+        handler = _inbound.get(content.get("type")) if isinstance(content, dict) else None
+        if handler is None:
+            return
+        try:
+            await database_sync_to_async(handler)(self.scope["user"], content)
+        except Exception:
+            logger.exception("client message failed", extra={"type": content.get("type")})
 
     async def push_event(self, message):
         await self.send_json({"event": message["event"], "data": message["data"]})

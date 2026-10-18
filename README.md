@@ -20,7 +20,9 @@ skills and endorsements, the Vue frontend, courses with lessons, quizzes, progre
 certificates, live notifications over one WebSocket per user, and the network: follows,
 connections, suggestions, lesson discussions and reactions, and community: a feed, groups with
 public or private membership, posts, and events with RSVPs, and careers: companies, jobs matched
-to your skills, applications with private résumés and a hiring pipeline. Messaging follows.
+to your skills, applications with private résumés and a hiring pipeline, and messaging: direct
+and group conversations with live delivery, read receipts and typing indicators. Release
+hardening follows.
 
 ## Codebase map
 
@@ -33,20 +35,23 @@ enrolments, follows and comments without importing the contexts that publish the
 ```mermaid
 flowchart LR
   subgraph Backend
-    config --> accounts & careers & community & engagement & learning & network & notifications & profiles & core
+    config --> accounts & careers & community & engagement & learning & messaging & network & notifications & profiles & core
     notifications -- 23 --> core
     learning -- 15 --> core
     community -- 14 --> engagement
     careers -- 12 --> core
     community -- 12 --> core
+    messaging -- 11 --> core
     engagement -- 10 --> core
     network -- 9 --> core
     profiles -- 9 --> core
     careers -- 6 --> profiles
     community -- 5 --> network
+    messaging -- 5 --> engagement
     learning -- 4 --> accounts
     careers -- 4 --> engagement
     profiles -- 3 --> accounts
+    messaging -- 3 --> network
     network -- 3 --> profiles
     learning -- 2 --> engagement
     learning -. events .-> notifications
@@ -55,17 +60,18 @@ flowchart LR
     engagement -. events .-> notifications
     community -. events .-> notifications
     careers -. events .-> notifications
+    messaging -. events .-> notifications
   end
   subgraph Frontend
-    pages -- 143 --> api
-    features -- 95 --> api
-    pages -- 83 --> components
-    router -- 60 --> pages
-    pages -- 54 --> features
-    features -- 33 --> components
-    pages -- 18 --> stores
-    stores -- 10 --> api
-    features -- 6 --> stores
+    pages -- 146 --> api
+    features -- 111 --> api
+    pages -- 85 --> components
+    router -- 62 --> pages
+    pages -- 58 --> features
+    features -- 37 --> components
+    pages -- 22 --> stores
+    stores -- 14 --> api
+    features -- 13 --> stores
   end
   api -. REST and WebSocket .-> config
 ```

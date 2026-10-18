@@ -71,6 +71,10 @@ export function connectRealtime(options: RealtimeOptions) {
 
   void start()
   return {
+    /** Send a frame up if the socket is open; dropped otherwise (typing hints are best effort). */
+    send(data: unknown) {
+      if (socket?.readyState === 1) socket.send(JSON.stringify(data))
+    },
     stop() {
       stopped = true
       clearTimeout(timer)

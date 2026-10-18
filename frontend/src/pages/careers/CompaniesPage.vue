@@ -71,6 +71,6 @@ const created = (c: Company) => router.push({ name: 'company', params: { slug: c
   </div>
   <p v-if="!companies.length" class="py-10 text-center text-muted">No companies match.</p>
   <Dialog v-model:open="creating" title="Add your company">
-    <CompanyForm @saved="created" />
+    <CompanyForm v-if="creating" @saved="created" />
   </Dialog>
 </template>

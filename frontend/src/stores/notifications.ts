@@ -1,8 +1,12 @@
 import { defineStore } from 'pinia'
 import { notifications as api, realtimeTicket, type AppNotification } from '@/api/notifications'
 import { connectRealtime, type RealtimeMessage } from '@/lib/realtime'
+import { bus } from '@/lib/bus'
 
-let connection: { stop(): void } | null = null
+let connection: ReturnType<typeof connectRealtime> | null = null
+
+/** Send a frame over the live connection, e.g. a typing hint. */
+export const sendRealtime = (data: unknown) => connection?.send(data)
 
 export const useNotificationsStore = defineStore('notifications', {
   state: () => ({
@@ -60,6 +64,7 @@ export const useNotificationsStore = defineStore('notifications', {
     },
     /** Live events from the socket; other tabs' reads arrive here too. */
     apply({ event, data }: RealtimeMessage) {
+      bus.emit(event, data)
       if (event === 'notification.created') {
         const n = data as unknown as AppNotification
         if (this.items.some((i) => i.id === n.id)) return
