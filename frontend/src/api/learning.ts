@@ -110,6 +110,27 @@ type LessonInput = Pick<Lesson, 'title' | 'order' | 'content' | 'video_url' | 'i
 
 const c = (slug: string) => `/courses/${encodeURIComponent(slug)}`
 
+export interface CourseAnalytics {
+  enrolled: number
+  active: number
+  completed: number
+  completion_rate: number
+  average_days_to_complete: number | null
+  lesson_count: number
+  weekly_enrolments: { week: string; count: number }[]
+  lessons: { id: number; title: string; order: number; completed: number }[]
+  quizzes: {
+    lesson_id: number
+    title: string
+    learners: number
+    attempts: number
+    passed: number
+    average_score: number
+  }[]
+  stalled_count: number
+  stalled: { username: string; name: string; lessons_done: number; last_active: string }[]
+}
+
 export const learning = {
   courses: (
     params: {
@@ -124,6 +145,7 @@ export const learning = {
     return api<Page<CourseSummary>>(`/courses/${q.size ? `?${q}` : ''}`)
   },
   course: (slug: string) => api<Course>(`${c(slug)}/`),
+  analytics: (slug: string) => api<CourseAnalytics>(`${c(slug)}/analytics/`),
   createCourse: (data: Partial<CourseInput>) => api<Course>('/courses/', { method: 'POST', body: data }),
   updateCourse: (slug: string, data: Partial<CourseInput>) =>
     api<Course>(`${c(slug)}/`, { method: 'PATCH', body: data }),

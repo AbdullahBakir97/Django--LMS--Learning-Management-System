@@ -244,3 +244,45 @@ class CertificateSerializer(serializers.ModelSerializer):
     def get_instructor(self, certificate) -> str:
         user = certificate.enrollment.course.instructor
         return user.get_full_name() or user.username
+
+
+class WeekCountSerializer(serializers.Serializer):
+    week = serializers.DateField()
+    count = serializers.IntegerField()
+
+
+class LessonFunnelSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    title = serializers.CharField()
+    order = serializers.IntegerField()
+    completed = serializers.IntegerField()
+
+
+class QuizStatsSerializer(serializers.Serializer):
+    lesson_id = serializers.IntegerField()
+    title = serializers.CharField()
+    learners = serializers.IntegerField()
+    attempts = serializers.IntegerField()
+    passed = serializers.IntegerField()
+    average_score = serializers.IntegerField()
+
+
+class StalledLearnerSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    name = serializers.CharField()
+    lessons_done = serializers.IntegerField()
+    last_active = serializers.DateTimeField()
+
+
+class CourseAnalyticsSerializer(serializers.Serializer):
+    enrolled = serializers.IntegerField()
+    active = serializers.IntegerField()
+    completed = serializers.IntegerField()
+    completion_rate = serializers.IntegerField(help_text="Percent of everyone who enrolled")
+    average_days_to_complete = serializers.FloatField(allow_null=True)
+    lesson_count = serializers.IntegerField()
+    weekly_enrolments = WeekCountSerializer(many=True)
+    lessons = LessonFunnelSerializer(many=True)
+    quizzes = QuizStatsSerializer(many=True)
+    stalled_count = serializers.IntegerField()
+    stalled = StalledLearnerSerializer(many=True)

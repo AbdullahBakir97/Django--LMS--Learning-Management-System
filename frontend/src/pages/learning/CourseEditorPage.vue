@@ -143,6 +143,9 @@ async function closeQuiz() {
     </div>
     <div v-if="course" class="flex items-center gap-2">
       <Tag>{{ course.status }}</Tag>
+      <RouterLink :to="{ name: 'course-analytics', params: { slug: course.slug } }"
+        ><Button variant="secondary" size="sm">Analytics</Button></RouterLink
+      >
       <RouterLink :to="{ name: 'course', params: { slug: course.slug } }"
         ><Button variant="secondary" size="sm">Preview</Button></RouterLink
       >

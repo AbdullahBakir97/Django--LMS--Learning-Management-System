@@ -129,6 +129,13 @@ export const router = createRouter({
           meta: { instructorOnly: true },
         },
         {
+          path: 'teach/:slug/analytics',
+          name: 'course-analytics',
+          component: () => import('@/pages/learning/CourseAnalyticsPage.vue'),
+          props: true,
+          meta: { instructorOnly: true },
+        },
+        {
           path: 'teach/:slug',
           name: 'course-editor',
           component: () => import('@/pages/learning/CourseEditorPage.vue'),

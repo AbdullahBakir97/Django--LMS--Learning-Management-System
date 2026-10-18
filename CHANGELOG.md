@@ -32,6 +32,9 @@ All notable changes. The project follows [Semantic Versioning](https://semver.or
 - **Reporting and moderation**: anyone can report a post, a comment or a person, once each;
   moderators (the admin role) work a queue grouped by item, remove the content or deactivate
   the account, or dismiss; every reporter hears back. Demo: `sara` moderates.
+- **Course analytics**: each instructor sees, per course, enrolments per week, completion rate
+  and average time to finish, how many learners finished each lesson (where they stop), quiz
+  pass rates and scores, and the learners with no progress in 14 days.
 
 ### Fixed
 

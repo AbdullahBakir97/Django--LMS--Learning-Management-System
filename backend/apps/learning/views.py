@@ -9,10 +9,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from . import selectors, services
+from .analytics import course_analytics
 from .models import Certificate, Course, Enrollment, Lesson, LessonAttachment, Quiz
 from .permissions import IsCourseOwner, IsInstructorOrReadOnly
 from .serializers import (
     CertificateSerializer,
+    CourseAnalyticsSerializer,
     CourseDetailSerializer,
     CourseListSerializer,
     EnrollmentSerializer,
@@ -65,6 +67,15 @@ class CourseViewSet(viewsets.ModelViewSet):
         if enrollment is None:
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(ProgressSerializer(enrollment).data)
+
+    @extend_schema(responses=CourseAnalyticsSerializer)
+    @action(detail=True, methods=["get"])
+    def analytics(self, request, slug=None):
+        """For the course's instructor (and admins): enrolments, drop-off, quizzes, stalled."""
+        course = self.get_object()
+        if course.instructor_id != request.user.id and request.user.role != "admin":
+            raise PermissionDenied("Only the course's instructor sees its analytics.")
+        return Response(CourseAnalyticsSerializer(course_analytics(course)).data)
 
 
 @extend_schema(parameters=[OpenApiParameter("course_slug", str, OpenApiParameter.PATH)])

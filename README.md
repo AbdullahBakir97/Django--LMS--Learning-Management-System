@@ -13,7 +13,7 @@ notifications. Django REST Framework on PostgreSQL and Redis, with a Vue 3 front
 
 | Area | For learners | For instructors, organisers and employers |
 |---|---|---|
-| **Learning** | Catalogue, enrolment with prerequisites, lessons in markdown with video, quizzes, progress, a PDF certificate anyone can verify; installable on a phone, and lessons you opened stay readable offline | Course editor, lessons, quiz builder, publishing |
+| **Learning** | Catalogue, enrolment with prerequisites, lessons in markdown with video, quizzes, progress, a PDF certificate anyone can verify; installable on a phone, and lessons you opened stay readable offline | Course editor, lessons, quiz builder, publishing , course analytics: enrolments per week, where learners stop, quiz results, stalled learners |
 | **Discussion** | Comments, replies and reactions on lessons and posts | Moderation of discussions on your own lessons and groups |
 | **Profiles** | Experience, education, skills and endorsements, a portfolio, badges earned along the way, recommendations from connections that you approve | |
 | **Network** | Follow, connect, people who share your skills | |
@@ -44,6 +44,8 @@ API is described by OpenAPI at `/api/docs/`.
 | A lesson read offline on a phone | Search across everything as you type |
 | ![Posts](docs/screenshots/posts-light.png) | ![Moderation](docs/screenshots/moderation-light.png) |
 | The feed with images, a share and company news | The moderation queue |
+| ![Analytics](docs/screenshots/analytics-light.png) | |
+| Course analytics for its instructor | |
 
 Light and dark themes, and every screen works at phone width. More in
 [docs/screenshots](docs/screenshots).
@@ -97,11 +99,11 @@ flowchart LR
     messaging -. events .-> notifications
   end
   subgraph Frontend
-    pages -- 164 --> api
-    features -- 155 --> api
-    pages -- 96 --> components
-    pages -- 70 --> features
-    router -- 64 --> pages
+    pages -- 168 --> api
+    features -- 157 --> api
+    pages -- 99 --> components
+    pages -- 74 --> features
+    router -- 66 --> pages
     features -- 54 --> components
     pages -- 22 --> stores
     features -- 17 --> stores
