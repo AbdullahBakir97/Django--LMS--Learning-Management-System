@@ -7,6 +7,9 @@ extend-exclude = ["migrations"]
 select = ["E", "F", "W", "I", "B", "UP", "DJ", "S"]
 ignore = ["S101", "DJ001"]  # asserts in tests; nullable CharField is a per-field call
 
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config", "conftest"]
+
 [tool.ruff.lint.per-file-ignores]
 "config/settings/*" = ["F403", "F405"]
 
