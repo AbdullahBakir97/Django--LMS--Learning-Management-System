@@ -33,7 +33,7 @@ export const router = createRouter({
           component: () => import('@/pages/auth/CheckEmailPage.vue'),
         },
         {
-          path: 'verify-email/:key',
+          path: 'verify-email/:code',
           name: 'verify-email',
           component: () => import('@/pages/auth/VerifyEmailPage.vue'),
           props: true,

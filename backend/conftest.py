@@ -1,7 +1,8 @@
 import factory
 import pytest
-from apps.accounts.models import User
 from rest_framework.test import APIClient
+
+from apps.accounts.models import User
 
 
 class UserFactory(factory.django.DjangoModelFactory):
