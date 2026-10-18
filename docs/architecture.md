@@ -71,3 +71,17 @@ registry.register("lesson", Lesson, can_view=..., owner_id=..., url=..., title=.
 The API addresses targets as `/api/engagement/<key>/<id>/comments/` and `.../reactions/`. The
 registry decides visibility (a gated lesson's discussion is a 404 to someone who cannot open the
 lesson), who may moderate (the owner), and what a notification links to.
+
+## Messages up the socket
+
+The WebSocket is mostly a push channel, but the SPA can send small hints up it (today only
+`{"type": "typing", "conversation": id}`). Core does not know about messaging, so a context
+registers a handler from `AppConfig.ready()`:
+
+```python
+@on_client_message("typing")
+def typing(user, payload): ...
+```
+
+Handlers run with database access, check membership themselves, and never write. Malformed
+frames are dropped without closing the connection.

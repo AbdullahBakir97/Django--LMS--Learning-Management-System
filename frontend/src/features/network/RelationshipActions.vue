@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { PhCheck, PhUserPlus, PhPlus, PhHourglassMedium } from '@phosphor-icons/vue'
+import { PhChatCircle, PhCheck, PhUserPlus, PhPlus, PhHourglassMedium } from '@phosphor-icons/vue'
+import { useRouter } from 'vue-router'
+import { messaging } from '@/api/messaging'
 import { network, type Relationship } from '@/api/network'
 import { ApiError } from '@/api/client'
 import Button from '@/components/ui/Button.vue'
 
 const props = defineProps<{ username: string }>()
+const router = useRouter()
 const rel = ref<Relationship | null>(null)
 const busy = ref(false)
 const error = ref('')
@@ -38,6 +41,11 @@ const stats = computed(() =>
       ]
     : [],
 )
+
+async function message() {
+  const c = await messaging.start([props.username])
+  router.push({ name: 'conversation', params: { id: c.id } })
+}
 
 const toggleFollow = () =>
   run(() => (rel.value?.following ? network.unfollow(props.username) : network.follow(props.username)))
@@ -80,9 +88,12 @@ const withdraw = () => run(() => network.remove(rel.value!.connection!.id))
       >
         <PhHourglassMedium :size="18" weight="light" /> Pending
       </Button>
-      <span v-else class="inline-flex h-9 items-center gap-1.5 px-1 text-sm text-accent">
-        <PhCheck :size="18" weight="light" /> Connected
-      </span>
+      <template v-else>
+        <span class="inline-flex h-9 items-center gap-1.5 px-1 text-sm text-accent">
+          <PhCheck :size="18" weight="light" /> Connected
+        </span>
+        <Button size="sm" @click="message"><PhChatCircle :size="18" weight="light" /> Message</Button>
+      </template>
       <Button
         :variant="rel.following ? 'secondary' : 'ghost'"
         size="sm"

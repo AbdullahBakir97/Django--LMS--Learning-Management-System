@@ -8,6 +8,11 @@ class FakeSocket {
   onmessage?: (e: { data: string }) => void
   onclose?: () => void
   closed = false
+  readyState = 0
+  sent: string[] = []
+  send(data: string) {
+    this.sent.push(data)
+  }
   constructor(public url: string) {
     FakeSocket.last = this
   }
@@ -43,7 +48,12 @@ describe('realtime', () => {
     await flush()
     expect(FakeSocket.last.url).toBe('ws://x/events/?ticket=t1')
     const first = FakeSocket.last
+    conn.send({ type: 'typing' })
+    expect(first.sent).toEqual([]) // nothing is sent before the socket opens
+    first.readyState = 1
     first.onopen?.()
+    conn.send({ type: 'typing', conversation: 3 })
+    expect(first.sent).toEqual(['{"type":"typing","conversation":3}'])
     first.onmessage?.({ data: '{"event":"notification.created","data":{"id":1}}' })
     first.onmessage?.({ data: 'not json' })
     expect(messages).toEqual([{ event: 'notification.created', data: { id: 1 } }])

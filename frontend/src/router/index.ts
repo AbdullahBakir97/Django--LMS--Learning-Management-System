@@ -18,6 +18,13 @@ export const router = createRouter({
           component: () => import('@/pages/ProfilePage.vue'),
           props: true,
         },
+        { path: 'messages', name: 'messages', component: () => import('@/pages/MessagesPage.vue') },
+        {
+          path: 'messages/:id',
+          name: 'conversation',
+          component: () => import('@/pages/MessagesPage.vue'),
+          props: true,
+        },
         { path: 'jobs', name: 'jobs', component: () => import('@/pages/careers/JobsPage.vue') },
         {
           path: 'jobs/:id',

@@ -68,6 +68,6 @@ watch(
   </div>
 
   <Dialog v-model:open="planning" title="New event">
-    <EventForm @created="(e) => ((planning = false), events.unshift(e))" />
+    <EventForm v-if="planning" @created="(e) => ((planning = false), events.unshift(e))" />
   </Dialog>
 </template>

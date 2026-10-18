@@ -172,10 +172,10 @@ function saved(c: Company) {
     </div>
 
     <Dialog v-model:open="posting" title="Post a job">
-      <JobForm :company-slug="company.slug" @saved="posted" />
+      <JobForm v-if="posting" :company-slug="company.slug" @saved="posted" />
     </Dialog>
     <Dialog v-model:open="editing" title="Edit company">
-      <CompanyForm :company="company" @saved="saved" />
+      <CompanyForm v-if="editing" :company="company" @saved="saved" />
     </Dialog>
   </template>
 </template>

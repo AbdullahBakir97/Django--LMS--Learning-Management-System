@@ -14,12 +14,14 @@ import {
   PhUsersFour,
   PhCalendarBlank,
   PhBriefcase,
+  PhChatsCircle,
 } from '@phosphor-icons/vue'
 import BrandMark from '@/components/BrandMark.vue'
 import ThemeToggle from '@/components/ui/ThemeToggle.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 import { useSessionStore } from '@/stores/session'
 import { useNotificationsStore } from '@/stores/notifications'
+import { useMessagesStore } from '@/stores/messages'
 import NotificationBell from '@/features/notifications/NotificationBell.vue'
 import NotificationToasts from '@/features/notifications/NotificationToasts.vue'
 
@@ -30,14 +32,20 @@ const navOpen = ref(false)
 
 // The shell only renders for a signed-in user, so its lifetime is the live connection's.
 const notifications = useNotificationsStore()
+const messages = useMessagesStore()
 void notifications.start()
-onUnmounted(() => notifications.stop())
+void messages.start()
+onUnmounted(() => {
+  notifications.stop()
+  messages.stop()
+})
 
 const items = computed(() => [
   { to: { name: 'home' }, label: 'Home', icon: PhHouse, exact: true, also: ['post'] },
   { to: { name: 'courses' }, label: 'Courses', icon: PhBooks, also: ['course', 'lesson'] },
   { to: { name: 'my-learning' }, label: 'My learning', icon: PhGraduationCap },
   { to: { name: 'network' }, label: 'Network', icon: PhUsersThree },
+  { to: { name: 'messages' }, label: 'Messages', icon: PhChatsCircle, also: ['conversation'], badge: true },
   { to: { name: 'groups' }, label: 'Groups', icon: PhUsersFour, also: ['group'] },
   { to: { name: 'events' }, label: 'Events', icon: PhCalendarBlank, also: ['event'] },
   {
@@ -96,7 +104,13 @@ async function signOut() {
           @click="navOpen = false"
         >
           <component :is="item.icon" :size="20" weight="light" />
-          {{ item.label }}
+          <span class="flex-1">{{ item.label }}</span>
+          <span
+            v-if="'badge' in item && messages.unread"
+            class="grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1.5 font-mono text-[11px] text-accent-ink"
+            :aria-label="`${messages.unread} unread`"
+            >{{ messages.unread > 99 ? '99+' : messages.unread }}</span
+          >
         </RouterLink>
       </nav>
       <div class="mt-auto grid gap-2 border-t border-line pt-4">
