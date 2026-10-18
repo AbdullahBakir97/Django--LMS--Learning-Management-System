@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { profiles, type Profile } from '@/api/profiles'
 import { ApiError } from '@/api/client'
 import ProfileView from '@/features/profile/ProfileView.vue'
+import RelationshipActions from '@/features/network/RelationshipActions.vue'
 import Alert from '@/components/ui/Alert.vue'
 import { useSessionStore } from '@/stores/session'
 
@@ -39,5 +40,9 @@ async function endorse(skillId: number) {
     :profile="profile"
     :can-endorse="profile.user.id !== session.user?.id"
     @endorse="endorse"
-  />
+  >
+    <template v-if="profile.user.id !== session.user?.id" #actions>
+      <RelationshipActions :username="profile.user.username" />
+    </template>
+  </ProfileView>
 </template>

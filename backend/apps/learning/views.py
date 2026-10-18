@@ -134,6 +134,7 @@ class LessonViewSet(viewsets.ModelViewSet):
 class LessonAttachmentDeleteView(generics.DestroyAPIView):
     permission_classes = [IsInstructorOrReadOnly, IsCourseOwner]
     course_attr = "course"
+    serializer_class = LessonAttachmentSerializer
 
     def get_object(self):
         attachment = get_object_or_404(
@@ -173,6 +174,7 @@ class QuizView(APIView):
             serializer.data, status=status.HTTP_200_OK if quiz else status.HTTP_201_CREATED
         )
 
+    @extend_schema(responses={204: None})
     def delete(self, request, pk):
         lesson = self._lesson(pk)
         if not IsCourseOwner().has_object_permission(request, self, lesson):

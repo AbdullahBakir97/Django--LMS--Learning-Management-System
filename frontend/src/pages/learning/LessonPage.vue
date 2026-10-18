@@ -10,6 +10,7 @@ import ProgressBar from '@/features/learning/ProgressBar.vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import Alert from '@/components/ui/Alert.vue'
+import DiscussionThread from '@/features/engagement/DiscussionThread.vue'
 
 const props = defineProps<{ slug: string; id: string }>()
 const router = useRouter()
@@ -131,6 +132,12 @@ async function refreshProgress() {
         <Alert v-else class="mt-8"
           >This is a free preview. Enrol in the course to track progress and take quizzes.</Alert
         >
+
+        <DiscussionThread
+          class="mt-12 border-t border-line pt-8"
+          :target="{ key: 'lesson', id: lesson.id }"
+          :title="lesson.title"
+        />
       </template>
     </div>
 

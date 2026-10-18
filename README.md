@@ -17,37 +17,46 @@ The full design, the domain map and the rules the code follows are in
 The project is being rebuilt in phases, one pull request each. Done so far: the backend
 foundation, accounts with JWT auth and email verification, profiles with experience, education,
 skills and endorsements, the Vue frontend, courses with lessons, quizzes, progress and
-certificates, and live notifications over one WebSocket per user. Network, community, careers and
-messaging follow.
+certificates, live notifications over one WebSocket per user, and the network: follows,
+connections, suggestions, lesson discussions and reactions. Community, careers and messaging
+follow.
 
 ## Codebase map
 
-Generated from the code graph (graphify, tests and migrations left out): arrows point from a
-module to what it uses, and the number is how many links the graph found. Contexts use only the
-layers below them: `notifications` hears about enrolments and certificates through events and
-never imports `learning`.
+Generated from the code graph (graphify; tests, migrations and admin modules left out): arrows
+point from a module to what it uses, and the number is how many links the graph found. Contexts
+use only the layers below them. Dotted arrows are domain events: `notifications` hears about
+enrolments, follows and comments without importing the contexts that publish them, and
+`learning` plugs lessons into `engagement` through its target registry.
 
 ```mermaid
 flowchart LR
   subgraph Backend
-    config --> learning & notifications & profiles & accounts & core
+    config --> accounts & engagement & learning & network & notifications & profiles & core
+    notifications -- 18 --> core
     learning -- 15 --> core
-    learning -- 4 --> accounts
-    notifications -- 14 --> core
+    engagement -- 10 --> core
+    network -- 9 --> core
     profiles -- 9 --> core
+    learning -- 4 --> accounts
     profiles -- 3 --> accounts
+    network -- 3 --> profiles
+    learning -- 2 --> engagement
     learning -. events .-> notifications
     profiles -. events .-> notifications
+    network -. events .-> notifications
+    engagement -. events .-> notifications
   end
   subgraph Frontend
-    router -- 36 --> pages
-    pages -- 43 --> components
-    pages -- 20 --> features
-    pages -- 70 --> api
-    pages -- 14 --> stores
-    features -- 21 --> api
-    features -- 12 --> components
+    pages -- 75 --> api
+    features -- 48 --> api
+    pages -- 45 --> components
+    router -- 38 --> pages
+    pages -- 23 --> features
+    features -- 18 --> components
+    pages -- 16 --> stores
     stores -- 10 --> api
+    layouts -- 5 --> components
   end
   api -. REST and WebSocket .-> config
 ```
