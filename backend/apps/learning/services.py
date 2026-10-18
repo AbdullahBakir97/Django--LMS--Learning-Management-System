@@ -36,7 +36,14 @@ def enroll(actor, course: Course) -> Enrollment:
         raise ValidationError({"prerequisites": [f"Complete “{c.title}” first." for c in missing]})
     enrollment = Enrollment.objects.create(course=course, student=actor)
     events.publish(
-        names.ENROLLED, enrollment_id=enrollment.id, course_id=course.id, student_id=actor.id
+        names.ENROLLED,
+        enrollment_id=enrollment.id,
+        course_id=course.id,
+        course_title=course.title,
+        course_slug=course.slug,
+        instructor_id=course.instructor_id,
+        student_id=actor.id,
+        student_name=actor.get_full_name() or actor.username,
     )
     return enrollment
 
@@ -103,6 +110,7 @@ def _check_completion(enrollment: Enrollment) -> None:
         names.COURSE_COMPLETED,
         enrollment_id=enrollment.id,
         course_id=course.id,
+        course_title=course.title,
         student_id=enrollment.student_id,
         certificate_code=str(certificate.code),
     )

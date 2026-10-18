@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.profiles",
     "apps.learning",
+    "apps.notifications",
 ]
 
 MIDDLEWARE = [

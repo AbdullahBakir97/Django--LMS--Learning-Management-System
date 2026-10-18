@@ -16,33 +16,38 @@ The full design, the domain map and the rules the code follows are in
 
 The project is being rebuilt in phases, one pull request each. Done so far: the backend
 foundation, accounts with JWT auth and email verification, profiles with experience, education,
-skills and endorsements, and the Vue frontend with sign-in, registration, password reset and
-profile editing. Courses, notifications, network, community, careers and messaging follow.
+skills and endorsements, the Vue frontend, courses with lessons, quizzes, progress and
+certificates, and live notifications over one WebSocket per user. Network, community, careers and
+messaging follow.
 
 ## Codebase map
 
-Generated from the code graph (graphify): arrows point from a module to what it imports, and the
-number is how many links the graph found. Contexts import only downward; `learning` and `profiles`
-never import each other.
+Generated from the code graph (graphify, tests and migrations left out): arrows point from a
+module to what it uses, and the number is how many links the graph found. Contexts use only the
+layers below them: `notifications` hears about enrolments and certificates through events and
+never imports `learning`.
 
 ```mermaid
 flowchart LR
   subgraph Backend
-    config --> learning & profiles & accounts & core
+    config --> learning & notifications & profiles & accounts & core
     learning -- 15 --> core
     learning -- 4 --> accounts
-    profiles -- 6 --> core
+    notifications -- 14 --> core
+    profiles -- 9 --> core
     profiles -- 3 --> accounts
+    learning -. events .-> notifications
+    profiles -. events .-> notifications
   end
   subgraph Frontend
-    router -- 20 --> pages
-    pages -- 21 --> components
-    pages -- 5 --> features
-    pages -- 27 --> api
-    pages -- 8 --> stores
-    features -- 4 --> api
-    features -- 6 --> components
-    stores -- 6 --> api
+    router -- 36 --> pages
+    pages -- 43 --> components
+    pages -- 20 --> features
+    pages -- 70 --> api
+    pages -- 14 --> stores
+    features -- 21 --> api
+    features -- 12 --> components
+    stores -- 10 --> api
   end
   api -. REST and WebSocket .-> config
 ```

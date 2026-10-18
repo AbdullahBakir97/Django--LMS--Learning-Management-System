@@ -52,6 +52,9 @@ backend/apps/learning/
 - Constraints live in the database: unique, check and index declarations on every model.
 - Cross-context side effects go through `core.events`, published in `transaction.on_commit`.
 - One notification write path, one realtime group per user (`user.<id>`), one task queue.
+- The WebSocket authenticates with a signed ticket from `POST /api/realtime/ticket/` that lives
+  30 seconds, so the bearer token never appears in a URL. Pushes are best effort; the list API is
+  the source of truth.
 - API: resource nouns, nested where ownership is natural, cursor pagination, django-filter,
   OpenAPI from drf-spectacular, errors as RFC 9457 problem documents.
 - Configuration from the environment. The same image runs locally, in CI and in production.

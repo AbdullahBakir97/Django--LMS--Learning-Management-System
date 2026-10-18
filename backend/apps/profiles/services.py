@@ -2,6 +2,9 @@
 
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
+from apps.core import events
+
+from . import events as names
 from .models import Endorsement, Profile, ProfileSkill, Skill
 
 
@@ -17,9 +20,17 @@ def add_skill(profile: Profile, name: str, level: str) -> ProfileSkill:
 def endorse(actor, profile_skill: ProfileSkill) -> Endorsement:
     if profile_skill.profile.user_id == actor.id:
         raise PermissionDenied("You cannot endorse your own skill.")
-    endorsement, _ = Endorsement.objects.get_or_create(
+    endorsement, created = Endorsement.objects.get_or_create(
         profile_skill=profile_skill, endorsed_by=actor
     )
+    if created:
+        events.publish(
+            names.SKILL_ENDORSED,
+            recipient_id=profile_skill.profile.user_id,
+            actor_id=actor.id,
+            actor_name=actor.get_full_name() or actor.username,
+            skill_name=profile_skill.skill.name,
+        )
     return endorsement
 
 
