@@ -18,6 +18,35 @@ export const router = createRouter({
           component: () => import('@/pages/ProfilePage.vue'),
           props: true,
         },
+        { path: 'jobs', name: 'jobs', component: () => import('@/pages/careers/JobsPage.vue') },
+        {
+          path: 'jobs/:id',
+          name: 'job',
+          component: () => import('@/pages/careers/JobPage.vue'),
+          props: true,
+        },
+        {
+          path: 'jobs/:id/applications',
+          name: 'job-applications',
+          component: () => import('@/pages/careers/JobApplicationsPage.vue'),
+          props: true,
+        },
+        {
+          path: 'applications',
+          name: 'applications',
+          component: () => import('@/pages/careers/MyApplicationsPage.vue'),
+        },
+        {
+          path: 'companies',
+          name: 'companies',
+          component: () => import('@/pages/careers/CompaniesPage.vue'),
+        },
+        {
+          path: 'companies/:slug',
+          name: 'company',
+          component: () => import('@/pages/careers/CompanyPage.vue'),
+          props: true,
+        },
         {
           path: 'groups',
           name: 'groups',

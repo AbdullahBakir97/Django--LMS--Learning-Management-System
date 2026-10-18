@@ -9,7 +9,7 @@ from .models import Notification, Preference
 from .serializers import NotificationSerializer
 from .tasks import send_notification_email
 
-EMAIL_KINDS = {Notification.Kind.COURSE_COMPLETED}
+EMAIL_KINDS = {Notification.Kind.COURSE_COMPLETED, Notification.Kind.APPLICATION_UPDATE}
 
 
 def notify(recipient_id, kind, title, *, body="", url="", actor_id=None) -> Notification | None:
