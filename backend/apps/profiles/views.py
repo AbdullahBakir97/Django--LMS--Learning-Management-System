@@ -5,12 +5,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from . import services
-from .models import Education, Experience, ProfileSkill, Skill
+from .models import Education, Experience, PortfolioItem, ProfileSkill, Skill
 from .selectors import profile_queryset
 from .serializers import (
     AddSkillSerializer,
     EducationSerializer,
     ExperienceSerializer,
+    PortfolioItemSerializer,
     ProfileSerializer,
     ProfileSkillSerializer,
     SkillSerializer,
@@ -53,6 +54,11 @@ class ExperienceViewSet(OwnEntriesViewSet):
 class EducationViewSet(OwnEntriesViewSet):
     queryset = Education.objects.all()
     serializer_class = EducationSerializer
+
+
+class PortfolioItemViewSet(OwnEntriesViewSet):
+    queryset = PortfolioItem.objects.all()
+    serializer_class = PortfolioItemSerializer
 
 
 class ProfileSkillViewSet(mixins.ListModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):

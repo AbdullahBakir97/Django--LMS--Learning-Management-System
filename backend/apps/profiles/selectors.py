@@ -8,5 +8,9 @@ def profile_queryset():
         endorsement_count=Count("endorsements")
     )
     return Profile.objects.select_related("user").prefetch_related(
-        "experiences", "educations", Prefetch("skills", queryset=skills)
+        "experiences",
+        "educations",
+        "portfolio",
+        "user__achievements",
+        Prefetch("skills", queryset=skills),
     )

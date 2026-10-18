@@ -6,6 +6,7 @@ from . import views
 router = SimpleRouter()
 router.register("profiles/me/experiences", views.ExperienceViewSet, basename="my-experiences")
 router.register("profiles/me/educations", views.EducationViewSet, basename="my-educations")
+router.register("profiles/me/portfolio", views.PortfolioItemViewSet, basename="my-portfolio")
 router.register("profiles/me/skills", views.ProfileSkillViewSet, basename="my-skills")
 
 urlpatterns = [

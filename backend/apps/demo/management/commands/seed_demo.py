@@ -28,6 +28,7 @@ from apps.learning import services as learning
 from apps.learning.models import Choice, Course, Lesson, Question, Quiz
 from apps.messaging import services as messaging
 from apps.network import services as network
+from apps.profiles.models import PortfolioItem
 from apps.profiles.services import add_skill
 
 DOMAIN = "demo.lms"
@@ -143,6 +144,35 @@ class Command(BaseCommand):
         network.request_connection(u["sara"], u["lina"])
         for a, b in [("yusuf", "karim"), ("sara", "amina"), ("omar", "karim")]:
             network.follow(u[a], u[b])
+
+        # Credentials
+        lina = u["lina"].profile
+        PortfolioItem.objects.create(
+            profile=lina,
+            title="Course catalogue API",
+            url="https://example.org/catalogue",
+            description="A versioned REST API with search, pagination and contract tests.",
+        )
+        PortfolioItem.objects.create(
+            profile=lina,
+            title="Talk: constraints over code",
+            description="Why rules belong in the database, given at a local Python meetup.",
+        )
+        karim_says = network.write_recommendation(
+            u["karim"],
+            u["lina"],
+            "Taught Lina in APIs with Django REST Framework",
+            "Lina asked the questions everyone else was thinking and then wrote the tests to "
+            "prove the answers. Her final project was the best in the cohort.",
+        )
+        network.set_recommendation_status(u["lina"], karim_says, "published")
+        network.write_recommendation(
+            u["amina"],
+            u["lina"],
+            "Worked with Lina on a data migration",
+            "Careful, calm under pressure and generous with reviews. "
+            "I would happily work with Lina again.",
+        )
 
         # Learning
         api = self.course(

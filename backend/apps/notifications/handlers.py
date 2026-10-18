@@ -155,3 +155,34 @@ def on_application_status_changed(*, applicant_id, job_title, company_name, stat
         f"{company_name}: your application for {job_title} is now “{status_label}”",
         url="/applications",
     )
+
+
+@subscribe("network.recommendation_requested")
+def on_recommendation_requested(
+    *, requester_id, requester_name, requester_username, recipient_id, message, **_
+):
+    notify(
+        recipient_id,
+        Kind.RECOMMENDATION_REQUEST,
+        f"{requester_name} asked you for a recommendation",
+        body=message,
+        url=f"/u/{requester_username}#recommend",
+        actor_id=requester_id,
+    )
+
+
+@subscribe("network.recommendation_written")
+def on_recommendation_written(*, author_id, author_name, recipient_id, **_):
+    notify(
+        recipient_id,
+        Kind.RECOMMENDATION,
+        f"{author_name} wrote you a recommendation",
+        body="Read it and choose whether it shows on your profile.",
+        url="/me#recommendations",
+        actor_id=author_id,
+    )
+
+
+@subscribe("profiles.achievement_earned")
+def on_achievement_earned(*, user_id, title, **_):
+    notify(user_id, Kind.ACHIEVEMENT, f"New badge: {title}", url="/me")

@@ -10,6 +10,8 @@ import {
   PhChatCircleText,
   PhHandshake,
   PhHandsClapping,
+  PhMedal,
+  PhQuotes,
   PhUserCirclePlus,
   PhUserPlus,
   PhUsersThree,
@@ -30,6 +32,9 @@ export const kindIcon: Record<NotificationKind, typeof PhBell> = {
   event_rsvp: PhCalendarCheck,
   application_received: PhFileText,
   application_update: PhBriefcase,
+  recommendation_request: PhQuotes,
+  recommendation: PhQuotes,
+  achievement: PhMedal,
 }
 
 const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })

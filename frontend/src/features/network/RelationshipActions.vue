@@ -8,6 +8,7 @@ import { ApiError } from '@/api/client'
 import Button from '@/components/ui/Button.vue'
 
 const props = defineProps<{ username: string }>()
+const emit = defineEmits<{ change: [rel: Relationship] }>()
 const router = useRouter()
 const rel = ref<Relationship | null>(null)
 const busy = ref(false)
@@ -15,7 +16,10 @@ const error = ref('')
 
 watch(
   () => props.username,
-  async (u) => (rel.value = await network.relationship(u)),
+  async (u) => {
+    rel.value = await network.relationship(u)
+    emit('change', rel.value)
+  },
   { immediate: true },
 )
 
@@ -25,6 +29,7 @@ async function run(action: () => Promise<unknown>) {
   try {
     await action()
     rel.value = await network.relationship(props.username)
+    emit('change', rel.value)
   } catch (e) {
     error.value = e instanceof ApiError ? (e.nonField ?? 'Something went wrong.') : 'Network error.'
   } finally {
@@ -93,6 +98,7 @@ const withdraw = () => run(() => network.remove(rel.value!.connection!.id))
           <PhCheck :size="18" weight="light" /> Connected
         </span>
         <Button size="sm" @click="message"><PhChatCircle :size="18" weight="light" /> Message</Button>
+        <slot name="connected" />
       </template>
       <Button
         :variant="rel.following ? 'secondary' : 'ghost'"

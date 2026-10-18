@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { nextTick, onMounted, reactive, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { PhPlus, PhTrash } from '@phosphor-icons/vue'
 import { auth } from '@/api/auth'
 import { profiles, type Profile, type SkillLevel } from '@/api/profiles'
+import { network, type Recommendation } from '@/api/network'
 import { useSessionStore } from '@/stores/session'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import Dialog from '@/components/ui/Dialog.vue'
 import TextField from '@/components/ui/TextField.vue'
 import EntryForm, { type Field } from '@/features/profile/EntryForm.vue'
+import RecommendationList from '@/features/profile/RecommendationList.vue'
 import { dateRange } from '@/features/profile/format'
 
 const session = useSessionStore()
@@ -18,8 +21,14 @@ const busy = ref(false)
 
 const about = reactive({ first_name: '', last_name: '', headline: '', location: '', website: '', bio: '' })
 
+const recommendations = ref<Recommendation[]>([])
+const route = useRoute()
+
 onMounted(async () => {
   profile.value = await profiles.me()
+  recommendations.value = await network.recommendations(profile.value.user.username)
+  // Notifications link to /me#recommendations; the card exists only after this load.
+  if (route.hash) nextTick(() => document.querySelector(route.hash)?.scrollIntoView())
   Object.assign(about, {
     first_name: profile.value.user.first_name,
     last_name: profile.value.user.last_name,
@@ -61,13 +70,31 @@ const educationFields: Field[] = [
   { key: 'description', label: 'Description', textarea: true },
 ]
 
-const dialog = ref<'experience' | 'education' | null>(null)
+const portfolioFields: Field[] = [
+  { key: 'title', label: 'Title', required: true },
+  { key: 'url', label: 'Link', type: 'url' },
+  { key: 'completed_on', label: 'Finished on', type: 'date' },
+  { key: 'description', label: 'Description', textarea: true },
+]
+
+const dialog = ref<'experience' | 'education' | 'portfolio' | null>(null)
 async function closeAndReload() {
   dialog.value = null
   await reload()
 }
 const submitExperience = (d: Record<string, string | null>) => profiles.addExperience(d as never)
 const submitEducation = (d: Record<string, string | null>) => profiles.addEducation(d as never)
+const submitPortfolio = (d: Record<string, string | null>) => profiles.addPortfolioItem(d as never)
+
+async function setStatus(id: number, status: 'published' | 'hidden') {
+  const updated = await network.setRecommendationStatus(id, status)
+  recommendations.value = recommendations.value.map((r) => (r.id === id ? updated : r))
+}
+
+async function removeRecommendation(id: number) {
+  await network.removeRecommendation(id)
+  recommendations.value = recommendations.value.filter((r) => r.id !== id)
+}
 const skillName = ref('')
 const skillLevel = ref<SkillLevel>('intermediate')
 const skillError = ref('')
@@ -84,10 +111,11 @@ async function addSkill() {
   }
 }
 
-async function remove(kind: 'experience' | 'education' | 'skill', id: number) {
+async function remove(kind: 'experience' | 'education' | 'portfolio' | 'skill', id: number) {
   const fn = {
     experience: profiles.removeExperience,
     education: profiles.removeEducation,
+    portfolio: profiles.removePortfolioItem,
     skill: profiles.removeSkill,
   }[kind]
   await fn(id)
@@ -133,8 +161,8 @@ async function remove(kind: 'experience' | 'education' | 'skill', id: number) {
       </form>
     </Card>
 
-    <div class="mt-6 grid gap-6 lg:grid-cols-[2fr_1fr]">
-      <div class="grid gap-6">
+    <div class="mt-6 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div class="grid grid-cols-[minmax(0,1fr)] content-start gap-6">
         <Card class="p-5">
           <div class="flex items-center justify-between">
             <h2 class="text-lg font-semibold">Experience</h2>
@@ -193,8 +221,53 @@ async function remove(kind: 'experience' | 'education' | 'skill', id: number) {
             </li>
           </ul>
         </Card>
+        <Card class="p-5">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold">Portfolio</h2>
+            <Button size="sm" variant="secondary" @click="dialog = 'portfolio'"
+              ><PhPlus :size="16" weight="light" /> Add</Button
+            >
+          </div>
+          <p v-if="!profile.portfolio.length" class="mt-2 text-sm text-muted">
+            Projects, papers, talks or repositories you are proud of.
+          </p>
+          <ul v-else class="mt-3 divide-y divide-line">
+            <li
+              v-for="p in profile.portfolio"
+              :key="p.id"
+              class="flex items-start justify-between gap-3 py-3"
+            >
+              <span class="min-w-0">
+                <span class="block truncate font-medium">{{ p.title }}</span>
+                <span v-if="p.url" class="block truncate font-mono text-xs text-muted">{{ p.url }}</span>
+              </span>
+              <button
+                type="button"
+                class="grid size-9 shrink-0 cursor-pointer place-items-center rounded-md text-muted hover:bg-danger-soft hover:text-danger"
+                :aria-label="`Remove ${p.title}`"
+                @click="remove('portfolio', p.id)"
+              >
+                <PhTrash :size="18" weight="light" />
+              </button>
+            </li>
+          </ul>
+        </Card>
+        <Card id="recommendations" class="scroll-mt-24 p-5">
+          <h2 class="text-lg font-semibold">Recommendations</h2>
+          <p v-if="!recommendations.length" class="mt-2 text-sm text-muted">
+            None yet. Open a connection’s profile and ask them for one.
+          </p>
+          <RecommendationList
+            v-else
+            class="mt-3"
+            :items="recommendations"
+            manage
+            @status="setStatus"
+            @remove="removeRecommendation"
+          />
+        </Card>
       </div>
-      <Card class="p-5">
+      <Card class="self-start p-5">
         <h2 class="text-lg font-semibold">Skills</h2>
         <form class="mt-3 grid gap-2" novalidate @submit.prevent="addSkill">
           <TextField v-model="skillName" label="Add a skill" placeholder="e.g. Django" :error="skillError" />
@@ -237,6 +310,14 @@ async function remove(kind: 'experience' | 'education' | 'skill', id: number) {
         v-if="dialog === 'experience'"
         :fields="experienceFields"
         :submit="submitExperience"
+        @done="closeAndReload"
+      />
+    </Dialog>
+    <Dialog :open="dialog === 'portfolio'" title="Add to portfolio" @update:open="dialog = null">
+      <EntryForm
+        v-if="dialog === 'portfolio'"
+        :fields="portfolioFields"
+        :submit="submitPortfolio"
         @done="closeAndReload"
       />
     </Dialog>

@@ -122,3 +122,43 @@ class Endorsement(TimeStampedModel):
 
     def __str__(self):
         return f"{self.endorsed_by} endorses {self.profile_skill}"
+
+
+class PortfolioItem(TimeStampedModel):
+    """Something the person made: a project, a paper, a talk, a repository."""
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="portfolio")
+    title = models.CharField(max_length=160)
+    url = models.URLField(blank=True)
+    description = models.TextField(blank=True)
+    completed_on = models.DateField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-completed_on", "-created_at"]
+
+    def __str__(self):
+        return self.title
+
+
+class Achievement(TimeStampedModel):
+    """A badge earned once. Awarded by event handlers in achievements.py, never by hand."""
+
+    class Code(models.TextChoices):
+        FIRST_COURSE = "first_course", "First course completed"
+        FIVE_COURSES = "five_courses", "Five courses completed"
+        FIRST_PUBLISHED = "first_published", "Published a first course"
+        FIRST_ENDORSEMENT = "first_endorsement", "First skill endorsement"
+        TEN_CONNECTIONS = "ten_connections", "Ten connections"
+        RECOMMENDED = "recommended", "Received a recommendation"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="achievements"
+    )
+    code = models.CharField(max_length=32, choices=Code.choices)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [models.UniqueConstraint(fields=["user", "code"], name="achievement_once")]
+
+    def __str__(self):
+        return f"{self.user_id} · {self.code}"

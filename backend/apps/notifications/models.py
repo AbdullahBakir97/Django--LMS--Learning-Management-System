@@ -21,6 +21,9 @@ class Notification(TimeStampedModel):
         EVENT_RSVP = "event_rsvp", "Someone is going to your event"
         APPLICATION_RECEIVED = "application_received", "New application to your job"
         APPLICATION_UPDATE = "application_update", "Your application changed status"
+        RECOMMENDATION_REQUEST = "recommendation_request", "Someone asked for a recommendation"
+        RECOMMENDATION = "recommendation", "Someone wrote you a recommendation"
+        ACHIEVEMENT = "achievement", "You earned a badge"
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"

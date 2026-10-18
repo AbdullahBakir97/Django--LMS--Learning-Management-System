@@ -4,3 +4,5 @@ export function dateRange(start: string, end: string | null): string {
   const from = month.format(new Date(start))
   return `${from} – ${end ? month.format(new Date(end)) : 'present'}`
 }
+
+export const monthYear = (iso: string): string => month.format(new Date(iso))
