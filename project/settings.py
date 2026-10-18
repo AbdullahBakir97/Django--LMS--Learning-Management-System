@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,12 +21,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-*n#-ls9^j#y=3j^j@56gvuo0f2v!-&)61jjrifq^7pspy6ov)1"
+SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DJANGO_DEBUG", "0") == "1"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 
 # Application definition
@@ -39,16 +40,17 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'django_celery_beat',
     'django_redis',
-    'crispy_forms',
     'rest_framework',
     'rest_framework.authtoken',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
     'corsheaders',
-    'ckeditor',
     'taggit',
     
     # my apps
@@ -68,6 +70,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -76,7 +79,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
-    'corsheaders.middleware.CorsMiddleware'
 ]
 
 AUTH_USER_MODEL = 'profiles.User'
@@ -105,14 +107,10 @@ TEMPLATES = [
     },
 ]
 
-CRISPY_TEMPLATE_PACK = 'bootstrap4'
-
 # Rest Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -127,15 +125,15 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [('127.0.0.1', 6379)],
+            'hosts': [os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")],
         },
     },
 }
 
 
 # Celery Configuration
-CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
-CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/0'
+CELERY_BROKER_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -147,16 +145,11 @@ SESSION_CACHE_ALIAS = 'default'
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://localhost:6379/1',
+        'LOCATION': os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0"),
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         }
     }
-}
-
-# JWT Authentication
-JWT_AUTH = {
-    'JWT_RESPONSE_PAYLOAD_HANDLER': 'project.utils.my_jwt_response_handler'
 }
 
 # CORS
@@ -166,13 +159,6 @@ CORS_ALLOWED_ORIGINS = [
 
 
 SITE_ID = 1
-
-# CKEditor Configuration
-CKEDITOR_CONFIGS = {
-    'default': {
-        'toolbar': 'full',
-    },
-}
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -220,9 +206,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL =  '/media/'
 MEDIA_ROOT =  BASE_DIR / "media"

@@ -1,0 +1,7 @@
+line-length = 100
+target-version = "py312"
+extend-exclude = ["migrations"]
+
+[lint]
+# Phase 0 gates on real errors only; style rules arrive with the rewrite in Phase 1.
+select = ["E9", "F63", "F7", "F82"]
