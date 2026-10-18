@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "dj_rest_auth.registration",
     "allauth",
     "allauth.account",
+    "allauth.socialaccount",  # dj-rest-auth registration imports its models
     "django_filters",
     "drf_spectacular",
     "corsheaders",
