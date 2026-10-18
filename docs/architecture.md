@@ -95,3 +95,9 @@ frames are dropped without closing the connection.
 - **Course reading.** `GET` requests for `/api/auth/user/`, `/api/me/enrollments/` and `/api/courses/…` go to the network first; offline, the last copy is used. No other API response is stored.
 
 The session store uses the cached user only when the browser reports it is offline and the refresh cookie cannot be used. Writes still need the network. Signing out posts `sign-out` to the worker, which deletes the course-reading cache. To retire old caches, bump `VERSION` in `sw.js`.
+
+## Search
+
+`apps/search` is the one context above all the others. It has no models. For each kind of result, it calls the owning context's visibility selector, such as `visible_courses`, `events_visible` or `jobs`, and ranks rows with PostgreSQL full-text search. This keeps every visibility rule in one place. A new searchable kind needs a finder in `selectors.py` and a row shape in `serializers.py`.
+
+Search vectors are computed per query, which is fast enough at this size. When a search starts taking more than about 100 ms, store a `SearchVectorField` with a GIN index on the large tables.
