@@ -3,7 +3,9 @@ repos:
     rev: v0.6.9
     hooks:
       - id: ruff
+        args: ["--config", "backend/pyproject.toml"]
       - id: ruff-format
+        args: ["--config", "backend/pyproject.toml"]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
