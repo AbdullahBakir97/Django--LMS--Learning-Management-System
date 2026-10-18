@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "apps.search",
     "apps.moderation",
     "apps.payments",
+    "apps.insights",
     "apps.demo",
     "apps.notifications",
 ]

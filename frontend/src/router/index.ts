@@ -13,6 +13,12 @@ export const router = createRouter({
         { path: '', name: 'home', component: () => import('@/pages/HomePage.vue') },
         { path: 'me', name: 'my-profile', component: () => import('@/pages/MyProfilePage.vue') },
         {
+          path: 'overview',
+          name: 'overview',
+          component: () => import('@/pages/OverviewPage.vue'),
+          meta: { adminOnly: true },
+        },
+        {
           path: 'moderation',
           name: 'moderation',
           component: () => import('@/pages/ModerationPage.vue'),

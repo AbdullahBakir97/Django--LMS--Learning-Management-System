@@ -18,6 +18,7 @@ import {
   PhWifiSlash,
   PhMagnifyingGlass,
   PhShieldCheck,
+  PhChartLineUp,
 } from '@phosphor-icons/vue'
 import BrandMark from '@/components/BrandMark.vue'
 import ThemeToggle from '@/components/ui/ThemeToggle.vue'
@@ -85,7 +86,10 @@ const items = computed(() => [
       ]
     : []),
   ...(session.user?.role === 'admin'
-    ? [{ to: { name: 'moderation' }, label: 'Moderation', icon: PhShieldCheck }]
+    ? [
+        { to: { name: 'overview' }, label: 'Overview', icon: PhChartLineUp },
+        { to: { name: 'moderation' }, label: 'Moderation', icon: PhShieldCheck },
+      ]
     : []),
   { to: { name: 'my-profile' }, label: 'My profile', icon: PhUserCircle },
 ])

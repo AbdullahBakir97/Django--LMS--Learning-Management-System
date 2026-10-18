@@ -107,7 +107,7 @@ To deploy published images instead of building on the server, replace each `buil
 ## Verified by CI on every push
 
 - The main journeys run in a real browser against a seeded backend: search, posting with a photo,
-  moderating a report, opening course analytics.
+  moderating a report, opening course analytics, the admin overview, a paid course asking for payment.
 - Every API route answers an anonymous caller without a server error, and the busiest lists keep a
   constant query count.
 - A deactivated account loses access at once: its access token stops working and its refresh token

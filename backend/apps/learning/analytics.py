@@ -3,37 +3,16 @@
 from datetime import timedelta
 
 from django.db.models import Avg, Count, F, Max, OuterRef, Q, Subquery
-from django.db.models.functions import Coalesce, Greatest, TruncWeek
+from django.db.models.functions import Coalesce, Greatest
 from django.utils import timezone
+
+from apps.core.stats import weekly_counts
 
 from .models import Course, Enrollment, LessonProgress, QuizAttempt
 
 WEEKS = 12
 STALLED_AFTER = timedelta(days=14)
 STALLED_SHOWN = 10
-
-
-def _weekly(course: Course, now) -> list[dict]:
-    """Enrolments per week for the last WEEKS weeks, empty weeks included."""
-    this_week = (now - timedelta(days=now.weekday())).replace(
-        hour=0, minute=0, second=0, microsecond=0
-    )
-    start = this_week - timedelta(weeks=WEEKS - 1)
-    counts = dict(
-        Enrollment.objects.filter(course=course, created_at__gte=start)
-        .annotate(week=TruncWeek("created_at"))
-        .values_list("week")
-        .annotate(n=Count("id"))
-        .values_list("week", "n")
-    )
-    by_date = {week.date(): n for week, n in counts.items()}
-    return [
-        {
-            "week": (start + timedelta(weeks=i)).date(),
-            "count": by_date.get((start + timedelta(weeks=i)).date(), 0),
-        }
-        for i in range(WEEKS)
-    ]
 
 
 def course_analytics(course: Course) -> dict:
@@ -116,7 +95,7 @@ def course_analytics(course: Course) -> dict:
         if duration
         else None,
         "lesson_count": len(lessons),
-        "weekly_enrolments": _weekly(course, now),
+        "weekly_enrolments": weekly_counts(enrolments, weeks=WEEKS, now=now),
         "lessons": lessons,
         "quizzes": quizzes,
         "stalled_count": stalled.count(),

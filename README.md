@@ -22,6 +22,7 @@ notifications. Django REST Framework on PostgreSQL and Redis, with a Vue 3 front
 | **Messaging** | Direct and group conversations, live, with typing and read receipts | |
 | **Search** | One box for people, courses, groups, events, jobs and companies, with results as you type (Ctrl/⌘ K) | Drafts and private groups stay visible only to the people who can see them |
 | **Safety** | Report a post, a comment or a person; hear back when a moderator has looked | A moderation queue that groups reports by item, with remove, deactivate or dismiss |
+| **Operations** | | For admins: one overview of people, enrolments, revenue per currency, courses in demand and reports waiting |
 | **Notifications** | Live in the app, email for what matters or a daily or weekly digest, quiet hours in your time zone, per-kind preferences | |
 
 Accounts use email sign-in with verification and password reset. Every list is cursor-paged,
@@ -46,6 +47,8 @@ API is described by OpenAPI at `/api/docs/`.
 | The feed with images, a share and company news | The moderation queue |
 | ![Analytics](docs/screenshots/analytics-light.png) | ![Buy a course](docs/screenshots/buy-light.png) |
 | Course analytics for its instructor | A paid course, with a free preview lesson |
+| ![Overview](docs/screenshots/overview-light.png) | |
+| The admin overview of the whole platform | |
 
 Light and dark themes, and every screen works at phone width. More in
 [docs/screenshots](docs/screenshots).
@@ -72,9 +75,9 @@ flowchart LR
   subgraph Backend
     config --> accounts & careers & community & engagement & learning & messaging & network & notifications & profiles & core
     notifications -- 31 --> core
+    learning -- 21 --> core
     profiles -- 20 --> core
     careers -- 18 --> core
-    learning -- 18 --> core
     community -- 16 --> engagement
     community -- 15 --> core
     network -- 13 --> core
@@ -99,11 +102,11 @@ flowchart LR
     messaging -. events .-> notifications
   end
   subgraph Frontend
-    pages -- 169 --> api
+    pages -- 174 --> api
     features -- 158 --> api
-    pages -- 99 --> components
-    pages -- 74 --> features
-    router -- 66 --> pages
+    pages -- 101 --> components
+    pages -- 75 --> features
+    router -- 68 --> pages
     features -- 54 --> components
     pages -- 22 --> stores
     features -- 17 --> stores
@@ -134,7 +137,7 @@ docs are at <http://localhost:8000/api/docs/>.
 | Command | Does |
 |---|---|
 | `make test` | backend pytest and frontend unit tests |
-| `make e2e` | Playwright journeys (search, posting a photo, moderation, analytics) against the seeded dev stack |
+| `make e2e` | Playwright journeys (search, posting a photo, moderation, analytics, overview, a paid course) against the seeded dev stack |
 | `make lint` / `make fmt` | ruff, ESLint, Prettier and vue-tsc |
 | `make schema` | write the OpenAPI schema, failing on any warning |
 | `make help` | every target |
