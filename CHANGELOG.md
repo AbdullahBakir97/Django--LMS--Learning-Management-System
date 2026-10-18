@@ -29,6 +29,9 @@ All notable changes. The project follows [Semantic Versioning](https://semver.or
   average, the host reads the comments.
 - **Company updates**: a company's team posts news on its page; followers see it on their home
   page.
+- **Reporting and moderation**: anyone can report a post, a comment or a person, once each;
+  moderators (the admin role) work a queue grouped by item, remove the content or deactivate
+  the account, or dismiss; every reporter hears back. Demo: `sara` moderates.
 
 ### Fixed
 

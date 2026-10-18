@@ -27,6 +27,7 @@ class Notification(TimeStampedModel):
         INTERVIEW = "interview", "Interview invitation or change"
         INTERVIEW_REPLY = "interview_reply", "A candidate replied to an interview"
         POST_SHARED = "post_shared", "Someone shared your post"
+        REPORT_REVIEWED = "report_reviewed", "Your report was reviewed"
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"

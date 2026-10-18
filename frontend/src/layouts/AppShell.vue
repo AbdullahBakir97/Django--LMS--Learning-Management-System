@@ -17,6 +17,7 @@ import {
   PhChatsCircle,
   PhWifiSlash,
   PhMagnifyingGlass,
+  PhShieldCheck,
 } from '@phosphor-icons/vue'
 import BrandMark from '@/components/BrandMark.vue'
 import ThemeToggle from '@/components/ui/ThemeToggle.vue'
@@ -82,6 +83,9 @@ const items = computed(() => [
           also: ['course-new', 'course-editor'],
         },
       ]
+    : []),
+  ...(session.user?.role === 'admin'
+    ? [{ to: { name: 'moderation' }, label: 'Moderation', icon: PhShieldCheck }]
     : []),
   { to: { name: 'my-profile' }, label: 'My profile', icon: PhUserCircle },
 ])

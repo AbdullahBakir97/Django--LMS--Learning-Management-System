@@ -242,3 +242,15 @@ def on_post_shared(*, share_id, author_id, sharer_id, sharer_name, **_):
         url=f"/posts/{share_id}",
         actor_id=sharer_id,
     )
+
+
+@subscribe("moderation.report_resolved")
+def on_report_resolved(*, reporter_ids, removed, **_):
+    outcome = "We removed it." if removed else "We found it within our guidelines."
+    for reporter_id in reporter_ids:
+        notify(
+            reporter_id,
+            Kind.REPORT_REVIEWED,
+            "Thanks for your report: we reviewed it",
+            body=outcome,
+        )

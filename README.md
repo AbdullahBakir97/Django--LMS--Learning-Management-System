@@ -21,6 +21,7 @@ notifications. Django REST Framework on PostgreSQL and Redis, with a Vue 3 front
 | **Careers** | Job search with skill match, saved jobs, applications with a private résumé, interview invitations to confirm and add to a calendar | Company pages, job posts, an applicant pipeline, interview scheduling, company updates for followers |
 | **Messaging** | Direct and group conversations, live, with typing and read receipts | |
 | **Search** | One box for people, courses, groups, events, jobs and companies, with results as you type (Ctrl/⌘ K) | Drafts and private groups stay visible only to the people who can see them |
+| **Safety** | Report a post, a comment or a person; hear back when a moderator has looked | A moderation queue that groups reports by item, with remove, deactivate or dismiss |
 | **Notifications** | Live in the app, email for what matters or a daily or weekly digest, quiet hours in your time zone, per-kind preferences | |
 
 Accounts use email sign-in with verification and password reset. Every list is cursor-paged,
@@ -41,8 +42,8 @@ API is described by OpenAPI at `/api/docs/`.
 | A profile with portfolio, badges and recommendations | Interview invitations to confirm |
 | ![Offline](docs/screenshots/offline-mobile.png) | ![Search](docs/screenshots/search-light.png) |
 | A lesson read offline on a phone | Search across everything as you type |
-| ![Posts](docs/screenshots/posts-light.png) | |
-| The feed with images, a share and company news | |
+| ![Posts](docs/screenshots/posts-light.png) | ![Moderation](docs/screenshots/moderation-light.png) |
+| The feed with images, a share and company news | The moderation queue |
 
 Light and dark themes, and every screen works at phone width. More in
 [docs/screenshots](docs/screenshots).
@@ -68,7 +69,7 @@ importing the contexts that publish them.
 flowchart LR
   subgraph Backend
     config --> accounts & careers & community & engagement & learning & messaging & network & notifications & profiles & core
-    notifications -- 30 --> core
+    notifications -- 31 --> core
     profiles -- 20 --> core
     careers -- 18 --> core
     community -- 16 --> engagement
@@ -96,15 +97,15 @@ flowchart LR
     messaging -. events .-> notifications
   end
   subgraph Frontend
-    pages -- 160 --> api
-    features -- 148 --> api
-    pages -- 92 --> components
-    pages -- 67 --> features
-    router -- 62 --> pages
-    features -- 52 --> components
+    pages -- 164 --> api
+    features -- 155 --> api
+    pages -- 96 --> components
+    pages -- 70 --> features
+    router -- 64 --> pages
+    features -- 54 --> components
     pages -- 22 --> stores
+    features -- 17 --> stores
     stores -- 14 --> api
-    features -- 13 --> stores
   end
   api -. REST and WebSocket .-> config
 ```
@@ -124,7 +125,7 @@ make seed                       # demo people, courses, groups, events, jobs and
 ```
 
 Open <http://localhost:5173>. The demo accounts are `karim`, `amina` (instructors), `lina`,
-`omar`, `sara`, `yusuf` and `rana` (who hires for Nahla Labs), each as `<name>@demo.lms`. They
+`omar`, `sara` (who moderates), `yusuf` and `rana` (who hires for Nahla Labs), each as `<name>@demo.lms`. They
 share one password: `make seed` prints it, or set `DEMO_PASSWORD` in `.env` to choose it. The API
 docs are at <http://localhost:8000/api/docs/>.
 

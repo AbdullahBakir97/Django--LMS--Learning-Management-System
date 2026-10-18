@@ -13,6 +13,12 @@ export const router = createRouter({
         { path: '', name: 'home', component: () => import('@/pages/HomePage.vue') },
         { path: 'me', name: 'my-profile', component: () => import('@/pages/MyProfilePage.vue') },
         {
+          path: 'moderation',
+          name: 'moderation',
+          component: () => import('@/pages/ModerationPage.vue'),
+          meta: { adminOnly: true },
+        },
+        {
           path: 'u/:username',
           name: 'profile',
           component: () => import('@/pages/ProfilePage.vue'),
@@ -177,6 +183,7 @@ router.beforeEach((to) => {
   if (to.meta.requiresAuth && !session.isAuthenticated) {
     return { name: 'login', query: to.fullPath !== '/' ? { next: to.fullPath } : {} }
   }
+  if (to.meta.adminOnly && session.user?.role !== 'admin') return { name: 'home' }
   if (to.meta.instructorOnly && !['instructor', 'admin'].includes(session.user?.role ?? '')) {
     return { name: 'home' }
   }
