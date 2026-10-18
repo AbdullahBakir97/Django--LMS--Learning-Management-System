@@ -13,5 +13,5 @@ psycopg[binary]>=3.2
 uvicorn[standard]>=0.30
 djangorestframework-simplejwt>=5.3
 dj-rest-auth>=7.0
-django-allauth>=65.0
+django-allauth[socialaccount]>=65.0
 Pillow>=10.4
