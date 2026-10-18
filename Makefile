@@ -11,9 +11,12 @@ shell:
 
 test:
 	cd backend && pytest
+	cd frontend && pnpm test:unit --run
 
 lint:
 	cd backend && ruff check . && ruff format --check .
+	cd frontend && pnpm lint && pnpm format:check && pnpm type-check
 
 fmt:
 	cd backend && ruff format . && ruff check --fix .
+	cd frontend && pnpm format

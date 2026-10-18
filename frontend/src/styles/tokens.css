@@ -1,0 +1,124 @@
+/* LMS design tokens. Semantic roles only; components never use raw colours.
+   Light: cool paper with a slate ink. Dark: deep slate, same roles. One accent: deep teal. */
+@import 'tailwindcss';
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+@theme {
+  --font-display: 'Bricolage Grotesque Variable', 'Geist Variable', system-ui, sans-serif;
+  --font-sans: 'Geist Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --color-page: var(--c-page);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-ink: var(--c-ink);
+  --color-muted: var(--c-muted);
+  --color-line: var(--c-line);
+  --color-line-strong: var(--c-line-strong);
+  --color-accent: var(--c-accent);
+  --color-accent-ink: var(--c-accent-ink);
+  --color-accent-soft: var(--c-accent-soft);
+  --color-danger: var(--c-danger);
+  --color-danger-soft: var(--c-danger-soft);
+  --color-success: var(--c-success);
+  --color-success-soft: var(--c-success-soft);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 1px rgb(15 23 42 / 0.03);
+  --shadow-pop: 0 12px 32px -12px rgb(15 23 42 / 0.25), 0 2px 6px rgb(15 23 42 / 0.06);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-quick: 160ms;
+  --duration-base: 240ms;
+}
+
+:root {
+  --c-page: #f6f7f9;
+  --c-surface: #ffffff;
+  --c-surface-2: #eef0f3;
+  --c-ink: #141a24;
+  --c-muted: #5b6676;
+  --c-line: rgb(20 26 36 / 0.1);
+  --c-line-strong: rgb(20 26 36 / 0.18);
+  --c-accent: #0f766e;
+  --c-accent-ink: #ffffff;
+  --c-accent-soft: rgb(15 118 110 / 0.1);
+  --c-danger: #b42318;
+  --c-danger-soft: rgb(180 35 24 / 0.1);
+  --c-success: #1f7a4d;
+  --c-success-soft: rgb(31 122 77 / 0.12);
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --c-page: #0f141b;
+  --c-surface: #161c25;
+  --c-surface-2: #1d2430;
+  --c-ink: #eef1f5;
+  --c-muted: #9aa5b5;
+  --c-line: rgb(238 241 245 / 0.1);
+  --c-line-strong: rgb(238 241 245 / 0.18);
+  --c-accent: #2fb7a9;
+  --c-accent-ink: #06201d;
+  --c-accent-soft: rgb(47 183 169 / 0.14);
+  --c-danger: #f28b82;
+  --c-danger-soft: rgb(242 139 130 / 0.14);
+  --c-success: #6fcf97;
+  --c-success-soft: rgb(111 207 151 / 0.14);
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    background: var(--c-page);
+    color: var(--c-ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+  :focus-visible {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--c-accent-soft);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@utility animate-page {
+  animation: page-in var(--duration-base) var(--ease-out) both;
+}
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

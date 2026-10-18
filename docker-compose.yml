@@ -39,5 +39,16 @@ services:
     volumes: ["./backend:/app"]
     depends_on: [postgres, redis]
 
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "corepack enable && pnpm install --frozen-lockfile && pnpm dev --host"
+    environment:
+      VITE_BACKEND_URL: http://backend:8000
+    volumes: ["./frontend:/app", "frontend_modules:/app/node_modules"]
+    ports: ["5173:5173"]
+    depends_on: [backend]
+
 volumes:
   pgdata:
+  frontend_modules:
