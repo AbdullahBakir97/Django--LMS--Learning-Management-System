@@ -40,6 +40,11 @@ urlpatterns = [
         name="account_confirm_email",
     ),
     path(
+        "email-verification-sent/",
+        FrontendRedirectView.as_view(target="verify-email"),
+        name="account_email_verification_sent",
+    ),
+    path(
         "reset-password/<str:uidb64>/<str:token>/",
         FrontendRedirectView.as_view(target="reset-password/{uidb64}/{token}"),
         name="password_reset_confirm",

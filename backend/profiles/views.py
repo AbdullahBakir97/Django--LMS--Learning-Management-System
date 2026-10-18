@@ -99,5 +99,5 @@ class SkillSearchView(generics.ListAPIView):
     search_fields = ["name"]
     pagination_class = None
 
-    def get_queryset(self):
-        return super().get_queryset()[:20]
+    def filter_queryset(self, queryset):
+        return super().filter_queryset(queryset)[:20]

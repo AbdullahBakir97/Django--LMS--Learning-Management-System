@@ -94,6 +94,7 @@ REST_AUTH = {
     "JWT_AUTH_SAMESITE": "Lax",
     "JWT_AUTH_RETURN_EXPIRATION": True,
     "USER_DETAILS_SERIALIZER": "accounts.serializers.UserSerializer",
+    "REGISTER_SERIALIZER": "accounts.serializers.RegisterSerializer",
 }
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),

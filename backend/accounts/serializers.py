@@ -1,3 +1,4 @@
+from dj_rest_auth.registration.serializers import RegisterSerializer as DefaultRegisterSerializer
 from rest_framework import serializers
 
 from .models import User
@@ -10,3 +11,13 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "username", "email", "first_name", "last_name", "role", "date_joined"]
         read_only_fields = ["id", "username", "email", "role", "date_joined"]
+
+
+class RegisterSerializer(DefaultRegisterSerializer):
+    """allauth only rejects emails with a *verified* address row; reject any existing user."""
+
+    def validate_email(self, email):
+        email = super().validate_email(email)
+        if User.objects.filter(email__iexact=email).exists():
+            raise serializers.ValidationError("A user is already registered with this email.")
+        return email

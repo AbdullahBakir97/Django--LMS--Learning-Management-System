@@ -8,12 +8,13 @@ from accounts.models import User
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = User
+        skip_postgeneration_save = True
 
     username = factory.Sequence(lambda n: f"user{n}")
     email = factory.LazyAttribute(lambda o: f"{o.username}@example.com")
     first_name = "Test"
     last_name = factory.Sequence(lambda n: f"User{n}")
-    password = factory.PostGenerationMethodCall("set_password", "pass-word-123")
+    password = factory.django.Password("pass-word-123")
 
 
 @pytest.fixture
