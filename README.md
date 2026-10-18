@@ -1,36 +1,60 @@
 # Django LMS
 
-A learning management system and professional network: courses with lessons, quizzes and
-certificates; profiles, connections and groups; jobs and companies; messaging and notifications.
-Django and Django REST Framework on PostgreSQL and Redis, with a Vue 3 frontend.
+A learning platform and professional network in one: courses with quizzes and verifiable
+certificates, a feed and groups, events, jobs with private applications, live messaging and
+notifications. Django REST Framework on PostgreSQL and Redis, with a Vue 3 frontend.
 
 [![CI](https://github.com/AbdullahBakir97/Django--LMS--Learning-Management-System/actions/workflows/ci.yml/badge.svg)](https://github.com/AbdullahBakir97/Django--LMS--Learning-Management-System/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+![The home feed](docs/screenshots/feed-light.png)
+
+## What it does
+
+| Area | For learners | For instructors, organisers and employers |
+|---|---|---|
+| **Learning** | Catalogue, enrolment with prerequisites, lessons in markdown with video, quizzes, progress, a PDF certificate anyone can verify | Course editor, lessons, quiz builder, publishing |
+| **Discussion** | Comments, replies and reactions on lessons and posts | Moderation of discussions on your own lessons and groups |
+| **Network** | Follow, connect, people who share your skills | |
+| **Community** | A feed, public and private groups, events with RSVPs | Group roles and approvals, events with capacity |
+| **Careers** | Job search with skill match, saved jobs, applications with a private résumé | Company pages, job posts, an applicant pipeline |
+| **Messaging** | Direct and group conversations, live, with typing and read receipts | |
+| **Notifications** | Live in the app, email for what matters, per-kind preferences | |
+
+Accounts use email sign-in with verification and password reset. Every list is cursor-paged,
+every error is an [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) problem document, and the
+API is described by OpenAPI at `/api/docs/`.
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Lesson with discussion](docs/screenshots/discussion-dark.png) | ![Messages](docs/screenshots/messages-light.png) |
+| Lesson player and its discussion | Live messaging |
+| ![Jobs](docs/screenshots/jobs-light.png) | ![Applicants](docs/screenshots/applicants-light.png) |
+| Jobs matched to your skills | The hiring team's applicant view |
+| ![Group](docs/screenshots/group-members-light.png) | ![Network](docs/screenshots/network-light.png) |
+| Group members and requests | Network and suggestions |
+
+Light and dark themes, and every screen works at phone width. More in
+[docs/screenshots](docs/screenshots).
+
+## Architecture
+
 ![System architecture](docs/diagrams/system-architecture.png)
 
-The full design, the domain map and the rules the code follows are in
-[docs/architecture.md](docs/architecture.md).
+Nine bounded contexts in five layers, each importing only from the layers below. Anything that
+needs to travel upward is a domain event published after commit. The design, the rules and the
+reasons are in [docs/architecture.md](docs/architecture.md).
 
-## Status
+![Domain layers](docs/diagrams/domain-layers.png)
 
-The project is being rebuilt in phases, one pull request each. Done so far: the backend
-foundation, accounts with JWT auth and email verification, profiles with experience, education,
-skills and endorsements, the Vue frontend, courses with lessons, quizzes, progress and
-certificates, live notifications over one WebSocket per user, and the network: follows,
-connections, suggestions, lesson discussions and reactions, and community: a feed, groups with
-public or private membership, posts, and events with RSVPs, and careers: companies, jobs matched
-to your skills, applications with private résumés and a hiring pipeline, and messaging: direct
-and group conversations with live delivery, read receipts and typing indicators. Release
-hardening follows.
-
-## Codebase map
+### Codebase map
 
 Generated from the code graph (graphify; tests, migrations and admin modules left out): arrows
-point from a module to what it uses, and the number is how many links the graph found. Contexts
-use only the layers below them. Dotted arrows are domain events: `notifications` hears about
-enrolments, follows and comments without importing the contexts that publish them, and
-`learning` plugs lessons into `engagement` through its target registry.
+point from a module to what it uses, and the number is how many links the graph found. Dotted
+arrows are domain events: `notifications` hears about enrolments, follows and comments without
+importing the contexts that publish them.
 
 ```mermaid
 flowchart LR
@@ -53,6 +77,7 @@ flowchart LR
     profiles -- 3 --> accounts
     messaging -- 3 --> network
     network -- 3 --> profiles
+    accounts -- 2 --> core
     learning -- 2 --> engagement
     learning -. events .-> notifications
     profiles -. events .-> notifications
@@ -65,7 +90,7 @@ flowchart LR
   subgraph Frontend
     pages -- 146 --> api
     features -- 111 --> api
-    pages -- 85 --> components
+    pages -- 86 --> components
     router -- 62 --> pages
     pages -- 58 --> features
     features -- 37 --> components
@@ -79,47 +104,49 @@ flowchart LR
 The full graph (every module, class and function, with an Obsidian vault and canvas) is
 regenerated locally with `graphify backend frontend --obsidian`; it is not committed.
 
+## Getting started
+
+Requirements: Docker with Compose. (Or Python 3.12, Node 22 with pnpm, PostgreSQL 16 and Redis 7.)
+
+```bash
+cp .env.example .env            # set DJANGO_SECRET_KEY
+make dev                        # postgres, redis, backend, worker and the app with hot reload
+make migrate
+make seed                       # demo people, courses, groups, events, jobs and conversations
+```
+
+Open <http://localhost:5173>. The demo accounts are `karim`, `amina` (instructors), `lina`,
+`omar`, `sara`, `yusuf` and `rana` (who hires for Nahla Labs), each as `<name>@demo.lms`. They
+share one password: `make seed` prints it, or set `DEMO_PASSWORD` in `.env` to choose it. The API
+docs are at <http://localhost:8000/api/docs/>.
+
+| Command | Does |
+|---|---|
+| `make test` | backend pytest and frontend unit tests |
+| `make e2e` | Playwright smoke test against the dev server |
+| `make lint` / `make fmt` | ruff, ESLint, Prettier and vue-tsc |
+| `make schema` | write the OpenAPI schema, failing on any warning |
+| `make help` | every target |
+
+## Production
+
+Two images: the API (also used for the Celery worker and migrations) and nginx serving the app.
+`make prod-up` runs the whole stack from `docker-compose.prod.yml`; pushing a `v*` tag publishes
+versioned images to the GitHub Container Registry. Settings, TLS, backups and the checklist are
+in [docs/deployment.md](docs/deployment.md).
+
 ## Repository layout
 
 | Path | What it is |
 |---|---|
 | `backend/` | Django project: `config/` (settings, ASGI, Celery), `apps/core/` (kernel), `apps/<context>/` per bounded context |
-| `frontend/` | Vue 3 single-page app: `src/api` (typed client), `src/stores`, `src/components/ui`, `src/pages`, `src/features` |
+| `frontend/` | Vue 3 app: `src/api` (typed client), `src/stores`, `src/lib` (live connection), `src/components/ui`, `src/features`, `src/pages` |
 | `DESIGN.md`, `PRODUCT.md` | The visual system and the product brief the frontend follows |
-| `docs/` | Architecture, diagrams, decisions |
-| `docker-compose.yml` | PostgreSQL, Redis, backend and worker for local development |
-
-## Getting started
-
-Requirements: Docker with Compose, or Python 3.12 with PostgreSQL 16 and Redis 7 running locally.
-
-```bash
-cp .env.example .env            # set DJANGO_SECRET_KEY
-make dev                        # builds and starts postgres, redis, backend, worker
-make migrate
-docker compose exec backend python manage.py createsuperuser
-```
-
-Then open <http://localhost:5173> for the app, <http://localhost:8000/api/docs/> for the API and
-<http://localhost:8000/admin/>.
-
-Without Docker:
-
-```bash
-cd backend
-pip install -r requirements-dev.txt
-export $(grep -v '^#' ../.env | xargs)
-python manage.py migrate && python manage.py runserver
-```
-
-| Command | Does |
-|---|---|
-| `make test` | backend pytest and frontend unit tests |
-| `make lint` / `make fmt` | ruff, ESLint, Prettier and vue-tsc |
-| `cd frontend && pnpm test:e2e` | Playwright smoke test against the dev server |
-| `pre-commit install` | run the same checks before each commit |
+| `docs/` | Architecture, deployment, diagrams, screenshots |
+| `docker-compose.yml`, `docker-compose.prod.yml` | Local development, and a production-like stack |
 
 ## Contributing
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/architecture.md](docs/architecture.md) first.
-Security issues go through [SECURITY.md](SECURITY.md). Licensed under the [MIT License](LICENSE).
+Changes are listed in [CHANGELOG.md](CHANGELOG.md). Security issues go through
+[SECURITY.md](SECURITY.md). Licensed under the [MIT License](LICENSE).

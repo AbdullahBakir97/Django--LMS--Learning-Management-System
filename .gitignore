@@ -171,3 +171,9 @@ graphify-out/
 # Playwright output
 frontend/test-results/
 frontend/playwright-report/
+
+# Real environment files (examples stay tracked)
+.env.*
+!.env.example
+!.env.production.example
+backend/schema.yml

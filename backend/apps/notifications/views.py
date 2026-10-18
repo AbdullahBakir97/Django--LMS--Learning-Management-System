@@ -6,6 +6,7 @@ from rest_framework.fields import IntegerField
 from rest_framework.response import Response
 
 from . import selectors, services
+from .models import Notification
 from .serializers import NotificationSerializer, PreferenceSerializer
 
 Count = inline_serializer("NotificationCount", {"count": IntegerField()})
@@ -16,6 +17,8 @@ Count = inline_serializer("NotificationCount", {"count": IntegerField()})
 )
 class NotificationViewSet(mixins.ListModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     """Your notifications, newest first. Other people's are invisible (404)."""
+
+    queryset = Notification.objects.none()  # for the schema; get_queryset() scopes to the user
 
     serializer_class = NotificationSerializer
     lookup_value_regex = r"\d+"

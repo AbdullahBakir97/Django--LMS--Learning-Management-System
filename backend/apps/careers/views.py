@@ -11,14 +11,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from . import selectors, services
-from .models import Company
+from .models import Application, Company, Job
 from .serializers import (
     AddMemberSerializer,
     ApplicationSerializer,
     ApplySerializer,
+    CompanyMemberSerializer,
     CompanySerializer,
     JobSerializer,
-    MemberSerializer,
     StatusSerializer,
 )
 
@@ -26,6 +26,7 @@ User = get_user_model()
 
 
 class CompanyViewSet(viewsets.ModelViewSet):
+    queryset = Company.objects.none()  # for the schema; get_queryset() scopes to the user
     serializer_class = CompanySerializer
     lookup_field = "slug"
     search_fields = ["name", "industry", "location"]
@@ -58,8 +59,8 @@ class CompanyViewSet(viewsets.ModelViewSet):
         (services.follow if request.method == "POST" else services.unfollow)(request.user, company)
         return Response(self.get_serializer(self.get_queryset().get(pk=company.pk)).data)
 
-    @extend_schema(methods=["GET"], responses=MemberSerializer(many=True))
-    @extend_schema(methods=["POST"], request=AddMemberSerializer, responses=MemberSerializer)
+    @extend_schema(methods=["GET"], responses=CompanyMemberSerializer(many=True))
+    @extend_schema(methods=["POST"], request=AddMemberSerializer, responses=CompanyMemberSerializer)
     @action(detail=True, methods=["get", "post"], pagination_class=None)
     def members(self, request, slug=None):
         company = self.get_object()
@@ -68,11 +69,11 @@ class CompanyViewSet(viewsets.ModelViewSet):
             data.is_valid(raise_exception=True)
             user = get_object_or_404(User, username=data.validated_data["username"])
             member = services.add_member(request.user, company, user, data.validated_data["role"])
-            return Response(MemberSerializer(member).data, status=status.HTTP_201_CREATED)
+            return Response(CompanyMemberSerializer(member).data, status=status.HTTP_201_CREATED)
         if selectors.role_in(request.user, company) is None:
             raise Http404
         return Response(
-            MemberSerializer(company.members.select_related("user__profile"), many=True).data
+            CompanyMemberSerializer(company.members.select_related("user__profile"), many=True).data
         )
 
 
@@ -93,6 +94,8 @@ class CompanyMemberView(APIView):
 )
 class JobViewSet(viewsets.ModelViewSet):
     """Open jobs; a company's team also sees its drafts and closed jobs."""
+
+    queryset = Job.objects.none()  # for the schema; get_queryset() scopes to the user
 
     serializer_class = JobSerializer
     filterset_fields = ["workplace", "employment_type", "level", "status"]
@@ -202,6 +205,8 @@ class JobViewSet(viewsets.ModelViewSet):
 
 class ApplicationViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """GET /applications/ lists your own. The hiring team reads them through the job."""
+
+    queryset = Application.objects.none()  # for the schema; get_queryset() scopes to the user
 
     serializer_class = ApplicationSerializer
 

@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from . import selectors, services
-from .models import Message
+from .models import Conversation, Message
 from .serializers import (
     ConversationSerializer,
     MessageSerializer,
@@ -30,6 +30,8 @@ class ConversationViewSet(
     mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
 ):
     """Your conversations. Others' are 404."""
+
+    queryset = Conversation.objects.none()  # for the schema; get_queryset() scopes to the user
 
     serializer_class = ConversationSerializer
     lookup_value_regex = r"\d+"
@@ -80,6 +82,8 @@ class ConversationViewSet(
 
 class MessagesView(generics.ListCreateAPIView):
     """Newest first, cursor paged. POST {body} to send."""
+
+    queryset = Message.objects.none()  # for the schema; get_queryset() scopes to the user
 
     serializer_class = MessageSerializer
 

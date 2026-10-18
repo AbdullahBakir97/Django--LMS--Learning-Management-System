@@ -1,0 +1,66 @@
+# Production-like stack: docker compose -f docker-compose.prod.yml --env-file .env.production up -d
+# Put TLS in front of the "web" service (a load balancer, Caddy or Traefik).
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes: ["redisdata:/data"]
+
+  migrate:
+    build: ./backend
+    env_file: .env.production
+    environment: { POSTGRES_HOST: postgres, REDIS_URL: redis://redis:6379/0 }
+    command: python manage.py migrate --noinput
+    healthcheck: { disable: true }
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env.production
+    environment: { POSTGRES_HOST: postgres, REDIS_URL: redis://redis:6379/0 }
+    volumes: ["media:/app/media"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_started }
+
+  worker:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env.production
+    environment: { POSTGRES_HOST: postgres, REDIS_URL: redis://redis:6379/0 }
+    command: celery -A config worker --loglevel=info
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A config inspect ping --timeout 5 -d celery@$$HOSTNAME"]
+      interval: 30s
+      retries: 3
+    volumes: ["media:/app/media"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    ports: ["${WEB_PORT:-80}:80"]
+    volumes: ["media:/srv/media:ro"]
+    depends_on: [backend]
+
+volumes:
+  pgdata:
+  redisdata:
+  media:

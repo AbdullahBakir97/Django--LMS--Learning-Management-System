@@ -13,11 +13,11 @@ from rest_framework.views import APIView
 from apps.engagement import selectors as engagement
 
 from . import selectors, services
-from .models import Group, Membership
+from .models import Event, Group, Membership, Post
 from .serializers import (
     EventSerializer,
+    GroupMemberSerializer,
     GroupSerializer,
-    MemberSerializer,
     PostSerializer,
     PostWriteSerializer,
     RoleSerializer,
@@ -42,6 +42,8 @@ def group_for(request, slug) -> Group:
 
 class GroupViewSet(viewsets.ModelViewSet):
     """Groups. Private groups are listed, but their posts and members are for members only."""
+
+    queryset = Group.objects.none()  # for the schema; get_queryset() scopes to the user
 
     serializer_class = GroupSerializer
     lookup_field = "slug"
@@ -78,7 +80,7 @@ class GroupViewSet(viewsets.ModelViewSet):
         return Response(self.get_serializer(self.get_queryset().get(slug=slug)).data)
 
     @extend_schema(
-        responses=MemberSerializer(many=True),
+        responses=GroupMemberSerializer(many=True),
         parameters=[OpenApiParameter("status", OpenApiTypes.STR, enum=["active", "pending"])],
     )
     @action(detail=True, methods=["get"], pagination_class=None)
@@ -94,7 +96,7 @@ class GroupViewSet(viewsets.ModelViewSet):
             .select_related("user__profile")
             .order_by("role", "created_at")
         )
-        return Response(MemberSerializer(rows, many=True).data)
+        return Response(GroupMemberSerializer(rows, many=True).data)
 
     @extend_schema(responses=PostSerializer(many=True))
     @action(detail=True, methods=["get"])
@@ -111,19 +113,19 @@ class GroupViewSet(viewsets.ModelViewSet):
 class MemberView(APIView):
     """Managers approve (POST .../approve/), remove (DELETE), or the owner sets a role (PATCH)."""
 
-    @extend_schema(request=None, responses=MemberSerializer)
+    @extend_schema(request=None, responses=GroupMemberSerializer)
     def post(self, request, slug, user_id):
         m = services.approve(request.user, group_for(request, slug), user_id)
-        return Response(MemberSerializer(m).data)
+        return Response(GroupMemberSerializer(m).data)
 
-    @extend_schema(request=RoleSerializer, responses=MemberSerializer)
+    @extend_schema(request=RoleSerializer, responses=GroupMemberSerializer)
     def patch(self, request, slug, user_id):
         data = RoleSerializer(data=request.data)
         data.is_valid(raise_exception=True)
         m = services.set_role(
             request.user, group_for(request, slug), user_id, data.validated_data["role"]
         )
-        return Response(MemberSerializer(m).data)
+        return Response(GroupMemberSerializer(m).data)
 
     @extend_schema(responses={204: None})
     def delete(self, request, slug, user_id):
@@ -136,6 +138,8 @@ class MemberView(APIView):
 )
 class PostViewSet(viewsets.ModelViewSet):
     """GET /posts/ is your feed; ?author=<username> is someone's posts."""
+
+    queryset = Post.objects.none()  # for the schema; get_queryset() scopes to the user
 
     serializer_class = PostSerializer
     http_method_names = ["get", "post", "patch", "delete"]
@@ -196,6 +200,8 @@ class PostViewSet(viewsets.ModelViewSet):
 )
 class EventViewSet(viewsets.ModelViewSet):
     """Events you can see: open ones and those in groups you can read."""
+
+    queryset = Event.objects.none()  # for the schema; get_queryset() scopes to the user
 
     serializer_class = EventSerializer
     http_method_names = ["get", "post", "patch", "delete", "put"]

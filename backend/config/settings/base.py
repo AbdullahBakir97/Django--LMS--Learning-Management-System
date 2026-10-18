@@ -38,12 +38,14 @@ INSTALLED_APPS = [
     "apps.community",
     "apps.careers",
     "apps.messaging",
+    "apps.demo",
     "apps.notifications",
 ]
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -171,7 +173,8 @@ CORS_ALLOW_CREDENTIALS = True
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "dj_rest_auth.jwt_auth.JWTCookieAuthentication",
+        # The SPA sends the access token as a bearer header; only the refresh token is a cookie.
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
@@ -184,16 +187,45 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "EXCEPTION_HANDLER": "apps.core.exceptions.problem_details_exception_handler",
-    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.AnonRateThrottle"],
-    "DEFAULT_THROTTLE_RATES": {"anon": "60/min"},
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": os.environ.get("THROTTLE_ANON", "60/min"),
+        "user": os.environ.get("THROTTLE_USER", "600/min"),
+        "auth": os.environ.get("THROTTLE_AUTH", "10/min"),
+    },
 }
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "LMS API",
     "DESCRIPTION": "Learning management and professional network platform.",
-    "VERSION": "0.1.0",
+    "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
+    # Distinct names for choice sets that share a field name (kind, level, role, status).
+    "ENUM_NAME_OVERRIDES": {
+        "GroupPrivacyEnum": "apps.community.models.Group.Privacy",
+        "MembershipRoleEnum": "apps.community.models.Membership.Role",
+        "MembershipStatusEnum": "apps.community.models.Membership.Status",
+        "AttendanceStatusEnum": "apps.community.models.Attendance.Status",
+        "ProfileSkillLevelEnum": "apps.profiles.models.ProfileSkill.Level",
+        "ConnectionStatusEnum": "apps.network.models.Connection.Status",
+        "NotificationKindEnum": "apps.notifications.models.Notification.Kind",
+        "CompanySizeEnum": "apps.careers.models.Company.Size",
+        "CompanyMemberRoleEnum": "apps.careers.models.CompanyMember.Role",
+        "JobStatusEnum": "apps.careers.models.Job.Status",
+        "JobWorkplaceEnum": "apps.careers.models.Job.Workplace",
+        "EmploymentTypeEnum": "apps.careers.models.Job.Type",
+        "JobLevelEnum": "apps.careers.models.Job.Level",
+        "ApplicationStatusEnum": "apps.careers.models.Application.Status",
+        "ReactionKindEnum": "apps.engagement.models.Reaction.Kind",
+        "UserRoleEnum": "apps.accounts.models.User.Role",
+        "CourseLevelEnum": "apps.learning.models.Course.Level",
+        "CourseStatusEnum": "apps.learning.models.Course.Status",
+        "EnrollmentStatusEnum": "apps.learning.models.Enrollment.Status",
+    },
 }
 
 LOGGING = {

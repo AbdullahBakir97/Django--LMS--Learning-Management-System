@@ -34,6 +34,8 @@ def _context(request, comments, target, obj) -> dict:
 class CommentsView(generics.GenericAPIView):
     """The discussion on a target, e.g. /api/engagement/lesson/12/comments/."""
 
+    queryset = Comment.objects.none()  # for the schema; get_queryset() scopes to the user
+
     pagination_class = OldestFirst
     serializer_class = CommentSerializer
 

@@ -17,5 +17,7 @@ def problem_details_exception_handler(exc, context):
     else:
         problem["errors"] = data
     response.data = problem
-    response["Content-Type"] = "application/problem+json"
+    # The attribute survives rendering (which rewrites the header); the header serves callers
+    # that read the response before it is rendered.
+    response.content_type = response["Content-Type"] = "application/problem+json"
     return response
