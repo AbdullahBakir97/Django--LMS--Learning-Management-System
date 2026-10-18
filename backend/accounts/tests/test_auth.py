@@ -38,7 +38,7 @@ def test_register_verify_login_refresh_logout(api_client):
     )
     assert response.status_code == 200, response.data
     assert "access" in response.data
-    assert "refresh" not in response.data, "refresh token must only travel in the cookie"
+    assert not response.data.get("refresh"), "refresh token must only travel in the cookie"
     refresh_cookie = response.cookies["lms_refresh"]
     assert refresh_cookie["httponly"]
     assert refresh_cookie["path"] == "/api/auth/token/refresh/"

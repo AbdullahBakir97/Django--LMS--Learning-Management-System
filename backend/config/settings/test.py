@@ -1,6 +1,6 @@
 from .base import *  # noqa: F401
 
-SECRET_KEY = "test-only-secret-key"  # noqa: S105
+SECRET_KEY = "test-only-secret-key-long-enough-for-hs256-signing"  # noqa: S105
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
