@@ -1,0 +1,246 @@
+from rest_framework import serializers
+
+from apps.accounts.serializers import UserSerializer
+
+from .models import (
+    Certificate,
+    Choice,
+    Course,
+    Enrollment,
+    Lesson,
+    LessonAttachment,
+    Question,
+    Quiz,
+)
+
+
+class LessonSummarySerializer(serializers.ModelSerializer):
+    has_quiz = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = Lesson
+        fields = ["id", "title", "order", "is_free_preview", "video_url", "has_quiz"]
+
+
+class CourseListSerializer(serializers.ModelSerializer):
+    instructor = UserSerializer(read_only=True)
+    lesson_count = serializers.IntegerField(read_only=True)
+    enrollment_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Course
+        fields = [
+            "id",
+            "slug",
+            "title",
+            "summary",
+            "cover",
+            "level",
+            "language",
+            "status",
+            "published_at",
+            "instructor",
+            "lesson_count",
+            "enrollment_count",
+            "created_at",
+        ]
+        read_only_fields = ["slug", "status", "published_at", "created_at"]
+
+
+class CourseDetailSerializer(CourseListSerializer):
+    lessons = LessonSummarySerializer(many=True, read_only=True)
+    prerequisites = serializers.SlugRelatedField(
+        many=True, slug_field="slug", queryset=Course.objects.all(), required=False
+    )
+
+    class Meta(CourseListSerializer.Meta):
+        fields = [*CourseListSerializer.Meta.fields, "description", "prerequisites", "lessons"]
+
+
+class LessonAttachmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LessonAttachment
+        fields = ["id", "title", "file"]
+
+
+class LessonSerializer(serializers.ModelSerializer):
+    attachments = LessonAttachmentSerializer(many=True, read_only=True)
+    has_quiz = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Lesson
+        fields = [
+            "id",
+            "title",
+            "order",
+            "content",
+            "video_url",
+            "is_free_preview",
+            "attachments",
+            "has_quiz",
+        ]
+
+    def get_has_quiz(self, lesson) -> bool:
+        return hasattr(lesson, "quiz")
+
+
+class ChoiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Choice
+        fields = ["id", "text", "is_correct"]
+
+
+class ChoicePublicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Choice
+        fields = ["id", "text"]
+
+
+class QuestionSerializer(serializers.ModelSerializer):
+    choices = ChoiceSerializer(many=True)
+
+    class Meta:
+        model = Question
+        fields = ["id", "text", "order", "choices"]
+
+    def validate_choices(self, choices):
+        if len(choices) < 2:
+            raise serializers.ValidationError("A question needs at least two choices.")
+        if not any(c["is_correct"] for c in choices):
+            raise serializers.ValidationError("Mark at least one choice as correct.")
+        return choices
+
+
+class QuestionPublicSerializer(serializers.ModelSerializer):
+    choices = ChoicePublicSerializer(many=True)
+
+    class Meta:
+        model = Question
+        fields = ["id", "text", "order", "choices"]
+
+
+class QuizAuthorSerializer(serializers.ModelSerializer):
+    """Instructor view and full replace: PUT the whole quiz with its questions."""
+
+    questions = QuestionSerializer(many=True)
+
+    class Meta:
+        model = Quiz
+        fields = ["id", "title", "pass_score", "questions"]
+
+    def create(self, validated):
+        questions = validated.pop("questions")
+        quiz = Quiz.objects.create(**validated)
+        self._write_questions(quiz, questions)
+        return quiz
+
+    def update(self, quiz, validated):
+        questions = validated.pop("questions", None)
+        for k, v in validated.items():
+            setattr(quiz, k, v)
+        quiz.save()
+        if questions is not None:
+            quiz.questions.all().delete()
+            self._write_questions(quiz, questions)
+        return quiz
+
+    @staticmethod
+    def _write_questions(quiz, questions):
+        for i, q in enumerate(questions, start=1):
+            choices = q.pop("choices")
+            question = Question.objects.create(quiz=quiz, order=i, text=q["text"])
+            Choice.objects.bulk_create([Choice(question=question, **c) for c in choices])
+
+
+class QuizPublicSerializer(serializers.ModelSerializer):
+    questions = QuestionPublicSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Quiz
+        fields = ["id", "title", "pass_score", "questions"]
+
+
+class QuizSubmitSerializer(serializers.Serializer):
+    answers = serializers.DictField(
+        child=serializers.IntegerField(), help_text="question id -> choice id"
+    )
+
+    def validate_answers(self, answers):
+        try:
+            return {int(k): v for k, v in answers.items()}
+        except ValueError:
+            raise serializers.ValidationError("Keys must be question ids.") from None
+
+
+class QuizAttemptSerializer(serializers.Serializer):
+    score = serializers.IntegerField()
+    passed = serializers.BooleanField()
+    pass_score = serializers.IntegerField(source="quiz.pass_score")
+    created_at = serializers.DateTimeField()
+
+
+class ProgressSerializer(serializers.ModelSerializer):
+    """The signed-in student's standing in a course."""
+
+    completed_lessons = serializers.SerializerMethodField()
+    passed_quizzes = serializers.SerializerMethodField()
+    certificate_code = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Enrollment
+        fields = [
+            "id",
+            "status",
+            "completed_at",
+            "completed_lessons",
+            "passed_quizzes",
+            "certificate_code",
+            "created_at",
+        ]
+
+    def get_completed_lessons(self, enrollment) -> list[int]:
+        return [p.lesson_id for p in enrollment.lesson_progress.all()]
+
+    def get_passed_quizzes(self, enrollment) -> list[int]:
+        return sorted({a.quiz_id for a in enrollment.quiz_attempts.all() if a.passed})
+
+    def get_certificate_code(self, enrollment) -> str | None:
+        certificate = getattr(enrollment, "certificate", None)
+        return str(certificate.code) if certificate else None
+
+
+class CourseBriefSerializer(serializers.ModelSerializer):
+    instructor = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Course
+        fields = ["id", "slug", "title", "summary", "cover", "level", "instructor"]
+
+
+class EnrollmentSerializer(serializers.ModelSerializer):
+    course = CourseBriefSerializer(read_only=True)
+
+    class Meta:
+        model = Enrollment
+        fields = ["id", "course", "status", "completed_at", "created_at"]
+
+
+class CertificateSerializer(serializers.ModelSerializer):
+    """Public verification record."""
+
+    student = serializers.SerializerMethodField()
+    course = serializers.CharField(source="enrollment.course.title")
+    instructor = serializers.SerializerMethodField()
+    completed_at = serializers.DateTimeField(source="enrollment.completed_at")
+
+    class Meta:
+        model = Certificate
+        fields = ["code", "student", "course", "instructor", "completed_at", "pdf"]
+
+    def get_student(self, certificate) -> str:
+        user = certificate.enrollment.student
+        return user.get_full_name() or user.username
+
+    def get_instructor(self, certificate) -> str:
+        user = certificate.enrollment.course.instructor
+        return user.get_full_name() or user.username

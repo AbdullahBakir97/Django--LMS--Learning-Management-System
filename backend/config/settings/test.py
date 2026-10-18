@@ -1,3 +1,5 @@
+import tempfile
+
 from .base import *  # noqa: F401
 
 SECRET_KEY = "test-only-secret-key-long-enough-for-hs256-signing"  # noqa: S105
@@ -7,3 +9,4 @@ CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
 CELERY_TASK_ALWAYS_EAGER = True
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 REST_AUTH = {**REST_AUTH, "JWT_AUTH_SECURE": False}
+MEDIA_ROOT = tempfile.mkdtemp(prefix="lms-test-media-")
