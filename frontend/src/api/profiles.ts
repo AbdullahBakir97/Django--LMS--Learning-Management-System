@@ -30,6 +30,28 @@ export interface ProfileSkill {
   endorsement_count: number
 }
 
+export interface PortfolioItem {
+  id: number
+  title: string
+  url: string
+  description: string
+  completed_on: string | null
+}
+
+export type AchievementCode =
+  | 'first_course'
+  | 'five_courses'
+  | 'first_published'
+  | 'first_endorsement'
+  | 'ten_connections'
+  | 'recommended'
+
+export interface Achievement {
+  code: AchievementCode
+  title: string
+  earned_at: string
+}
+
 export interface Profile {
   id: number
   user: User
@@ -41,12 +63,15 @@ export interface Profile {
   experiences: Experience[]
   educations: Education[]
   skills: ProfileSkill[]
+  portfolio: PortfolioItem[]
+  achievements: Achievement[]
   created_at: string
   updated_at: string
 }
 
 type ExperienceInput = Omit<Experience, 'id'>
 type EducationInput = Omit<Education, 'id'>
+type PortfolioInput = Omit<PortfolioItem, 'id'>
 
 export const profiles = {
   me: () => api<Profile>('/profiles/me/'),
@@ -65,6 +90,10 @@ export const profiles = {
   updateEducation: (id: number, data: Partial<EducationInput>) =>
     api<Education>(`/profiles/me/educations/${id}/`, { method: 'PATCH', body: data }),
   removeEducation: (id: number) => api(`/profiles/me/educations/${id}/`, { method: 'DELETE' }),
+
+  addPortfolioItem: (data: PortfolioInput) =>
+    api<PortfolioItem>('/profiles/me/portfolio/', { method: 'POST', body: data }),
+  removePortfolioItem: (id: number) => api(`/profiles/me/portfolio/${id}/`, { method: 'DELETE' }),
 
   addSkill: (name: string, level: SkillLevel) =>
     api<ProfileSkill>('/profiles/me/skills/', { method: 'POST', body: { name, level } }),

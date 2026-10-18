@@ -26,13 +26,14 @@ const form = reactive<Record<string, string>>(
 const errors = reactive<Record<string, string | undefined>>({})
 const general = ref('')
 const busy = ref(false)
+const dateKeys = new Set(props.fields.filter((f) => f.type === 'date').map((f) => f.key))
 
 async function onSubmit() {
   busy.value = true
   general.value = ''
   try {
     const data = Object.fromEntries(
-      Object.entries(form).map(([k, v]) => [k, v === '' && k.endsWith('_date') ? null : v]),
+      Object.entries(form).map(([k, v]) => [k, v === '' && dateKeys.has(k) ? null : v]),
     )
     await props.submit(data)
     emit('done')

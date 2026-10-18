@@ -3,7 +3,7 @@ from django.db.models import Count, Q
 
 from apps.profiles.models import ProfileSkill
 
-from .models import Connection, Follow
+from .models import Connection, Follow, Recommendation
 
 User = get_user_model()
 Status = Connection.Status
@@ -20,9 +20,13 @@ def connection_between(a, b) -> Connection | None:
 
 
 def connections_of(user):
+    return connections_of_id(user.id).select_related("requester__profile", "addressee__profile")
+
+
+def connections_of_id(user_id: int):
     return Connection.objects.filter(
-        Q(requester=user) | Q(addressee=user), status=Status.ACCEPTED
-    ).select_related("requester__profile", "addressee__profile")
+        Q(requester_id=user_id) | Q(addressee_id=user_id), status=Status.ACCEPTED
+    )
 
 
 def requests_for(user, direction: str):
@@ -68,3 +72,11 @@ def suggestions_for(user, limit: int = 10):
         .filter(shared_skills__gt=0)
         .order_by("-shared_skills", "username")[:limit]
     )
+
+
+def recommendations_for(viewer, recipient):
+    """Published ones for everyone; the recipient also sees pending and hidden ones to decide."""
+    rows = Recommendation.objects.filter(recipient=recipient).select_related("author__profile")
+    if viewer.id != recipient.id:
+        rows = rows.filter(status=Recommendation.Status.PUBLISHED)
+    return rows

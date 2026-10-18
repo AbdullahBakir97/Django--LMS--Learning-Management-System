@@ -113,4 +113,7 @@ def _check_completion(enrollment: Enrollment) -> None:
         course_title=course.title,
         student_id=enrollment.student_id,
         certificate_code=str(certificate.code),
+        completed_count=Enrollment.objects.filter(
+            student_id=enrollment.student_id, status=Enrollment.Status.COMPLETED
+        ).count(),
     )

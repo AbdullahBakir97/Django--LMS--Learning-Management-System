@@ -37,6 +37,16 @@ export interface FollowRow {
   since: string
 }
 
+export interface Recommendation {
+  id: number
+  author: Person
+  relationship: string
+  body: string
+  status: 'pending' | 'published' | 'hidden'
+  created_at: string
+  updated_at: string
+}
+
 const u = encodeURIComponent
 
 export const network = {
@@ -52,4 +62,16 @@ export const network = {
   accept: (id: number) => api<Connection>(`/connections/${id}/accept/`, { method: 'POST' }),
   decline: (id: number) => api<void>(`/connections/${id}/decline/`, { method: 'POST' }),
   remove: (id: number) => api<void>(`/connections/${id}/`, { method: 'DELETE' }),
+
+  recommendations: (username: string) => api<Recommendation[]>(`/network/${u(username)}/recommendations/`),
+  recommend: (username: string, data: Pick<Recommendation, 'relationship' | 'body'>) =>
+    api<Recommendation>(`/network/${u(username)}/recommendations/`, { method: 'POST', body: data }),
+  askForRecommendation: (username: string, message: string) =>
+    api<void>(`/network/${u(username)}/recommendations/request/`, {
+      method: 'POST',
+      body: { message },
+    }),
+  setRecommendationStatus: (id: number, status: 'published' | 'hidden') =>
+    api<Recommendation>(`/recommendations/${id}/`, { method: 'PATCH', body: { status } }),
+  removeRecommendation: (id: number) => api<void>(`/recommendations/${id}/`, { method: 'DELETE' }),
 }

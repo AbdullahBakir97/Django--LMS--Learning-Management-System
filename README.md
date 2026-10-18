@@ -15,6 +15,7 @@ notifications. Django REST Framework on PostgreSQL and Redis, with a Vue 3 front
 |---|---|---|
 | **Learning** | Catalogue, enrolment with prerequisites, lessons in markdown with video, quizzes, progress, a PDF certificate anyone can verify | Course editor, lessons, quiz builder, publishing |
 | **Discussion** | Comments, replies and reactions on lessons and posts | Moderation of discussions on your own lessons and groups |
+| **Profiles** | Experience, education, skills and endorsements, a portfolio, badges earned along the way, recommendations from connections that you approve | |
 | **Network** | Follow, connect, people who share your skills | |
 | **Community** | A feed, public and private groups, events with RSVPs | Group roles and approvals, events with capacity |
 | **Careers** | Job search with skill match, saved jobs, applications with a private résumé | Company pages, job posts, an applicant pipeline |
@@ -35,6 +36,8 @@ API is described by OpenAPI at `/api/docs/`.
 | Jobs matched to your skills | The hiring team's applicant view |
 | ![Group](docs/screenshots/group-members-light.png) | ![Network](docs/screenshots/network-light.png) |
 | Group members and requests | Network and suggestions |
+| ![Profile](docs/screenshots/profile-light.png) | |
+| A profile with portfolio, badges and recommendations | |
 
 Light and dark themes, and every screen works at phone width. More in
 [docs/screenshots](docs/screenshots).
@@ -60,15 +63,15 @@ importing the contexts that publish them.
 flowchart LR
   subgraph Backend
     config --> accounts & careers & community & engagement & learning & messaging & network & notifications & profiles & core
-    notifications -- 23 --> core
+    notifications -- 26 --> core
+    profiles -- 20 --> core
     learning -- 15 --> core
     community -- 14 --> engagement
+    network -- 13 --> core
     careers -- 12 --> core
     community -- 12 --> core
     messaging -- 11 --> core
     engagement -- 10 --> core
-    network -- 9 --> core
-    profiles -- 9 --> core
     careers -- 6 --> profiles
     community -- 5 --> network
     messaging -- 5 --> engagement
@@ -88,12 +91,12 @@ flowchart LR
     messaging -. events .-> notifications
   end
   subgraph Frontend
-    pages -- 146 --> api
-    features -- 111 --> api
-    pages -- 86 --> components
+    pages -- 153 --> api
+    features -- 119 --> api
+    pages -- 90 --> components
     router -- 62 --> pages
-    pages -- 58 --> features
-    features -- 37 --> components
+    pages -- 61 --> features
+    features -- 43 --> components
     pages -- 22 --> stores
     stores -- 14 --> api
     features -- 13 --> stores

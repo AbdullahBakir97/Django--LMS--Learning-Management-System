@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Connection
+from .models import Connection, Recommendation
 
 
 class PersonSerializer(serializers.Serializer):
@@ -60,3 +60,23 @@ class RelationshipSerializer(serializers.Serializer):
     following_count = serializers.IntegerField()
     connections = serializers.IntegerField()
     connection = serializers.DictField(allow_null=True)
+
+
+class RecommendationSerializer(serializers.ModelSerializer):
+    author = PersonSerializer(read_only=True)
+
+    class Meta:
+        model = Recommendation
+        fields = ["id", "author", "relationship", "body", "status", "created_at", "updated_at"]
+        read_only_fields = ["id", "author", "status", "created_at", "updated_at"]
+        extra_kwargs = {"body": {"min_length": 40, "max_length": 3000}}
+
+
+class RecommendationStatusSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(
+        choices=[Recommendation.Status.PUBLISHED, Recommendation.Status.HIDDEN]
+    )
+
+
+class RecommendationRequestSerializer(serializers.Serializer):
+    message = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")

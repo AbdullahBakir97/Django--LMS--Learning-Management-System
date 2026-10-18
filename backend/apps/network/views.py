@@ -9,12 +9,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from . import selectors, services
-from .models import Connection, Follow
+from .models import Connection, Follow, Recommendation
 from .serializers import (
     ConnectionSerializer,
     ConnectRequestSerializer,
     FollowerSerializer,
     FollowingSerializer,
+    RecommendationRequestSerializer,
+    RecommendationSerializer,
+    RecommendationStatusSerializer,
     RelationshipSerializer,
     SuggestionSerializer,
 )
@@ -134,4 +137,57 @@ class ConnectionViewSet(mixins.ListModelMixin, mixins.DestroyModelMixin, viewset
     @action(detail=True, methods=["post"])
     def decline(self, request, pk=None):
         services.decline(request.user, self.get_object())
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class RecommendationsView(generics.ListCreateAPIView):
+    """GET what shows on this person's profile; POST to write (or rewrite) one for them."""
+
+    queryset = Recommendation.objects.none()  # for the schema; get_queryset() scopes to the user
+    serializer_class = RecommendationSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return selectors.recommendations_for(self.request.user, person(self.kwargs["username"]))
+
+    def perform_create(self, serializer):
+        serializer.instance = services.write_recommendation(
+            self.request.user, person(self.kwargs["username"]), **serializer.validated_data
+        )
+
+
+class RecommendationRequestView(APIView):
+    """Ask a connection to write you a recommendation. They get a notification."""
+
+    @extend_schema(request=RecommendationRequestSerializer, responses={202: None})
+    def post(self, request, username):
+        data = RecommendationRequestSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        services.request_recommendation(request.user, person(username), **data.validated_data)
+        return Response(status=status.HTTP_202_ACCEPTED)
+
+
+class RecommendationDetailView(generics.GenericAPIView):
+    """PATCH to publish or hide one written about you; DELETE one you wrote or received."""
+
+    serializer_class = RecommendationSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return Recommendation.objects.filter(Q(author=user) | Q(recipient=user)).select_related(
+            "author__profile"
+        )
+
+    @extend_schema(request=RecommendationStatusSerializer, responses=RecommendationSerializer)
+    def patch(self, request, pk):
+        data = RecommendationStatusSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        recommendation = services.set_recommendation_status(
+            request.user, self.get_object(), data.validated_data["status"]
+        )
+        return Response(self.get_serializer(recommendation).data)
+
+    @extend_schema(responses={204: None})
+    def delete(self, request, pk):
+        services.delete_recommendation(request.user, self.get_object())
         return Response(status=status.HTTP_204_NO_CONTENT)

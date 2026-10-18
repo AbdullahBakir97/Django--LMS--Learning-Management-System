@@ -61,3 +61,35 @@ class Connection(TimeStampedModel):
 
     def other(self, user):
         return self.addressee if self.requester_id == user.id else self.requester
+
+
+class Recommendation(TimeStampedModel):
+    """Written by a connection. Shows on the recipient's profile only once they publish it."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending"
+        PUBLISHED = "published"
+        HIDDEN = "hidden"
+
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="recommendations_written"
+    )
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="recommendations"
+    )
+    relationship = models.CharField(max_length=160)
+    body = models.TextField()
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+
+    class Meta:
+        ordering = ["-updated_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["author", "recipient"], name="recommendation_once"),
+            models.CheckConstraint(
+                condition=~models.Q(author=models.F("recipient")), name="recommendation_not_self"
+            ),
+        ]
+        indexes = [models.Index(fields=["recipient", "status"], name="recommendation_profile_idx")]
+
+    def __str__(self):
+        return f"{self.author_id} recommends {self.recipient_id}"

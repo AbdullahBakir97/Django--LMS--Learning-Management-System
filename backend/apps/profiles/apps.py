@@ -6,4 +6,4 @@ class ProfilesConfig(AppConfig):
     name = "apps.profiles"
 
     def ready(self):
-        from . import signals  # noqa: F401
+        from . import achievements, signals  # noqa: F401

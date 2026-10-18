@@ -1,6 +1,15 @@
 from django.contrib import admin
 
-from .models import Education, Endorsement, Experience, Profile, ProfileSkill, Skill
+from .models import (
+    Achievement,
+    Education,
+    Endorsement,
+    Experience,
+    PortfolioItem,
+    Profile,
+    ProfileSkill,
+    Skill,
+)
 
 
 class ExperienceInline(admin.TabularInline):
@@ -10,6 +19,11 @@ class ExperienceInline(admin.TabularInline):
 
 class EducationInline(admin.TabularInline):
     model = Education
+    extra = 0
+
+
+class PortfolioItemInline(admin.TabularInline):
+    model = PortfolioItem
     extra = 0
 
 
@@ -23,7 +37,7 @@ class ProfileSkillInline(admin.TabularInline):
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "headline", "location", "updated_at")
     search_fields = ("user__username", "user__email", "headline")
-    inlines = [ExperienceInline, EducationInline, ProfileSkillInline]
+    inlines = [ExperienceInline, EducationInline, PortfolioItemInline, ProfileSkillInline]
 
 
 @admin.register(Skill)
@@ -32,3 +46,10 @@ class SkillAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Endorsement)
+
+
+@admin.register(Achievement)
+class AchievementAdmin(admin.ModelAdmin):
+    list_display = ("user", "code", "created_at")
+    list_filter = ("code",)
+    search_fields = ("user__username",)

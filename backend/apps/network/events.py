@@ -1,3 +1,6 @@
 FOLLOWED = "network.followed"
 CONNECTION_REQUESTED = "network.connection_requested"
 CONNECTION_ACCEPTED = "network.connection_accepted"
+RECOMMENDATION_REQUESTED = "network.recommendation_requested"
+RECOMMENDATION_WRITTEN = "network.recommendation_written"
+RECOMMENDATION_PUBLISHED = "network.recommendation_published"

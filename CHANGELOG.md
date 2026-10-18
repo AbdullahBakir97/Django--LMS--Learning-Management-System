@@ -2,6 +2,16 @@
 
 All notable changes. The project follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+
+- **Portfolio**: projects, papers, talks and repositories on a profile.
+- **Recommendations**: connections write them, or you ask a connection for one; nothing shows
+  on your profile until you publish it, and a rewrite goes back for your approval.
+- **Badges**: earned once for milestones (first course, five courses, first published course,
+  first endorsement, ten connections, first recommendation) and announced as notifications.
+
 ## 1.0.0
 
 The rebuild: a modular monolith with nine bounded contexts, a Vue 3 app, and a production stack.
