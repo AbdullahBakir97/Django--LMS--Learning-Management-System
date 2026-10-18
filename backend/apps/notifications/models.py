@@ -48,13 +48,23 @@ class Notification(TimeStampedModel):
 
 
 class Preference(TimeStampedModel):
-    """Absent row means the defaults: email on, nothing muted."""
+    """Absent row means the defaults: email on, nothing muted, no digest, no quiet hours."""
+
+    class Digest(models.TextChoices):
+        OFF = "off", "Email each important update"
+        DAILY = "daily", "One email a day"
+        WEEKLY = "weekly", "One email a week"
 
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notification_preference"
     )
     email_enabled = models.BooleanField(default=True)
     muted_kinds = models.JSONField(default=list, blank=True)
+    digest = models.CharField(max_length=6, choices=Digest.choices, default=Digest.OFF)
+    quiet_start = models.TimeField(null=True, blank=True)
+    quiet_end = models.TimeField(null=True, blank=True)
+    timezone = models.CharField(max_length=64, default="UTC")
+    last_digest_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"preferences for {self.user_id}"

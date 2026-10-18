@@ -31,7 +31,8 @@ services:
 
   worker:
     build: ./backend
-    command: celery -A config worker --loglevel=info
+    # -B runs the scheduler inside the worker; fine for one dev worker.
+    command: celery -A config worker -B --loglevel=info -s /tmp/celerybeat-schedule
     env_file: .env
     environment:
       POSTGRES_HOST: postgres

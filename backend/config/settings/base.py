@@ -4,6 +4,8 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from celery.schedules import crontab
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
@@ -146,6 +148,13 @@ CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_TASK_SERIALIZER = "json"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TIMEZONE = "UTC"
+CELERY_BEAT_SCHEDULE = {
+    # Hourly, so each reader's digest goes out at 08:00 in their own time zone.
+    "notification-digests": {
+        "task": "apps.notifications.tasks.send_digests",
+        "schedule": crontab(minute=0),
+    },
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

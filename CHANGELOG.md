@@ -14,6 +14,14 @@ All notable changes. The project follows [Semantic Versioning](https://semver.or
 - **Interviews**: the hiring team offers a slot (video, phone or on site) from the applicant list;
   the candidate confirms or declines; a new time asks again; either side adds it to a calendar
   (.ics); invitations, changes and cancellations reach the candidate by notification and email.
+- **Digests and quiet hours**: email right away, or one daily or weekly digest of what you have
+  not read at 08:00 in your time zone; quiet hours hold instant email until they end. A `beat`
+  service in the production compose file runs the hourly schedule.
+
+### Fixed
+
+- Recommendation, badge and interview notifications had no icon in the app; a test now keeps
+  the backend's notification kinds and the app's icons in step.
 
 ## 1.0.0
 

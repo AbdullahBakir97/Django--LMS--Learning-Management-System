@@ -53,6 +53,16 @@ services:
     depends_on:
       migrate: { condition: service_completed_successfully }
 
+  beat:
+    # Exactly one scheduler, however many workers run.
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env.production
+    environment: { POSTGRES_HOST: postgres, REDIS_URL: redis://redis:6379/0 }
+    command: celery -A config beat --loglevel=info -s /tmp/celerybeat-schedule
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
   web:
     build: ./frontend
     restart: unless-stopped

@@ -20,7 +20,7 @@ notifications. Django REST Framework on PostgreSQL and Redis, with a Vue 3 front
 | **Community** | A feed, public and private groups, events with RSVPs | Group roles and approvals, events with capacity |
 | **Careers** | Job search with skill match, saved jobs, applications with a private résumé, interview invitations to confirm and add to a calendar | Company pages, job posts, an applicant pipeline, interview scheduling |
 | **Messaging** | Direct and group conversations, live, with typing and read receipts | |
-| **Notifications** | Live in the app, email for what matters, per-kind preferences | |
+| **Notifications** | Live in the app, email for what matters or a daily or weekly digest, quiet hours in your time zone, per-kind preferences | |
 
 Accounts use email sign-in with verification and password reset. Every list is cursor-paged,
 every error is an [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) problem document, and the
@@ -91,7 +91,7 @@ flowchart LR
     messaging -. events .-> notifications
   end
   subgraph Frontend
-    pages -- 155 --> api
+    pages -- 156 --> api
     features -- 132 --> api
     pages -- 92 --> components
     pages -- 64 --> features

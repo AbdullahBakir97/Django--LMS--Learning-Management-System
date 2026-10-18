@@ -35,8 +35,15 @@ export interface AppNotification {
 export interface NotificationPreferences {
   email_enabled: boolean
   muted_kinds: NotificationKind[]
+  digest: 'off' | 'daily' | 'weekly'
+  /** "22:00:00" in the reader's time zone, or null for no quiet hours. */
+  quiet_start: string | null
+  quiet_end: string | null
+  timezone: string
   kinds: { value: NotificationKind; label: string }[]
 }
+
+export type PreferencesPatch = Partial<Omit<NotificationPreferences, 'kinds'>>
 
 export const notifications = {
   list: (params: { unread?: boolean; cursor?: string } = {}) => {
@@ -50,7 +57,7 @@ export const notifications = {
   readAll: () => api<{ count: number }>('/notifications/read-all/', { method: 'POST' }),
   remove: (id: number) => api<void>(`/notifications/${id}/`, { method: 'DELETE' }),
   preferences: () => api<NotificationPreferences>('/notifications/preferences/'),
-  updatePreferences: (body: Partial<Pick<NotificationPreferences, 'email_enabled' | 'muted_kinds'>>) =>
+  updatePreferences: (body: PreferencesPatch) =>
     api<NotificationPreferences>('/notifications/preferences/', { method: 'PATCH', body }),
 }
 
