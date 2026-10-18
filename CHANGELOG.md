@@ -17,6 +17,9 @@ All notable changes. The project follows [Semantic Versioning](https://semver.or
 - **Digests and quiet hours**: email right away, or one daily or weekly digest of what you have
   not read at 08:00 in your time zone; quiet hours hold instant email until they end. A `beat`
   service in the production compose file runs the hourly schedule.
+- **Installable app and offline reading**: a web app manifest and icons, and a small service
+  worker. Courses and lessons you opened, and your account, stay readable offline, with a
+  banner saying so. Sign-out deletes what was kept. Nothing else from the API is stored.
 
 ### Fixed
 

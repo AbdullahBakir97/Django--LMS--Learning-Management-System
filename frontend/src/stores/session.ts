@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { auth, type User } from '@/api/auth'
 import { refreshAccessToken, setAccessToken } from '@/api/client'
+import { clearOfflineData } from '@/lib/offline'
 
 export const useSessionStore = defineStore('session', {
   state: () => ({ user: null as User | null }),
@@ -13,6 +14,10 @@ export const useSessionStore = defineStore('session', {
     async bootstrap() {
       if (await refreshAccessToken()) {
         this.user = await auth.me().catch(() => null)
+      } else if (!navigator.onLine) {
+        // Offline: the service worker answers with the last signed-in user, if any,
+        // so lessons read before stay readable. Writes fail until the network is back.
+        this.user = await auth.me().catch(() => null)
       }
     },
     async login(email: string, password: string) {
@@ -23,6 +28,7 @@ export const useSessionStore = defineStore('session', {
     async logout() {
       await auth.logout().catch(() => undefined)
       setAccessToken(null)
+      clearOfflineData()
       this.user = null
     },
     async refreshUser() {

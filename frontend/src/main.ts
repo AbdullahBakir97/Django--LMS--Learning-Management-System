@@ -10,8 +10,10 @@ import App from './App.vue'
 import { router } from './router'
 import { applyStoredTheme } from './composables/useTheme'
 import { useSessionStore } from './stores/session'
+import { registerServiceWorker } from './lib/offline'
 
 applyStoredTheme()
+registerServiceWorker()
 
 const app = createApp(App).use(createPinia())
 
