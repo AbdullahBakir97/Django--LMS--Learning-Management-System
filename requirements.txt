@@ -12,3 +12,4 @@ celery>=5.4
 django-celery-beat>=2.7
 redis>=5.0
 Pillow>=10.4
+django-shortuuidfield>=0.1.3
