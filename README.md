@@ -41,7 +41,7 @@ API is described by OpenAPI at `/api/docs/`.
 | A profile with portfolio, badges and recommendations | Interview invitations to confirm |
 | ![Offline](docs/screenshots/offline-mobile.png) | ![Search](docs/screenshots/search-light.png) |
 | A lesson read offline on a phone | Search across everything as you type |
-| ![Feed](docs/screenshots/feed-light.png) | |
+| ![Posts](docs/screenshots/posts-light.png) | |
 | The feed with images, a share and company news | |
 
 Light and dark themes, and every screen works at phone width. More in
