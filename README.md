@@ -20,6 +20,7 @@ notifications. Django REST Framework on PostgreSQL and Redis, with a Vue 3 front
 | **Community** | A feed, public and private groups, events with RSVPs | Group roles and approvals, events with capacity |
 | **Careers** | Job search with skill match, saved jobs, applications with a private résumé, interview invitations to confirm and add to a calendar | Company pages, job posts, an applicant pipeline, interview scheduling |
 | **Messaging** | Direct and group conversations, live, with typing and read receipts | |
+| **Search** | One box for people, courses, groups, events, jobs and companies, with results as you type (Ctrl/⌘ K) | Drafts and private groups stay visible only to the people who can see them |
 | **Notifications** | Live in the app, email for what matters or a daily or weekly digest, quiet hours in your time zone, per-kind preferences | |
 
 Accounts use email sign-in with verification and password reset. Every list is cursor-paged,
@@ -38,8 +39,8 @@ API is described by OpenAPI at `/api/docs/`.
 | Group members and requests | Network and suggestions |
 | ![Profile](docs/screenshots/profile-light.png) | ![Interviews](docs/screenshots/interviews-light.png) |
 | A profile with portfolio, badges and recommendations | Interview invitations to confirm |
-| ![Offline](docs/screenshots/offline-mobile.png) | |
-| A lesson read offline on a phone | |
+| ![Offline](docs/screenshots/offline-mobile.png) | ![Search](docs/screenshots/search-light.png) |
+| A lesson read offline on a phone | Search across everything as you type |
 
 Light and dark themes, and every screen works at phone width. More in
 [docs/screenshots](docs/screenshots).
@@ -94,11 +95,11 @@ flowchart LR
   end
   subgraph Frontend
     pages -- 156 --> api
-    features -- 132 --> api
+    features -- 138 --> api
     pages -- 92 --> components
     pages -- 64 --> features
     router -- 62 --> pages
-    features -- 47 --> components
+    features -- 48 --> components
     pages -- 22 --> stores
     stores -- 14 --> api
     features -- 13 --> stores

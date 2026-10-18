@@ -20,6 +20,9 @@ All notable changes. The project follows [Semantic Versioning](https://semver.or
 - **Installable app and offline reading**: a web app manifest and icons, and a small service
   worker. Courses and lessons you opened, and your account, stay readable offline, with a
   banner saying so. Sign-out deletes what was kept. Nothing else from the API is stored.
+- **Search**: one search across people, courses, groups, events, jobs and companies, opened
+  with Ctrl/⌘ K or `/`. PostgreSQL full-text search with prefix matching and title-first
+  ranking; it reuses each area's visibility rules, so drafts and private groups never leak.
 
 ### Fixed
 

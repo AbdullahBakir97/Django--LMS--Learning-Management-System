@@ -16,6 +16,7 @@ import {
   PhBriefcase,
   PhChatsCircle,
   PhWifiSlash,
+  PhMagnifyingGlass,
 } from '@phosphor-icons/vue'
 import BrandMark from '@/components/BrandMark.vue'
 import ThemeToggle from '@/components/ui/ThemeToggle.vue'
@@ -26,6 +27,7 @@ import { useMessagesStore } from '@/stores/messages'
 import { useOnline } from '@/lib/offline'
 import NotificationBell from '@/features/notifications/NotificationBell.vue'
 import NotificationToasts from '@/features/notifications/NotificationToasts.vue'
+import SearchPalette from '@/features/search/SearchPalette.vue'
 
 const session = useSessionStore()
 const router = useRouter()
@@ -33,12 +35,26 @@ const route = useRoute()
 const navOpen = ref(false)
 const online = useOnline()
 
+// Ctrl/Cmd+K anywhere, or "/" when not typing, opens search.
+const searching = ref(false)
+const shortcut = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K'
+function onKey(e: KeyboardEvent) {
+  const typing =
+    e.target instanceof HTMLElement && e.target.closest('input, textarea, select, [contenteditable]')
+  if ((e.key === 'k' && (e.metaKey || e.ctrlKey)) || (e.key === '/' && !typing)) {
+    e.preventDefault()
+    searching.value = true
+  }
+}
+window.addEventListener('keydown', onKey)
+
 // The shell only renders for a signed-in user, so its lifetime is the live connection's.
 const notifications = useNotificationsStore()
 const messages = useMessagesStore()
 void notifications.start()
 void messages.start()
 onUnmounted(() => {
+  window.removeEventListener('keydown', onKey)
   notifications.stop()
   messages.stop()
 })
@@ -150,7 +166,19 @@ async function signOut() {
         >
           <PhList :size="22" weight="light" />
         </button>
-        <span class="hidden lg:block" />
+        <button
+          type="button"
+          class="flex h-10 min-w-0 cursor-pointer items-center gap-2 rounded-md px-3 text-sm text-muted ring-1 ring-line hover:bg-surface-2 hover:text-ink sm:w-72"
+          aria-keyshortcuts="Control+K Meta+K"
+          @click="searching = true"
+        >
+          <PhMagnifyingGlass :size="18" weight="light" aria-hidden="true" />
+          <span class="hidden sm:inline">Search</span>
+          <kbd class="ml-auto hidden rounded-sm bg-surface-2 px-1.5 font-mono text-xs sm:inline">{{
+            shortcut
+          }}</kbd>
+          <span class="sr-only sm:hidden">Search</span>
+        </button>
         <div class="flex items-center gap-1">
           <NotificationBell />
           <ThemeToggle />
@@ -173,5 +201,6 @@ async function signOut() {
       </main>
     </div>
     <NotificationToasts />
+    <SearchPalette v-model:open="searching" />
   </div>
 </template>
