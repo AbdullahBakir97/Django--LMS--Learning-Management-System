@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 "ordering": ["-published_at", "-created_at"],
-                "indexes": [models.Index(fields=["status", "level"], name="learning_co_status_8c0d5f_idx")],
+                "indexes": [models.Index(fields=["status", "level"], name="course_status_level_idx")],
             },
         ),
         migrations.CreateModel(
