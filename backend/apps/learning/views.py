@@ -31,7 +31,7 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     permission_classes = [IsInstructorOrReadOnly, IsCourseOwner]
     lookup_field = "slug"
-    filterset_fields = ["level", "language", "status"]
+    filterset_fields = ["level", "language", "status", "instructor"]
     search_fields = ["title", "summary"]
     ordering_fields = ["published_at", "created_at", "title"]
 

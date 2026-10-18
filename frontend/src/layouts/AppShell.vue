@@ -1,7 +1,16 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { RouterLink, RouterView, useRouter } from 'vue-router'
-import { PhHouse, PhSignOut, PhUserCircle, PhList, PhX } from '@phosphor-icons/vue'
+import { computed, ref } from 'vue'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
+import {
+  PhHouse,
+  PhSignOut,
+  PhUserCircle,
+  PhList,
+  PhX,
+  PhBooks,
+  PhGraduationCap,
+  PhChalkboardTeacher,
+} from '@phosphor-icons/vue'
 import BrandMark from '@/components/BrandMark.vue'
 import ThemeToggle from '@/components/ui/ThemeToggle.vue'
 import Avatar from '@/components/ui/Avatar.vue'
@@ -9,12 +18,25 @@ import { useSessionStore } from '@/stores/session'
 
 const session = useSessionStore()
 const router = useRouter()
+const route = useRoute()
 const navOpen = ref(false)
 
-const items = [
-  { to: { name: 'home' }, label: 'Home', icon: PhHouse },
+const items = computed(() => [
+  { to: { name: 'home' }, label: 'Home', icon: PhHouse, exact: true },
+  { to: { name: 'courses' }, label: 'Courses', icon: PhBooks, also: ['course', 'lesson'] },
+  { to: { name: 'my-learning' }, label: 'My learning', icon: PhGraduationCap },
+  ...(['instructor', 'admin'].includes(session.user?.role ?? '')
+    ? [
+        {
+          to: { name: 'teach' },
+          label: 'Teaching',
+          icon: PhChalkboardTeacher,
+          also: ['course-new', 'course-editor'],
+        },
+      ]
+    : []),
   { to: { name: 'my-profile' }, label: 'My profile', icon: PhUserCircle },
-]
+])
 
 async function signOut() {
   await session.logout()
@@ -45,7 +67,11 @@ async function signOut() {
           :key="item.label"
           :to="item.to"
           class="flex h-10 items-center gap-3 rounded-md px-3 text-sm text-muted transition-colors duration-quick hover:bg-surface-2 hover:text-ink"
-          active-class="bg-accent-soft text-accent hover:bg-accent-soft hover:text-accent"
+          :active-class="
+            item.exact ? '' : 'bg-accent-soft text-accent hover:bg-accent-soft hover:text-accent'
+          "
+          exact-active-class="bg-accent-soft text-accent hover:bg-accent-soft hover:text-accent"
+          :class="item.also?.includes(String(route.name)) && 'bg-accent-soft text-accent'"
           @click="navOpen = false"
         >
           <component :is="item.icon" :size="20" weight="light" />

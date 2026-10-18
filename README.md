@@ -19,6 +19,37 @@ foundation, accounts with JWT auth and email verification, profiles with experie
 skills and endorsements, and the Vue frontend with sign-in, registration, password reset and
 profile editing. Courses, notifications, network, community, careers and messaging follow.
 
+## Codebase map
+
+Generated from the code graph (graphify): arrows point from a module to what it imports, and the
+number is how many links the graph found. Contexts import only downward; `learning` and `profiles`
+never import each other.
+
+```mermaid
+flowchart LR
+  subgraph Backend
+    config --> learning & profiles & accounts & core
+    learning -- 15 --> core
+    learning -- 4 --> accounts
+    profiles -- 6 --> core
+    profiles -- 3 --> accounts
+  end
+  subgraph Frontend
+    router -- 20 --> pages
+    pages -- 21 --> components
+    pages -- 5 --> features
+    pages -- 27 --> api
+    pages -- 8 --> stores
+    features -- 4 --> api
+    features -- 6 --> components
+    stores -- 6 --> api
+  end
+  api -. REST and WebSocket .-> config
+```
+
+The full graph (every module, class and function, with an Obsidian vault and canvas) is
+regenerated locally with `graphify backend frontend --obsidian`; it is not committed.
+
 ## Repository layout
 
 | Path | What it is |
