@@ -14,3 +14,4 @@ ignore = ["S101", "DJ001"]  # asserts in tests; nullable CharField is a per-fiel
 DJANGO_SETTINGS_MODULE = "config.settings.test"
 python_files = ["test_*.py"]
 addopts = "-q --reuse-db"
+pythonpath = ["."]

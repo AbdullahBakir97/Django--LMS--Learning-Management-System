@@ -1,6 +1,7 @@
 """Settings shared by every environment. Values come from the environment; see .env.example."""
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -16,13 +17,21 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
     "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
+    "dj_rest_auth",
+    "dj_rest_auth.registration",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",  # dj-rest-auth registration imports its models
     "django_filters",
     "drf_spectacular",
     "corsheaders",
     "channels",
     "core",
     "accounts",
+    "profiles",
 ]
 
 MIDDLEWARE = [
@@ -34,6 +43,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -56,6 +66,43 @@ TEMPLATES = [
 ]
 
 AUTH_USER_MODEL = "accounts.User"
+SITE_ID = 1
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "LMS <no-reply@localhost>")
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+# allauth: email is the login id, verification is mandatory, username still exists for URLs.
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "[LMS] "
+ACCOUNT_UNIQUE_EMAIL = True
+
+# JWT: short-lived access token returned in the body, refresh token only in an HttpOnly cookie.
+REST_AUTH = {
+    "USE_JWT": True,
+    "TOKEN_MODEL": None,  # JWT only; no DRF token table
+    "JWT_AUTH_COOKIE": None,
+    "JWT_AUTH_REFRESH_COOKIE": "lms_refresh",
+    "JWT_AUTH_REFRESH_COOKIE_PATH": "/api/auth/token/refresh/",
+    "JWT_AUTH_HTTPONLY": True,
+    "JWT_AUTH_SECURE": os.environ.get("JWT_COOKIE_SECURE", "1") == "1",
+    "JWT_AUTH_SAMESITE": "Lax",
+    "JWT_AUTH_RETURN_EXPIRATION": True,
+    "USER_DETAILS_SERIALIZER": "accounts.serializers.UserSerializer",
+    "REGISTER_SERIALIZER": "accounts.serializers.RegisterSerializer",
+}
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
+}
 
 DATABASES = {
     "default": {
@@ -116,7 +163,10 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "dj_rest_auth.jwt_auth.JWTCookieAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_PAGINATION_CLASS": "core.pagination.CursorPagination",
     "PAGE_SIZE": 20,
