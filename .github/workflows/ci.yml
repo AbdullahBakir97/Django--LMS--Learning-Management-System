@@ -44,3 +44,32 @@ jobs:
         run: python manage.py makemigrations --check --dry-run
       - name: Tests
         run: pytest
+
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Lint and format
+        run: pnpm lint && pnpm format:check
+      - name: Type-check
+        run: pnpm type-check
+      - name: Unit tests
+        run: pnpm test:unit --run
+      - name: Build
+        run: pnpm build-only
+      - name: Browser smoke test
+        run: pnpm exec playwright install --with-deps chromium && pnpm test:e2e
