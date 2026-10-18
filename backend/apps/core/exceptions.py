@@ -2,7 +2,14 @@
 
 from http import HTTPStatus
 
+from rest_framework.exceptions import APIException
 from rest_framework.views import exception_handler
+
+
+class PaymentRequired(APIException):
+    status_code = 402
+    default_detail = "Buy this course to enrol."
+    default_code = "payment_required"
 
 
 def problem_details_exception_handler(exc, context):

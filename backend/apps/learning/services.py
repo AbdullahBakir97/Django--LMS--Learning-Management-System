@@ -5,6 +5,7 @@ from django.utils import timezone
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from apps.core import events
+from apps.core.exceptions import PaymentRequired
 
 from . import events as names
 from .models import Certificate, Course, Enrollment, Lesson, LessonProgress, Quiz, QuizAttempt
@@ -22,7 +23,7 @@ def publish_course(actor, course: Course) -> Course:
     return course
 
 
-def enroll(actor, course: Course) -> Enrollment:
+def check_can_enroll(actor, course: Course) -> None:
     if not course.is_published:
         raise ValidationError("This course is not published.")
     if course.instructor_id == actor.id:
@@ -34,17 +35,26 @@ def enroll(actor, course: Course) -> Enrollment:
     )
     if missing.exists():
         raise ValidationError({"prerequisites": [f"Complete “{c.title}” first." for c in missing]})
-    enrollment = Enrollment.objects.create(course=course, student=actor)
-    events.publish(
-        names.ENROLLED,
-        enrollment_id=enrollment.id,
-        course_id=course.id,
-        course_title=course.title,
-        course_slug=course.slug,
-        instructor_id=course.instructor_id,
-        student_id=actor.id,
-        student_name=actor.get_full_name() or actor.username,
-    )
+
+
+def enroll(actor, course: Course, *, paid: bool = False) -> Enrollment:
+    """`paid=True` is for payments, after checkout: the rules were checked before payment."""
+    if not paid:
+        check_can_enroll(actor, course)
+        if course.is_paid:
+            raise PaymentRequired()
+    enrollment, created = Enrollment.objects.get_or_create(course=course, student=actor)
+    if created:
+        events.publish(
+            names.ENROLLED,
+            enrollment_id=enrollment.id,
+            course_id=course.id,
+            course_title=course.title,
+            course_slug=course.slug,
+            instructor_id=course.instructor_id,
+            student_id=actor.id,
+            student_name=actor.get_full_name() or actor.username,
+        )
     return enrollment
 
 

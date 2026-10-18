@@ -38,13 +38,21 @@ class CourseListSerializer(serializers.ModelSerializer):
             "level",
             "language",
             "status",
+            "price_cents",
+            "currency",
             "published_at",
             "instructor",
             "lesson_count",
             "enrollment_count",
             "created_at",
         ]
-        read_only_fields = ["slug", "status", "published_at", "created_at"]
+        read_only_fields = ["slug", "status", "currency", "published_at", "created_at"]
+
+    def validate_price_cents(self, value):
+        # Card networks will not charge less than about 0.50 in most currencies.
+        if 0 < value < 50:
+            raise serializers.ValidationError("A paid course costs at least 0.50.")
+        return value
 
 
 class CourseDetailSerializer(CourseListSerializer):

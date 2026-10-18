@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "apps.messaging",
     "apps.search",
     "apps.moderation",
+    "apps.payments",
     "apps.demo",
     "apps.notifications",
 ]
@@ -82,6 +83,10 @@ TEMPLATES = [
 AUTH_USER_MODEL = "accounts.User"
 SITE_ID = 1
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+# Paid courses. Without a secret key every course stays free to join and checkout answers 503.
+PAYMENTS_CURRENCY = os.environ.get("PAYMENTS_CURRENCY", "usd").lower()
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "LMS <no-reply@localhost>")
 
 AUTHENTICATION_BACKENDS = [
@@ -239,6 +244,7 @@ SPECTACULAR_SETTINGS = {
         "CourseLevelEnum": "apps.learning.models.Course.Level",
         "CourseStatusEnum": "apps.learning.models.Course.Status",
         "EnrollmentStatusEnum": "apps.learning.models.Enrollment.Status",
+        "OrderStatusEnum": "apps.payments.models.Order.Status",
     },
 }
 

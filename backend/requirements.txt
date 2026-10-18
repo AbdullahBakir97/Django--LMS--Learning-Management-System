@@ -16,6 +16,7 @@ djangorestframework-simplejwt>=5.3
 dj-rest-auth>=7.0
 django-allauth[socialaccount]>=65.0
 Pillow>=10.4
+stripe>=11.0  # Checkout and signed webhooks for paid courses
 drf-nested-routers>=0.94
 reportlab>=4.2
 tzdata>=2024.1  # time zones for digests and quiet hours, even on slim images
