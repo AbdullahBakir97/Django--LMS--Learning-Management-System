@@ -15,6 +15,7 @@ import {
   PhCalendarBlank,
   PhBriefcase,
   PhChatsCircle,
+  PhWifiSlash,
 } from '@phosphor-icons/vue'
 import BrandMark from '@/components/BrandMark.vue'
 import ThemeToggle from '@/components/ui/ThemeToggle.vue'
@@ -22,6 +23,7 @@ import Avatar from '@/components/ui/Avatar.vue'
 import { useSessionStore } from '@/stores/session'
 import { useNotificationsStore } from '@/stores/notifications'
 import { useMessagesStore } from '@/stores/messages'
+import { useOnline } from '@/lib/offline'
 import NotificationBell from '@/features/notifications/NotificationBell.vue'
 import NotificationToasts from '@/features/notifications/NotificationToasts.vue'
 
@@ -29,6 +31,7 @@ const session = useSessionStore()
 const router = useRouter()
 const route = useRoute()
 const navOpen = ref(false)
+const online = useOnline()
 
 // The shell only renders for a signed-in user, so its lifetime is the live connection's.
 const notifications = useNotificationsStore()
@@ -153,6 +156,14 @@ async function signOut() {
           <ThemeToggle />
         </div>
       </header>
+      <p
+        v-if="!online"
+        role="status"
+        class="flex items-center justify-center gap-2 border-b border-line bg-surface-2 px-4 py-2 text-center text-sm text-ink"
+      >
+        <PhWifiSlash :size="18" weight="light" aria-hidden="true" />
+        You are offline. Lessons you opened before are still readable; changes need a connection.
+      </p>
       <main class="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
         <RouterView v-slot="{ Component }">
           <div :key="$route.path" class="animate-page">

@@ -13,7 +13,7 @@ notifications. Django REST Framework on PostgreSQL and Redis, with a Vue 3 front
 
 | Area | For learners | For instructors, organisers and employers |
 |---|---|---|
-| **Learning** | Catalogue, enrolment with prerequisites, lessons in markdown with video, quizzes, progress, a PDF certificate anyone can verify | Course editor, lessons, quiz builder, publishing |
+| **Learning** | Catalogue, enrolment with prerequisites, lessons in markdown with video, quizzes, progress, a PDF certificate anyone can verify; installable on a phone, and lessons you opened stay readable offline | Course editor, lessons, quiz builder, publishing |
 | **Discussion** | Comments, replies and reactions on lessons and posts | Moderation of discussions on your own lessons and groups |
 | **Profiles** | Experience, education, skills and endorsements, a portfolio, badges earned along the way, recommendations from connections that you approve | |
 | **Network** | Follow, connect, people who share your skills | |
@@ -38,6 +38,8 @@ API is described by OpenAPI at `/api/docs/`.
 | Group members and requests | Network and suggestions |
 | ![Profile](docs/screenshots/profile-light.png) | ![Interviews](docs/screenshots/interviews-light.png) |
 | A profile with portfolio, badges and recommendations | Interview invitations to confirm |
+| ![Offline](docs/screenshots/offline-mobile.png) | |
+| A lesson read offline on a phone | |
 
 Light and dark themes, and every screen works at phone width. More in
 [docs/screenshots](docs/screenshots).

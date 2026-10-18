@@ -85,3 +85,13 @@ def typing(user, payload): ...
 
 Handlers run with database access, check membership themselves, and never write. Malformed
 frames are dropped without closing the connection.
+
+## Offline reading
+
+`frontend/public/sw.js` is a small service worker, registered only in production builds. It keeps three caches:
+
+- **App shell.** Pages are fetched from the network first and fall back to the cached `index.html`, so every route opens offline.
+- **Assets.** Files under `/assets/` carry a content hash in their names, so they are served from the cache first.
+- **Course reading.** `GET` requests for `/api/auth/user/`, `/api/me/enrollments/` and `/api/courses/…` go to the network first; offline, the last copy is used. No other API response is stored.
+
+The session store uses the cached user only when the browser reports it is offline and the refresh cookie cannot be used. Writes still need the network. Signing out posts `sign-out` to the worker, which deletes the course-reading cache. To retire old caches, bump `VERSION` in `sw.js`.
