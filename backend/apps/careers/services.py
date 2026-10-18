@@ -8,7 +8,15 @@ from apps.core import events
 from apps.profiles.models import Skill
 
 from . import events as names
-from .models import Application, Company, CompanyFollower, CompanyMember, Job, SavedJob
+from .models import (
+    Application,
+    Company,
+    CompanyFollower,
+    CompanyMember,
+    Interview,
+    Job,
+    SavedJob,
+)
 from .selectors import role_in
 
 MAX_RESUME_BYTES = 5 * 1024 * 1024
@@ -193,3 +201,73 @@ def _set(application: Application, status: str) -> Application:
     application.status_changed_at = timezone.now()
     application.save(update_fields=["status", "status_changed_at", "updated_at"])
     return application
+
+
+CLOSED = (Status.REJECTED, Status.WITHDRAWN, Status.HIRED)
+SLOT_FIELDS = ("starts_at", "duration_minutes", "kind", "location")
+
+
+def _interview_payload(interview: Interview) -> dict:
+    job = interview.application.job
+    return {
+        "interview_id": interview.id,
+        "applicant_id": interview.application.applicant_id,
+        "applicant_name": _name(interview.application.applicant),
+        "job_id": job.id,
+        "job_title": job.title,
+        "company_name": job.company.name,
+        "starts_at": interview.starts_at.isoformat(),
+        "team_ids": list(job.company.members.values_list("user_id", flat=True)),
+    }
+
+
+def schedule_interview(actor, application: Application, **fields) -> Interview:
+    _require_team(actor, application.job.company)
+    if application.status in CLOSED:
+        raise ValidationError("This application is closed.")
+    interview = Interview.objects.create(application=application, scheduled_by=actor, **fields)
+    if application.status in (Status.SUBMITTED, Status.REVIEWING):
+        _set(application, Status.INTERVIEW)  # the interview notification says it all
+    events.publish(names.INTERVIEW_SCHEDULED, rescheduled=False, **_interview_payload(interview))
+    return interview
+
+
+def update_interview(actor, interview: Interview, **fields) -> Interview:
+    """Team edits. A new time, length, kind or place needs the candidate's reply again."""
+    _require_team(actor, interview.application.job.company)
+    if interview.status == Interview.Status.CANCELLED:
+        raise ValidationError("This interview was cancelled.")
+    moved = any(k in fields and fields[k] != getattr(interview, k) for k in SLOT_FIELDS)
+    for key, value in fields.items():
+        setattr(interview, key, value)
+    if moved:
+        interview.status, interview.response_note = Interview.Status.SCHEDULED, ""
+    interview.save()
+    if moved:
+        events.publish(names.INTERVIEW_SCHEDULED, rescheduled=True, **_interview_payload(interview))
+    return interview
+
+
+def respond_to_interview(actor, interview: Interview, accept: bool, note: str = "") -> Interview:
+    if interview.application.applicant_id != actor.id:
+        raise PermissionDenied("Only the candidate replies.")
+    if interview.status == Interview.Status.CANCELLED or interview.starts_at <= timezone.now():
+        raise ValidationError("This interview can no longer be answered.")
+    interview.status = Interview.Status.CONFIRMED if accept else Interview.Status.DECLINED
+    interview.response_note = note
+    interview.save(update_fields=["status", "response_note", "updated_at"])
+    events.publish(
+        names.INTERVIEW_RESPONDED,
+        accepted=accept,
+        **_interview_payload(interview),
+    )
+    return interview
+
+
+def cancel_interview(actor, interview: Interview) -> Interview:
+    _require_team(actor, interview.application.job.company)
+    if interview.status != Interview.Status.CANCELLED:
+        interview.status = Interview.Status.CANCELLED
+        interview.save(update_fields=["status", "updated_at"])
+        events.publish(names.INTERVIEW_CANCELLED, **_interview_payload(interview))
+    return interview

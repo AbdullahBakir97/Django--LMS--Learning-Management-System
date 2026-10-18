@@ -11,6 +11,9 @@ All notable changes. The project follows [Semantic Versioning](https://semver.or
   on your profile until you publish it, and a rewrite goes back for your approval.
 - **Badges**: earned once for milestones (first course, five courses, first published course,
   first endorsement, ten connections, first recommendation) and announced as notifications.
+- **Interviews**: the hiring team offers a slot (video, phone or on site) from the applicant list;
+  the candidate confirms or declines; a new time asks again; either side adds it to a calendar
+  (.ics); invitations, changes and cancellations reach the candidate by notification and email.
 
 ## 1.0.0
 

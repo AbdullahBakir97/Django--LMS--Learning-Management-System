@@ -1,9 +1,10 @@
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 
 from apps.engagement.serializers import AuthorSerializer
 
-from .models import Application, Company, CompanyMember, Job
+from .models import Application, Company, CompanyMember, Interview, Job
 
 
 class CompanySerializer(serializers.ModelSerializer):
@@ -119,12 +120,48 @@ class JobSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class InterviewSerializer(serializers.ModelSerializer):
+    status_label = serializers.CharField(source="get_status_display", read_only=True)
+    calendar_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Interview
+        fields = [
+            "id",
+            "starts_at",
+            "duration_minutes",
+            "kind",
+            "location",
+            "details",
+            "status",
+            "status_label",
+            "response_note",
+            "calendar_url",
+        ]
+        read_only_fields = ["id", "status", "status_label", "response_note", "calendar_url"]
+        extra_kwargs = {"duration_minutes": {"min_value": 15, "max_value": 240}}
+
+    def get_calendar_url(self, obj) -> str:
+        return reverse("interview-calendar", args=[obj.pk])
+
+    def validate_starts_at(self, value):
+        if value <= timezone.now():
+            raise serializers.ValidationError("Pick a time in the future.")
+        return value
+
+
+class InterviewReplySerializer(serializers.Serializer):
+    accept = serializers.BooleanField()
+    note = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")
+
+
 class ApplicationSerializer(serializers.ModelSerializer):
     applicant = AuthorSerializer(read_only=True)
     applicant_headline = serializers.CharField(source="applicant.profile.headline", default="")
     job = serializers.SerializerMethodField()
     resume_url = serializers.SerializerMethodField()
     status_label = serializers.CharField(source="get_status_display", read_only=True)
+    interviews = InterviewSerializer(many=True, read_only=True)
 
     class Meta:
         model = Application
@@ -139,6 +176,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
             "status_changed_at",
             "created_at",
             "resume_url",
+            "interviews",
         ]
 
     def get_job(self, obj) -> dict:

@@ -4,6 +4,7 @@ import {
   PhBriefcase,
   PhFileText,
   PhCalendarCheck,
+  PhCalendarDots,
   PhDoorOpen,
   PhUsersFour,
   PhCertificate,
@@ -35,6 +36,8 @@ export const kindIcon: Record<NotificationKind, typeof PhBell> = {
   recommendation_request: PhQuotes,
   recommendation: PhQuotes,
   achievement: PhMedal,
+  interview: PhCalendarDots,
+  interview_reply: PhCalendarCheck,
 }
 
 const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })

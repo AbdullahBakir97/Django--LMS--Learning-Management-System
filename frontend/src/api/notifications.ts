@@ -18,6 +18,8 @@ export type NotificationKind =
   | 'recommendation_request'
   | 'recommendation'
   | 'achievement'
+  | 'interview'
+  | 'interview_reply'
 
 export interface AppNotification {
   id: number

@@ -1,9 +1,14 @@
+from datetime import timedelta
+
 import pytest
+from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
+from django.utils import timezone
 from rest_framework.test import APIClient
 
-from apps.careers.models import Application, Job
+from apps.careers.ics import interview_ics
+from apps.careers.models import Application, Interview, Job
 from apps.notifications.models import Notification
 from apps.profiles.models import ProfileSkill, Skill
 from conftest import UserFactory
@@ -200,3 +205,102 @@ def test_saved_jobs_filters_and_skill_match(recruiter, company, auth_client, use
 
     c = auth_client.post(f"/api/companies/{company['slug']}/follow/").data
     assert c["following"] and c["follower_count"] == 1 and c["open_jobs"] == 2
+
+
+@pytest.fixture
+def application(recruiter, company, user, auth_client):
+    job = post_job(recruiter, company).data
+    client_for(recruiter).post(f"/api/jobs/{job['id']}/publish/")
+    response = auth_client.post(f"/api/jobs/{job['id']}/apply/", {"resume": pdf()})
+    assert response.status_code == 201, response.data
+    return response.data
+
+
+def slot(**extra):
+    return {
+        "starts_at": (timezone.now() + timedelta(days=3)).isoformat(),
+        "duration_minutes": 45,
+        "kind": "video",
+        "location": "https://meet.example.org/abc",
+        **extra,
+    }
+
+
+@pytest.mark.django_db
+def test_team_schedules_and_candidate_replies(
+    recruiter,
+    application,
+    user,
+    auth_client,
+    run_events,
+    settings,
+):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    team = client_for(recruiter)
+    url = f"/api/applications/{application['id']}/interviews/"
+
+    assert auth_client.post(url, slot()).status_code == 403, "the candidate cannot schedule"
+    past = slot(starts_at=(timezone.now() - timedelta(hours=1)).isoformat())
+    assert team.post(url, past).status_code == 400
+    assert team.post(url, slot(duration_minutes=5)).status_code == 400
+
+    with run_events():
+        created = team.post(url, slot())
+    assert created.status_code == 201, created.data
+    assert created.data["status"] == "scheduled"
+    assert Application.objects.get(pk=application["id"]).status == "interview"
+    invite = Notification.objects.get(recipient=user, kind="interview")
+    assert "invited you" in invite.title
+    assert any("invited you" in m.subject for m in mail.outbox)
+
+    mine = auth_client.get("/api/applications/").data["results"][0]
+    assert [i["id"] for i in mine["interviews"]] == [created.data["id"]]
+
+    iid = created.data["id"]
+    assert team.post(f"/api/interviews/{iid}/reply/", {"accept": True}).status_code == 403
+    with run_events():
+        reply = auth_client.post(
+            f"/api/interviews/{iid}/reply/", {"accept": True, "note": "See you"}
+        )
+    assert reply.data["status"] == "confirmed"
+    assert Notification.objects.filter(recipient=recruiter, kind="interview_reply").exists()
+
+    # Changing the time needs a new reply; changing only the notes does not.
+    team.patch(f"/api/interviews/{iid}/", {"details": "Bring a laptop"})
+    assert Interview.objects.get(pk=iid).status == "confirmed"
+    with run_events():
+        moved = team.patch(f"/api/interviews/{iid}/", {"duration_minutes": 60})
+    assert moved.data["status"] == "scheduled" and moved.data["response_note"] == ""
+    assert Notification.objects.filter(recipient=user, title__contains="moved").exists()
+    assert auth_client.patch(f"/api/interviews/{iid}/", {"duration_minutes": 30}).status_code == 403
+
+    with run_events():
+        assert team.post(f"/api/interviews/{iid}/cancel/").data["status"] == "cancelled"
+    assert auth_client.post(f"/api/interviews/{iid}/reply/", {"accept": True}).status_code == 400
+
+    stranger = client_for(UserFactory())
+    assert stranger.get(f"/api/interviews/{iid}/calendar.ics/").status_code == 404
+    ics = auth_client.get(f"/api/interviews/{iid}/calendar.ics/")
+    assert ics["Content-Type"] == "text/calendar" and b"STATUS:CANCELLED" in ics.content
+
+
+@pytest.mark.django_db
+def test_closed_applications_take_no_interviews(recruiter, application, auth_client):
+    auth_client.post(f"/api/applications/{application['id']}/withdraw/")
+    url = f"/api/applications/{application['id']}/interviews/"
+    assert client_for(recruiter).post(url, slot()).status_code == 400
+
+
+@pytest.mark.django_db
+def test_calendar_escapes_text_and_folds_long_lines(recruiter, application):
+    interview = Interview.objects.create(
+        application_id=application["id"],
+        starts_at=timezone.now() + timedelta(days=1),
+        location="Room 4, Building B; second floor",
+        details="Line one\nLine two " + "x" * 120,
+    )
+    text = interview_ics(interview)
+    assert "LOCATION:Room 4\\, Building B\\; second floor" in text
+    assert "DESCRIPTION:Line one\\nLine two" in text
+    assert all(len(line) <= 75 for line in text.split("\r\n"))
+    assert text.endswith("END:VCALENDAR\r\n")

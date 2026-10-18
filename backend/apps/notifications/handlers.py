@@ -5,12 +5,19 @@ reads the payload and never imports learning code. Publishers put what a notific
 (titles, slugs, names) in the payload.
 """
 
+from datetime import datetime
+
 from apps.core.events import subscribe
 
 from .models import Notification
 from .services import notify
 
 Kind = Notification.Kind
+
+
+def _when(iso: str) -> str:
+    # The server cannot know the reader's time zone; the app shows local time, email shows UTC.
+    return datetime.fromisoformat(iso).strftime("%d %b %Y, %H:%M UTC")
 
 
 @subscribe("learning.enrolled")
@@ -186,3 +193,41 @@ def on_recommendation_written(*, author_id, author_name, recipient_id, **_):
 @subscribe("profiles.achievement_earned")
 def on_achievement_earned(*, user_id, title, **_):
     notify(user_id, Kind.ACHIEVEMENT, f"New badge: {title}", url="/me")
+
+
+@subscribe("careers.interview_scheduled")
+def on_interview_scheduled(*, applicant_id, job_title, company_name, starts_at, rescheduled, **_):
+    verb = "moved your interview" if rescheduled else "invited you to an interview"
+    notify(
+        applicant_id,
+        Kind.INTERVIEW,
+        f"{company_name} {verb} for {job_title}",
+        body=f"{_when(starts_at)}. Confirm or decline in the app.",
+        url="/applications",
+    )
+
+
+@subscribe("careers.interview_cancelled")
+def on_interview_cancelled(*, applicant_id, job_title, company_name, starts_at, **_):
+    notify(
+        applicant_id,
+        Kind.INTERVIEW,
+        f"{company_name} cancelled your interview for {job_title}",
+        body=f"It was set for {_when(starts_at)}.",
+        url="/applications",
+    )
+
+
+@subscribe("careers.interview_responded")
+def on_interview_responded(
+    *, applicant_id, applicant_name, job_id, job_title, accepted, team_ids, **_
+):
+    answer = "confirmed" if accepted else "declined"
+    for member_id in team_ids:
+        notify(
+            member_id,
+            Kind.INTERVIEW_REPLY,
+            f"{applicant_name} {answer} the interview for {job_title}",
+            url=f"/jobs/{job_id}/applications",
+            actor_id=applicant_id,
+        )

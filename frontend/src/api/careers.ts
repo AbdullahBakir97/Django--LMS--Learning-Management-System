@@ -72,6 +72,26 @@ export type JobInput = Pick<
   | 'closes_on'
 > & { company_slug?: string }
 
+export type InterviewKind = 'video' | 'phone' | 'onsite'
+
+export interface Interview {
+  id: number
+  starts_at: string
+  duration_minutes: number
+  kind: InterviewKind
+  location: string
+  details: string
+  status: 'scheduled' | 'confirmed' | 'declined' | 'cancelled'
+  status_label: string
+  response_note: string
+  calendar_url: string
+}
+
+export type InterviewInput = Pick<
+  Interview,
+  'starts_at' | 'duration_minutes' | 'kind' | 'location' | 'details'
+>
+
 export interface Application {
   id: number
   job: { id: number; title: string; company: CompanyRef }
@@ -83,6 +103,7 @@ export interface Application {
   status_changed_at: string | null
   created_at: string
   resume_url: string
+  interviews: Interview[]
 }
 
 export interface CompanyMember {
@@ -129,6 +150,11 @@ export const careers = {
   setStatus: (id: number, status: ApplicationStatus) =>
     api<Application>(`/applications/${id}/status/`, { method: 'POST', body: { status } }),
   withdraw: (id: number) => api<Application>(`/applications/${id}/withdraw/`, { method: 'POST' }),
+  scheduleInterview: (applicationId: number, data: InterviewInput) =>
+    api<Interview>(`/applications/${applicationId}/interviews/`, { method: 'POST', body: data }),
+  replyToInterview: (id: number, accept: boolean, note = '') =>
+    api<Interview>(`/interviews/${id}/reply/`, { method: 'POST', body: { accept, note } }),
+  cancelInterview: (id: number) => api<Interview>(`/interviews/${id}/cancel/`, { method: 'POST' }),
 
   companies: (params: { search?: string; mine?: boolean } = {}) =>
     api<Page<Company>>(`/companies/${qs({ search: params.search, mine: params.mine })}`),
@@ -154,6 +180,7 @@ export const labels = {
     internship: 'Internship',
   } as Record<EmploymentType, string>,
   level: { entry: 'Entry', mid: 'Mid', senior: 'Senior', lead: 'Lead' } as Record<JobLevel, string>,
+  interview: { video: 'Video call', phone: 'Phone call', onsite: 'On site' } as Record<InterviewKind, string>,
 }
 
 /** "1,200–1,800 JOD a month"-style band, or empty when no salary is given. */
