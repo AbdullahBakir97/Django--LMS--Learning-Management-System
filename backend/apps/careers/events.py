@@ -1,2 +1,5 @@
 APPLICATION_SUBMITTED = "careers.application_submitted"
 APPLICATION_STATUS_CHANGED = "careers.application_status_changed"
+INTERVIEW_SCHEDULED = "careers.interview_scheduled"
+INTERVIEW_RESPONDED = "careers.interview_responded"
+INTERVIEW_CANCELLED = "careers.interview_cancelled"

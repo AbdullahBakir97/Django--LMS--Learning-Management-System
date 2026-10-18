@@ -47,6 +47,8 @@ def jobs(user):
 def applications(user):
     """Yours, plus those to jobs at companies you work for."""
     team = CompanyMember.objects.filter(user=user).values("company_id")
-    return Application.objects.filter(
-        Q(applicant=user) | Q(job__company_id__in=team)
-    ).select_related("job__company", "applicant__profile")
+    return (
+        Application.objects.filter(Q(applicant=user) | Q(job__company_id__in=team))
+        .select_related("job__company", "applicant__profile")
+        .prefetch_related("interviews")
+    )

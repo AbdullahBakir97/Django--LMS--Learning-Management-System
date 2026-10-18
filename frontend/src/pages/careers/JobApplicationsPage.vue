@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { PhArrowLeft, PhFilePdf } from '@phosphor-icons/vue'
-import { careers, type Application, type ApplicationStatus, type Job } from '@/api/careers'
+import { PhArrowLeft, PhCalendarPlus, PhFilePdf } from '@phosphor-icons/vue'
+import { careers, type Application, type ApplicationStatus, type Interview, type Job } from '@/api/careers'
 import { apiBlob, ApiError } from '@/api/client'
 import Alert from '@/components/ui/Alert.vue'
 import Avatar from '@/components/ui/Avatar.vue'
 import Card from '@/components/ui/Card.vue'
+import Dialog from '@/components/ui/Dialog.vue'
+import InterviewForm from '@/features/careers/InterviewForm.vue'
+import InterviewItem from '@/features/careers/InterviewItem.vue'
 import { timeAgo } from '@/features/notifications/format'
 
 const props = defineProps<{ id: string }>()
@@ -14,6 +17,7 @@ const job = ref<Job | null>(null)
 const apps = ref<Application[]>([])
 const error = ref('')
 const open = ref<number | null>(null)
+const scheduling = ref<Application | null>(null)
 const statuses: { v: ApplicationStatus; l: string }[] = [
   { v: 'submitted', l: 'Submitted' },
   { v: 'reviewing', l: 'In review' },
@@ -44,6 +48,19 @@ async function setStatus(a: Application, status: ApplicationStatus) {
   const updated = await careers.setStatus(a.id, status)
   Object.assign(a, updated)
 }
+
+async function scheduled(interview: Interview) {
+  const a = scheduling.value!
+  a.interviews.push(interview)
+  if (a.status === 'submitted' || a.status === 'reviewing') Object.assign(a, { status: 'interview' })
+  scheduling.value = null
+}
+
+async function cancel(i: Interview) {
+  Object.assign(i, await careers.cancelInterview(i.id))
+}
+
+const closed = (a: Application) => ['withdrawn', 'hired', 'rejected'].includes(a.status)
 
 async function resume(a: Application) {
   const blob = await apiBlob(a.resume_url)
@@ -87,6 +104,14 @@ async function resume(a: Application) {
         >
           <PhFilePdf :size="18" weight="light" /> Résumé
         </button>
+        <button
+          v-if="!closed(a)"
+          type="button"
+          class="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md px-3 text-sm ring-1 ring-line-strong hover:bg-surface-2"
+          @click="scheduling = a"
+        >
+          <PhCalendarPlus :size="18" weight="light" /> Interview
+        </button>
         <span v-if="a.status === 'withdrawn'" class="text-sm text-muted">Withdrawn</span>
         <select
           v-else
@@ -110,7 +135,25 @@ async function resume(a: Application) {
           {{ a.cover_letter }}
         </p>
       </div>
+      <InterviewItem v-for="i in a.interviews" :key="i.id" :interview="i">
+        <button
+          v-if="i.status !== 'cancelled'"
+          type="button"
+          class="h-8 cursor-pointer rounded-md px-2 text-sm text-muted hover:bg-danger-soft hover:text-danger"
+          @click="cancel(i)"
+        >
+          Cancel interview
+        </button>
+      </InterviewItem>
     </div>
     <p v-if="!apps.length" class="p-6 text-center text-muted">No applications yet.</p>
   </Card>
+
+  <Dialog
+    :open="scheduling !== null"
+    :title="scheduling ? `Interview ${scheduling.applicant.name}` : ''"
+    @update:open="scheduling = null"
+  >
+    <InterviewForm v-if="scheduling" :application-id="scheduling.id" @done="scheduled" />
+  </Dialog>
 </template>

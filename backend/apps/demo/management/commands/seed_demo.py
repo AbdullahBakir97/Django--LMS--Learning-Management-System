@@ -389,11 +389,22 @@ class Command(BaseCommand):
                 level="entry",
             ),
         )
-        careers.apply(
+        lina_applied = careers.apply(
             u["lina"],
             backend,
             ContentFile(PDF, name="lina.pdf"),
             "I build Django services and just finished the APIs course here.",
+        )
+        careers.schedule_interview(
+            u["rana"],
+            lina_applied,
+            starts_at=(timezone.now() + timedelta(days=3)).replace(
+                hour=9, minute=0, second=0, microsecond=0
+            ),
+            duration_minutes=45,
+            kind="video",
+            location="https://meet.example.org/nahla-backend",
+            details="You will meet Rana and one engineer. Expect a short pairing exercise.",
         )
         careers.apply(u["omar"], analyst, ContentFile(PDF, name="omar.pdf"))
 

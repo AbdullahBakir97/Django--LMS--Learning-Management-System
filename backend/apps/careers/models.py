@@ -178,3 +178,44 @@ class Application(TimeStampedModel):
 
     def __str__(self):
         return f"{self.applicant_id} → {self.job_id} ({self.status})"
+
+
+class Interview(TimeStampedModel):
+    """An interview slot the hiring team offers; the candidate confirms or declines it."""
+
+    class Kind(models.TextChoices):
+        VIDEO = "video", "Video call"
+        PHONE = "phone", "Phone call"
+        ONSITE = "onsite", "On site"
+
+    class Status(models.TextChoices):
+        SCHEDULED = "scheduled", "Awaiting reply"
+        CONFIRMED = "confirmed", "Confirmed"
+        DECLINED = "declined", "Declined"
+        CANCELLED = "cancelled", "Cancelled"
+
+    application = models.ForeignKey(
+        Application, on_delete=models.CASCADE, related_name="interviews"
+    )
+    scheduled_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    starts_at = models.DateTimeField()
+    duration_minutes = models.PositiveSmallIntegerField(default=45)
+    kind = models.CharField(max_length=8, choices=Kind.choices, default=Kind.VIDEO)
+    location = models.CharField(max_length=300, help_text="Meeting link, phone number or address")
+    details = models.TextField(blank=True, max_length=2000)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.SCHEDULED)
+    response_note = models.CharField(max_length=500, blank=True)
+
+    class Meta:
+        ordering = ["starts_at"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(duration_minutes__gte=15, duration_minutes__lte=240),
+                name="interview_duration_range",
+            )
+        ]
+
+    def __str__(self):
+        return f"interview {self.application_id} at {self.starts_at:%Y-%m-%d %H:%M}"

@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -11,13 +11,16 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from . import selectors, services
-from .models import Application, Company, Job
+from .ics import interview_ics
+from .models import Application, Company, Interview, Job
 from .serializers import (
     AddMemberSerializer,
     ApplicationSerializer,
     ApplySerializer,
     CompanyMemberSerializer,
     CompanySerializer,
+    InterviewReplySerializer,
+    InterviewSerializer,
     JobSerializer,
     StatusSerializer,
 )
@@ -231,6 +234,17 @@ class ApplicationViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, views
             self.get_serializer(services.withdraw(request.user, self.get_object())).data
         )
 
+    @extend_schema(request=InterviewSerializer, responses={201: InterviewSerializer})
+    @action(detail=True, methods=["post"])
+    def interviews(self, request, pk=None):
+        """The hiring team offers an interview slot. The candidate is notified."""
+        data = InterviewSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        interview = services.schedule_interview(
+            request.user, self.get_object(), **data.validated_data
+        )
+        return Response(InterviewSerializer(interview).data, status=status.HTTP_201_CREATED)
+
     @extend_schema(responses={(200, "application/pdf"): OpenApiTypes.BINARY})
     @action(detail=True, methods=["get"], url_path="resume", url_name="resume")
     def resume(self, request, pk=None):
@@ -241,3 +255,44 @@ class ApplicationViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, views
             as_attachment=False,
             filename=f"resume-{application.applicant.username}.pdf",
         )
+
+
+class InterviewViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
+    """PATCH to change a slot (team), reply (candidate), cancel (team), or add it to a calendar."""
+
+    queryset = Interview.objects.none()  # for the schema; get_queryset() scopes to the user
+    serializer_class = InterviewSerializer
+    http_method_names = ["get", "post", "patch"]
+
+    def get_queryset(self):
+        return Interview.objects.filter(
+            application__in=selectors.applications(self.request.user)
+        ).select_related("application__job__company", "application__applicant")
+
+    def perform_update(self, serializer):
+        serializer.instance = services.update_interview(
+            self.request.user, serializer.instance, **serializer.validated_data
+        )
+
+    @extend_schema(request=InterviewReplySerializer, responses=InterviewSerializer)
+    @action(detail=True, methods=["post"])
+    def reply(self, request, pk=None):
+        data = InterviewReplySerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        interview = services.respond_to_interview(
+            request.user, self.get_object(), **data.validated_data
+        )
+        return Response(self.get_serializer(interview).data)
+
+    @extend_schema(request=None, responses=InterviewSerializer)
+    @action(detail=True, methods=["post"])
+    def cancel(self, request, pk=None):
+        interview = services.cancel_interview(request.user, self.get_object())
+        return Response(self.get_serializer(interview).data)
+
+    @extend_schema(responses={(200, "text/calendar"): OpenApiTypes.STR})
+    @action(detail=True, methods=["get"], url_path="calendar.ics", url_name="calendar")
+    def calendar(self, request, pk=None):
+        response = HttpResponse(interview_ics(self.get_object()), content_type="text/calendar")
+        response["Content-Disposition"] = f'attachment; filename="interview-{pk}.ics"'
+        return response

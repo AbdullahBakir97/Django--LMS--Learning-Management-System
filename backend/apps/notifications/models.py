@@ -24,6 +24,8 @@ class Notification(TimeStampedModel):
         RECOMMENDATION_REQUEST = "recommendation_request", "Someone asked for a recommendation"
         RECOMMENDATION = "recommendation", "Someone wrote you a recommendation"
         ACHIEVEMENT = "achievement", "You earned a badge"
+        INTERVIEW = "interview", "Interview invitation or change"
+        INTERVIEW_REPLY = "interview_reply", "A candidate replied to an interview"
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"

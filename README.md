@@ -18,7 +18,7 @@ notifications. Django REST Framework on PostgreSQL and Redis, with a Vue 3 front
 | **Profiles** | Experience, education, skills and endorsements, a portfolio, badges earned along the way, recommendations from connections that you approve | |
 | **Network** | Follow, connect, people who share your skills | |
 | **Community** | A feed, public and private groups, events with RSVPs | Group roles and approvals, events with capacity |
-| **Careers** | Job search with skill match, saved jobs, applications with a private résumé | Company pages, job posts, an applicant pipeline |
+| **Careers** | Job search with skill match, saved jobs, applications with a private résumé, interview invitations to confirm and add to a calendar | Company pages, job posts, an applicant pipeline, interview scheduling |
 | **Messaging** | Direct and group conversations, live, with typing and read receipts | |
 | **Notifications** | Live in the app, email for what matters, per-kind preferences | |
 
@@ -36,8 +36,8 @@ API is described by OpenAPI at `/api/docs/`.
 | Jobs matched to your skills | The hiring team's applicant view |
 | ![Group](docs/screenshots/group-members-light.png) | ![Network](docs/screenshots/network-light.png) |
 | Group members and requests | Network and suggestions |
-| ![Profile](docs/screenshots/profile-light.png) | |
-| A profile with portfolio, badges and recommendations | |
+| ![Profile](docs/screenshots/profile-light.png) | ![Interviews](docs/screenshots/interviews-light.png) |
+| A profile with portfolio, badges and recommendations | Interview invitations to confirm |
 
 Light and dark themes, and every screen works at phone width. More in
 [docs/screenshots](docs/screenshots).
@@ -63,12 +63,12 @@ importing the contexts that publish them.
 flowchart LR
   subgraph Backend
     config --> accounts & careers & community & engagement & learning & messaging & network & notifications & profiles & core
-    notifications -- 26 --> core
+    notifications -- 29 --> core
     profiles -- 20 --> core
+    careers -- 17 --> core
     learning -- 15 --> core
     community -- 14 --> engagement
     network -- 13 --> core
-    careers -- 12 --> core
     community -- 12 --> core
     messaging -- 11 --> core
     engagement -- 10 --> core
@@ -91,12 +91,12 @@ flowchart LR
     messaging -. events .-> notifications
   end
   subgraph Frontend
-    pages -- 153 --> api
-    features -- 119 --> api
-    pages -- 90 --> components
+    pages -- 155 --> api
+    features -- 132 --> api
+    pages -- 92 --> components
+    pages -- 64 --> features
     router -- 62 --> pages
-    pages -- 61 --> features
-    features -- 43 --> components
+    features -- 47 --> components
     pages -- 22 --> stores
     stores -- 14 --> api
     features -- 13 --> stores
