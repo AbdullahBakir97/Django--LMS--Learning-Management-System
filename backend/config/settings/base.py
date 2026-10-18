@@ -84,6 +84,7 @@ ACCOUNT_UNIQUE_EMAIL = True
 # JWT: short-lived access token returned in the body, refresh token only in an HttpOnly cookie.
 REST_AUTH = {
     "USE_JWT": True,
+    "TOKEN_MODEL": None,  # JWT only; no DRF token table
     "JWT_AUTH_COOKIE": None,
     "JWT_AUTH_REFRESH_COOKIE": "lms_refresh",
     "JWT_AUTH_REFRESH_COOKIE_PATH": "/api/auth/token/refresh/",
