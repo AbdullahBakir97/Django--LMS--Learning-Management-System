@@ -22,7 +22,7 @@ land in the following phases.
 
 | Path | What it is |
 |---|---|
-| `backend/` | Django project: `config/` (settings, ASGI, Celery), `core/` (kernel), one package per context |
+| `backend/` | Django project: `config/` (settings, ASGI, Celery), `apps/core/` (kernel), `apps/<context>/` per bounded context |
 | `docs/` | Architecture, diagrams, decisions |
 | `docker-compose.yml` | PostgreSQL, Redis, backend and worker for local development |
 
