@@ -1,3 +1,4 @@
+from django.core.validators import FileExtensionValidator
 from rest_framework import serializers
 
 from apps.accounts.serializers import UserSerializer
@@ -15,7 +16,10 @@ from .models import (
 
 
 class LessonSummarySerializer(serializers.ModelSerializer):
-    has_quiz = serializers.BooleanField(read_only=True)
+    has_quiz = serializers.SerializerMethodField()
+
+    def get_has_quiz(self, lesson) -> bool:
+        return hasattr(lesson, "quiz")
 
     class Meta:
         model = Lesson
@@ -38,13 +42,21 @@ class CourseListSerializer(serializers.ModelSerializer):
             "level",
             "language",
             "status",
+            "price_cents",
+            "currency",
             "published_at",
             "instructor",
             "lesson_count",
             "enrollment_count",
             "created_at",
         ]
-        read_only_fields = ["slug", "status", "published_at", "created_at"]
+        read_only_fields = ["slug", "status", "currency", "published_at", "created_at"]
+
+    def validate_price_cents(self, value):
+        # Card networks will not charge less than about 0.50 in most currencies.
+        if 0 < value < 50:
+            raise serializers.ValidationError("A paid course costs at least 0.50.")
+        return value
 
 
 class CourseDetailSerializer(CourseListSerializer):
@@ -56,11 +68,38 @@ class CourseDetailSerializer(CourseListSerializer):
     class Meta(CourseListSerializer.Meta):
         fields = [*CourseListSerializer.Meta.fields, "description", "prerequisites", "lessons"]
 
+    def to_representation(self, course):
+        data = super().to_representation(course)
+        request = self.context.get("request")
+        user = request.user if request else None
+        open_to_all = user and (
+            course.instructor_id == user.id
+            or user.role == "admin"
+            or course.enrollments.filter(student=user).exists()
+        )
+        if not open_to_all:  # the outline is public; videos of locked lessons are not
+            for lesson in data["lessons"]:
+                if not lesson["is_free_preview"]:
+                    lesson["video_url"] = ""
+        return data
+
+
+ATTACHMENT_TYPES = "pdf zip png jpg jpeg gif webp txt md csv docx xlsx pptx py ipynb sql".split()
+ATTACHMENT_MAX_BYTES = 25 * 1024 * 1024  # under nginx's 40 MB body limit
+
 
 class LessonAttachmentSerializer(serializers.ModelSerializer):
+    # No HTML, SVG or scripts: they would run on the site's own origin if someone opened them.
+    file = serializers.FileField(validators=[FileExtensionValidator(ATTACHMENT_TYPES)])
+
     class Meta:
         model = LessonAttachment
         fields = ["id", "title", "file"]
+
+    def validate_file(self, file):
+        if file.size > ATTACHMENT_MAX_BYTES:
+            raise serializers.ValidationError("Attachments can be up to 25 MB.")
+        return file
 
 
 class LessonSerializer(serializers.ModelSerializer):
@@ -244,3 +283,45 @@ class CertificateSerializer(serializers.ModelSerializer):
     def get_instructor(self, certificate) -> str:
         user = certificate.enrollment.course.instructor
         return user.get_full_name() or user.username
+
+
+class WeekCountSerializer(serializers.Serializer):
+    week = serializers.DateField()
+    count = serializers.IntegerField()
+
+
+class LessonFunnelSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    title = serializers.CharField()
+    order = serializers.IntegerField()
+    completed = serializers.IntegerField()
+
+
+class QuizStatsSerializer(serializers.Serializer):
+    lesson_id = serializers.IntegerField()
+    title = serializers.CharField()
+    learners = serializers.IntegerField()
+    attempts = serializers.IntegerField()
+    passed = serializers.IntegerField()
+    average_score = serializers.IntegerField()
+
+
+class StalledLearnerSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    name = serializers.CharField()
+    lessons_done = serializers.IntegerField()
+    last_active = serializers.DateTimeField()
+
+
+class CourseAnalyticsSerializer(serializers.Serializer):
+    enrolled = serializers.IntegerField()
+    active = serializers.IntegerField()
+    completed = serializers.IntegerField()
+    completion_rate = serializers.IntegerField(help_text="Percent of everyone who enrolled")
+    average_days_to_complete = serializers.FloatField(allow_null=True)
+    lesson_count = serializers.IntegerField()
+    weekly_enrolments = WeekCountSerializer(many=True)
+    lessons = LessonFunnelSerializer(many=True)
+    quizzes = QuizStatsSerializer(many=True)
+    stalled_count = serializers.IntegerField()
+    stalled = StalledLearnerSerializer(many=True)

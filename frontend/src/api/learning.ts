@@ -18,6 +18,9 @@ export interface CourseSummary {
   level: Level
   language: string
   status: 'draft' | 'published'
+  /** Smallest currency unit; 0 means free. */
+  price_cents: number
+  currency: string
   published_at: string | null
   instructor: User
   lesson_count: number
@@ -105,10 +108,45 @@ export interface CertificateRecord {
   pdf: string | null
 }
 
-type CourseInput = Pick<Course, 'title' | 'summary' | 'description' | 'level' | 'language'>
+type CourseInput = Pick<Course, 'title' | 'summary' | 'description' | 'level' | 'language' | 'price_cents'>
+
+/** Paid orders in one currency, net of refunds. `recent_cents` is the last 30 days. */
+export interface Revenue {
+  currency: string
+  total_cents: number
+  recent_cents: number
+  orders: number
+}
+
+export const money = (cents: number, currency: string) =>
+  new Intl.NumberFormat('en', { style: 'currency', currency }).format(cents / 100)
+
+export const price = (course: Pick<CourseSummary, 'price_cents' | 'currency'>) =>
+  course.price_cents ? money(course.price_cents, course.currency) : 'Free'
 type LessonInput = Pick<Lesson, 'title' | 'order' | 'content' | 'video_url' | 'is_free_preview'>
 
 const c = (slug: string) => `/courses/${encodeURIComponent(slug)}`
+
+export interface CourseAnalytics {
+  enrolled: number
+  active: number
+  completed: number
+  completion_rate: number
+  average_days_to_complete: number | null
+  lesson_count: number
+  weekly_enrolments: { week: string; count: number }[]
+  lessons: { id: number; title: string; order: number; completed: number }[]
+  quizzes: {
+    lesson_id: number
+    title: string
+    learners: number
+    attempts: number
+    passed: number
+    average_score: number
+  }[]
+  stalled_count: number
+  stalled: { username: string; name: string; lessons_done: number; last_active: string }[]
+}
 
 export const learning = {
   courses: (
@@ -124,6 +162,8 @@ export const learning = {
     return api<Page<CourseSummary>>(`/courses/${q.size ? `?${q}` : ''}`)
   },
   course: (slug: string) => api<Course>(`${c(slug)}/`),
+  analytics: (slug: string) => api<CourseAnalytics>(`${c(slug)}/analytics/`),
+  revenue: (slug: string) => api<Revenue[]>(`/payments/courses/${encodeURIComponent(slug)}/revenue/`),
   createCourse: (data: Partial<CourseInput>) => api<Course>('/courses/', { method: 'POST', body: data }),
   updateCourse: (slug: string, data: Partial<CourseInput>) =>
     api<Course>(`${c(slug)}/`, { method: 'PATCH', body: data }),
@@ -131,6 +171,9 @@ export const learning = {
   publish: (slug: string) => api<Course>(`${c(slug)}/publish/`, { method: 'POST' }),
   enroll: (slug: string) => api<Progress>(`${c(slug)}/enroll/`, { method: 'POST' }),
   progress: (slug: string) => api<Progress | undefined>(`${c(slug)}/progress/`),
+  /** Paid courses: a hosted payment page. The course unlocks when the payment is confirmed. */
+  checkout: (slug: string) =>
+    api<{ url: string }>('/payments/checkout/', { method: 'POST', body: { course: slug } }),
 
   lesson: (slug: string, id: number) => api<Lesson>(`${c(slug)}/lessons/${id}/`),
   createLesson: (slug: string, data: Partial<LessonInput>) =>

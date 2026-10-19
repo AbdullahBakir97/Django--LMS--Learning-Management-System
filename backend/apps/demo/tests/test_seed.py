@@ -9,6 +9,7 @@ from apps.community.models import Group
 from apps.learning.models import Course
 from apps.messaging.models import Message
 from apps.notifications.models import Notification
+from apps.payments.models import Order
 
 
 @pytest.mark.django_db
@@ -27,6 +28,10 @@ def test_seed_builds_a_demo_and_is_idempotent(django_capture_on_commit_callbacks
     call_command("seed_demo")
     assert User.objects.filter(email__endswith="@demo.lms").count() == 7, (
         "a second run does nothing"
+    )
+    paid = Course.objects.get(price_cents__gt=0)
+    Order.objects.create(
+        buyer=User.objects.get(username="omar"), course=paid, amount_cents=2900, currency="usd"
     )
     call_command("seed_demo", "--reset")
     assert User.objects.filter(email__endswith="@demo.lms").count() == 7, "reset rebuilds"

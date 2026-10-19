@@ -37,6 +37,14 @@ def post_context(request, posts) -> dict:
         "request": request,
         "reactions": engagement.reaction_summary("post", ids, request.user),
         "comment_counts": engagement.comment_counts("post", ids),
+        # Groups this reader manages, so can_delete needs no query per post.
+        "managed_groups": set(
+            Membership.objects.filter(
+                user=request.user,
+                status=Membership.Status.ACTIVE,
+                role__in=[Membership.Role.OWNER, Membership.Role.ADMIN],
+            ).values_list("group_id", flat=True)
+        ),
     }
 
 

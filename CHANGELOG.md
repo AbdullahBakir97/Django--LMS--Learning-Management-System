@@ -2,7 +2,22 @@
 
 All notable changes. The project follows [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 2.0.0 (2026-10-18)
+
+Paid courses, analytics for instructors and admins, moderation, search, an installable app,
+and a security pass over the whole codebase. Upgrading from 1.x: see
+[docs/deployment.md](docs/deployment.md#upgrading-from-1x).
+
+### Changed (breaking for API clients)
+
+- `POST /api/auth/password/change/` needs `old_password`.
+- The refresh cookie's path is `/api/auth/` (it was `/api/auth/token/refresh/`).
+- `GET /api/profiles/{username}/` no longer includes `user.email`; deactivated accounts return
+  404. `GET /api/profiles/me/` still includes your own email.
+- `GET /api/courses/{slug}/lessons/` lists only lessons the reader may open.
+- `POST /api/courses/{slug}/enroll/` answers 402 for a paid course; buy it through
+  `POST /api/payments/checkout/`.
+- Deleting a course that has learners or orders answers 400.
 
 ### Added
 
@@ -29,9 +44,62 @@ All notable changes. The project follows [Semantic Versioning](https://semver.or
   average, the host reads the comments.
 - **Company updates**: a company's team posts news on its page; followers see it on their home
   page.
+- **Reporting and moderation**: anyone can report a post, a comment or a person, once each;
+  moderators (the admin role) work a queue grouped by item, remove the content or deactivate
+  the account, or dismiss; every reporter hears back. Demo: `sara` moderates.
+- **Course analytics**: each instructor sees, per course, enrolments per week, completion rate
+  and average time to finish, how many learners finished each lesson (where they stop), quiz
+  pass rates and scores, and the learners with no progress in 14 days.
+- **Paid courses**: an instructor sets a price; learners pay on a Stripe Checkout page and the
+  course unlocks when Stripe's signed webhook confirms the payment (retries are harmless).
+  Free preview lessons stay open to everyone. Without Stripe keys, every course stays free.
+  Demo: "Testing Django properly" costs $29.
+- **Refunds and promotion codes**: a full refund in the Stripe dashboard ends access to the
+  course; buyers can enter promotion codes made in Stripe, and orders record what was paid.
+- **Course revenue**: an instructor's analytics show what each course earned, net of refunds.
+- **Platform overview** for admins (`/overview`): people and sign-ups per week, enrolments
+  per week and completion rate, revenue per currency for 30 days and all time, the courses with
+  the most new learners, new posts, open jobs, and how many reported items wait for review.
+- **Browser journeys in CI**: a new job seeds a real backend and runs search, posting with a
+  photo, moderation, analytics, the admin overview and a paid course in Chromium on every push.
+
+### Security
+
+From a full audit of the codebase. Each fix has a test.
+
+- Rate limits could be dodged with a forged `X-Forwarded-For` header; they now count the
+  address nginx saw (`NUM_PROXIES`).
+- Signing out now revokes the refresh token (the cookie never reached the logout endpoint).
+- Changing the password asks for the current one, and a new password (change or reset) signs
+  out every other device.
+- The lesson list and the course outline exposed paid lesson text, videos and files to anyone
+  signed in; they now show only what the reader may open.
+- Lesson attachments refuse HTML, SVG and scripts, and nginx always serves them as downloads.
+- Profiles no longer show other people's email addresses, or deactivated accounts.
+- A share no longer shows a post whose group has since turned private.
+- Very large images are refused before they are decoded (a small file could use gigabytes).
+- Quizzes in other people's draft courses are hidden.
+- Removing a connection ends the direct conversation; typing signals are limited per socket.
+- An app opened online without a valid session clears what an earlier user left offline.
 
 ### Fixed
 
+- A buyer could pay twice from two tabs, and refunding the duplicate removed their access.
+- Finishing the last lesson twice at once failed with a server error.
+- Deleting a course with learners or orders failed or erased their certificates; it is now
+  refused.
+- An email held for quiet hours could be sent several times, or after it was read or email was
+  turned off; one failing digest stopped everyone else's.
+- The only admin of a company could demote themselves.
+- Course, company and job lists joined every lesson, enrolment, follower and applicant before
+  counting; the groups, events, feed and moderation lists ran a query per row.
+- The "quiz" tag never showed in course outlines.
+- Errors raised as a plain message (such as "You are already enrolled.") were not shown in the app.
+- nginx refused uploads over 12 MB, so a post with four photos failed in production; it now
+  accepts 40 MB and Django still checks each file.
+- A moderator could deactivate another admin from a report; admin accounts are now managed only
+  in the admin site.
+- The weekly chart could trigger a browser "ResizeObserver loop" error while resizing.
 - Recommendation, badge and interview notifications had no icon in the app; a test now keeps
   the backend's notification kinds and the app's icons in step.
 

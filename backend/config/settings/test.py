@@ -14,3 +14,5 @@ REST_FRAMEWORK = {
     **REST_FRAMEWORK,
     "DEFAULT_THROTTLE_RATES": {"anon": "10000/min", "user": "10000/min", "auth": "10000/min"},
 }
+STRIPE_SECRET_KEY = "sk_test_dummy"  # noqa: S105
+STRIPE_WEBHOOK_SECRET = "whsec_test"  # noqa: S105

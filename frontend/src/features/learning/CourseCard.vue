@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import { PhBooks, PhUsers } from '@phosphor-icons/vue'
-import type { CourseSummary } from '@/api/learning'
+import { price, type CourseSummary } from '@/api/learning'
 import Tag from '@/components/ui/Tag.vue'
 
 defineProps<{ course: CourseSummary }>()
@@ -15,6 +15,9 @@ defineProps<{ course: CourseSummary }>()
     <div class="flex items-center gap-2">
       <Tag>{{ course.level }}</Tag>
       <Tag v-if="course.status === 'draft'">draft</Tag>
+      <span class="ml-auto font-mono text-sm" :class="course.price_cents ? 'text-ink' : 'text-muted'">{{
+        price(course)
+      }}</span>
     </div>
     <h3 class="mt-3 text-lg font-semibold group-hover:text-accent">{{ course.title }}</h3>
     <p class="mt-1 line-clamp-2 text-sm text-muted">{{ course.summary || 'No summary yet.' }}</p>

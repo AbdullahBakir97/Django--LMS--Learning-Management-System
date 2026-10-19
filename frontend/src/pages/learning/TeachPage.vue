@@ -28,6 +28,13 @@ onMounted(async () => {
   </div>
   <p v-if="courses && !courses.length" class="mt-10 text-muted">You have not created a course yet.</p>
   <ul v-else class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-    <li v-for="c in courses ?? []" :key="c.id"><CourseCard :course="c" /></li>
+    <li v-for="c in courses ?? []" :key="c.id" class="grid gap-2">
+      <CourseCard :course="c" />
+      <RouterLink
+        :to="{ name: 'course-analytics', params: { slug: c.slug } }"
+        class="w-fit text-sm text-accent hover:underline"
+        >Analytics</RouterLink
+      >
+    </li>
   </ul>
 </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import {
   PhCheckCircle,
   PhCircle,
@@ -9,7 +9,7 @@ import {
   PhPencilSimple,
   PhSealCheck,
 } from '@phosphor-icons/vue'
-import { learning, type Course, type Progress } from '@/api/learning'
+import { learning, price, type Course, type Progress } from '@/api/learning'
 import { ApiError } from '@/api/client'
 import { useSessionStore } from '@/stores/session'
 import { renderMarkdown } from '@/features/learning/markdown'
@@ -22,6 +22,7 @@ import Tag from '@/components/ui/Tag.vue'
 const props = defineProps<{ slug: string }>()
 const session = useSessionStore()
 const router = useRouter()
+const route = useRoute()
 const course = ref<Course | null>(null)
 const progress = ref<Progress | null>(null)
 const error = ref('')
@@ -47,6 +48,35 @@ async function load() {
 }
 watch(() => props.slug, load, { immediate: true })
 
+// Back from the payment page: the webhook usually lands within seconds, so check a few times.
+const confirming = ref(route.query.paid === '1')
+let poll: ReturnType<typeof setTimeout> | undefined
+async function waitForPayment(tries = 15) {
+  if (!confirming.value) return
+  if (progress.value || tries === 0) {
+    confirming.value = false
+    router.replace({ query: {} })
+    return
+  }
+  poll = setTimeout(async () => {
+    progress.value = (await learning.progress(props.slug).catch(() => undefined)) ?? null
+    waitForPayment(tries - 1)
+  }, 2000)
+}
+watch(course, (c) => c && waitForPayment(), { once: true })
+onBeforeUnmount(() => clearTimeout(poll))
+
+async function buy() {
+  enrolling.value = true
+  error.value = ''
+  try {
+    window.location.assign((await learning.checkout(props.slug)).url)
+  } catch (e) {
+    error.value = e instanceof ApiError ? (e.nonField ?? 'Could not start the payment.') : ''
+    enrolling.value = false
+  }
+}
+
 async function enroll() {
   enrolling.value = true
   error.value = ''
@@ -56,7 +86,8 @@ async function enroll() {
       router.push({ name: 'lesson', params: { slug: props.slug, id: nextLesson.value.id } })
   } catch (e) {
     if (e instanceof ApiError) {
-      const pre = e.problem.errors?.prerequisites
+      const errs = e.problem.errors
+      const pre = Array.isArray(errs) ? undefined : errs?.prerequisites
       error.value = Array.isArray(pre) ? pre.join(' ') : (e.nonField ?? 'Could not enrol.')
     }
   } finally {
@@ -159,9 +190,21 @@ async function enroll() {
             <Button class="w-full">Continue</Button>
           </RouterLink>
         </template>
+        <template v-else-if="confirming">
+          <Alert tone="success">Payment received. Unlocking your course…</Alert>
+        </template>
         <template v-else>
           <Alert v-if="error" tone="danger">{{ error }}</Alert>
-          <Button :loading="enrolling" :disabled="course.status !== 'published'" @click="enroll"
+          <template v-if="course.price_cents">
+            <p class="font-mono text-2xl">{{ price(course) }}</p>
+            <Button :loading="enrolling" :disabled="course.status !== 'published'" @click="buy"
+              >Buy course</Button
+            >
+            <p class="text-xs text-muted">
+              Secure card payment. Lifetime access once paid. Free preview lessons are open to all.
+            </p>
+          </template>
+          <Button v-else :loading="enrolling" :disabled="course.status !== 'published'" @click="enroll"
             >Enrol for free</Button
           >
           <p class="text-xs text-muted">

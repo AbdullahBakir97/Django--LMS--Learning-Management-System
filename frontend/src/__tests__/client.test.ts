@@ -42,6 +42,17 @@ describe('api client', () => {
     expect(error.field('email')).toBe('Taken.')
   })
 
+  it('reads a bare list of errors as the general message', () => {
+    const error = new ApiError({
+      type: 'about:blank',
+      title: 'Bad Request',
+      status: 400,
+      errors: ['You are already enrolled.'],
+    })
+    expect(error.nonField).toBe('You are already enrolled.')
+    expect(error.field('email')).toBeUndefined()
+  })
+
   it('returns null when the refresh cookie is missing', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(json(401, {}))
     await expect(refreshAccessToken()).resolves.toBeNull()

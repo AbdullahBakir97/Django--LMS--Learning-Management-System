@@ -42,6 +42,9 @@ INSTALLED_APPS = [
     "apps.careers",
     "apps.messaging",
     "apps.search",
+    "apps.moderation",
+    "apps.payments",
+    "apps.insights",
     "apps.demo",
     "apps.notifications",
 ]
@@ -81,6 +84,10 @@ TEMPLATES = [
 AUTH_USER_MODEL = "accounts.User"
 SITE_ID = 1
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+# Paid courses. Without a secret key every course stays free to join and checkout answers 503.
+PAYMENTS_CURRENCY = os.environ.get("PAYMENTS_CURRENCY", "usd").lower()
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "LMS <no-reply@localhost>")
 
 AUTHENTICATION_BACKENDS = [
@@ -101,13 +108,15 @@ REST_AUTH = {
     "TOKEN_MODEL": None,  # JWT only; no DRF token table
     "JWT_AUTH_COOKIE": None,
     "JWT_AUTH_REFRESH_COOKIE": "lms_refresh",
-    "JWT_AUTH_REFRESH_COOKIE_PATH": "/api/auth/token/refresh/",
+    # /api/auth/, not just the refresh URL: logout must receive the cookie to revoke the token.
+    "JWT_AUTH_REFRESH_COOKIE_PATH": "/api/auth/",
     "JWT_AUTH_HTTPONLY": True,
     "JWT_AUTH_SECURE": os.environ.get("JWT_COOKIE_SECURE", "1") == "1",
     "JWT_AUTH_SAMESITE": "Lax",
     "JWT_AUTH_RETURN_EXPIRATION": True,
     "USER_DETAILS_SERIALIZER": "apps.accounts.serializers.UserSerializer",
     "REGISTER_SERIALIZER": "apps.accounts.serializers.RegisterSerializer",
+    "OLD_PASSWORD_FIELD_ENABLED": True,  # a stolen access token alone cannot change the password
 }
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
@@ -150,6 +159,9 @@ CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_TASK_SERIALIZER = "json"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TIMEZONE = "UTC"
+# Quiet hours hold an email up to a day. Redis re-delivers an unacknowledged task after the
+# visibility timeout (default one hour), so it must outlast the longest hold.
+CELERY_BROKER_TRANSPORT_OPTIONS = {"visibility_timeout": 2 * 24 * 3600}
 CELERY_BEAT_SCHEDULE = {
     # Hourly, so each reader's digest goes out at 08:00 in their own time zone.
     "notification-digests": {
@@ -202,6 +214,9 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
     ],
+    # Rate limits key on the client address. nginx in the image is one proxy; add one for each
+    # load balancer in front of it, or a forged X-Forwarded-For gets around every limit.
+    "NUM_PROXIES": int(os.environ.get("NUM_PROXIES", "1")),
     "DEFAULT_THROTTLE_RATES": {
         "anon": os.environ.get("THROTTLE_ANON", "60/min"),
         "user": os.environ.get("THROTTLE_USER", "600/min"),
@@ -212,7 +227,7 @@ REST_FRAMEWORK = {
 SPECTACULAR_SETTINGS = {
     "TITLE": "LMS API",
     "DESCRIPTION": "Learning management and professional network platform.",
-    "VERSION": "1.0.0",
+    "VERSION": "2.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     # Distinct names for choice sets that share a field name (kind, level, role, status).
@@ -224,6 +239,8 @@ SPECTACULAR_SETTINGS = {
         "ProfileSkillLevelEnum": "apps.profiles.models.ProfileSkill.Level",
         "ConnectionStatusEnum": "apps.network.models.Connection.Status",
         "NotificationKindEnum": "apps.notifications.models.Notification.Kind",
+        "ReportKindEnum": "apps.moderation.models.Report.Kind",
+        "ReportReasonEnum": "apps.moderation.models.Report.Reason",
         "CompanySizeEnum": "apps.careers.models.Company.Size",
         "CompanyMemberRoleEnum": "apps.careers.models.CompanyMember.Role",
         "JobStatusEnum": "apps.careers.models.Job.Status",
@@ -236,6 +253,7 @@ SPECTACULAR_SETTINGS = {
         "CourseLevelEnum": "apps.learning.models.Course.Level",
         "CourseStatusEnum": "apps.learning.models.Course.Status",
         "EnrollmentStatusEnum": "apps.learning.models.Enrollment.Status",
+        "OrderStatusEnum": "apps.payments.models.Order.Status",
     },
 }
 

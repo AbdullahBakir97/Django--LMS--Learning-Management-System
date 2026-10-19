@@ -13,6 +13,18 @@ export const router = createRouter({
         { path: '', name: 'home', component: () => import('@/pages/HomePage.vue') },
         { path: 'me', name: 'my-profile', component: () => import('@/pages/MyProfilePage.vue') },
         {
+          path: 'overview',
+          name: 'overview',
+          component: () => import('@/pages/OverviewPage.vue'),
+          meta: { adminOnly: true },
+        },
+        {
+          path: 'moderation',
+          name: 'moderation',
+          component: () => import('@/pages/ModerationPage.vue'),
+          meta: { adminOnly: true },
+        },
+        {
           path: 'u/:username',
           name: 'profile',
           component: () => import('@/pages/ProfilePage.vue'),
@@ -123,6 +135,13 @@ export const router = createRouter({
           meta: { instructorOnly: true },
         },
         {
+          path: 'teach/:slug/analytics',
+          name: 'course-analytics',
+          component: () => import('@/pages/learning/CourseAnalyticsPage.vue'),
+          props: true,
+          meta: { instructorOnly: true },
+        },
+        {
           path: 'teach/:slug',
           name: 'course-editor',
           component: () => import('@/pages/learning/CourseEditorPage.vue'),
@@ -177,6 +196,7 @@ router.beforeEach((to) => {
   if (to.meta.requiresAuth && !session.isAuthenticated) {
     return { name: 'login', query: to.fullPath !== '/' ? { next: to.fullPath } : {} }
   }
+  if (to.meta.adminOnly && session.user?.role !== 'admin') return { name: 'home' }
   if (to.meta.instructorOnly && !['instructor', 'admin'].includes(session.user?.role ?? '')) {
     return { name: 'home' }
   }

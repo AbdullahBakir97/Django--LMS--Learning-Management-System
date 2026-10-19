@@ -14,6 +14,7 @@ import {
   PhMedal,
   PhQuotes,
   PhRepeat,
+  PhShieldCheck,
   PhUserCirclePlus,
   PhUserPlus,
   PhUsersThree,
@@ -40,6 +41,7 @@ export const kindIcon: Record<NotificationKind, typeof PhBell> = {
   interview: PhCalendarDots,
   interview_reply: PhCalendarCheck,
   post_shared: PhRepeat,
+  report_reviewed: PhShieldCheck,
 }
 
 const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })

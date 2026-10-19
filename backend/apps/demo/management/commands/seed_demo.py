@@ -16,6 +16,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.accounts.models import User
@@ -27,7 +28,9 @@ from apps.engagement import services as engagement
 from apps.learning import services as learning
 from apps.learning.models import Choice, Course, Lesson, Question, Quiz
 from apps.messaging import services as messaging
+from apps.moderation import services as moderation
 from apps.network import services as network
+from apps.payments.models import Order
 from apps.profiles.models import PortfolioItem
 from apps.profiles.services import add_skill
 
@@ -62,7 +65,15 @@ PEOPLE = [
         ["Django", "Python", "SQL"],
     ),
     ("omar", "Omar", "Saleh", "learner", "Data analyst at Nahla", "Zarqa", ["SQL", "Python"]),
-    ("sara", "Sara", "Mansour", "learner", "Frontend engineer", "Dubai", ["Vue", "TypeScript"]),
+    (
+        "sara",
+        "Sara",
+        "Mansour",
+        "admin",
+        "Frontend engineer, community moderator",
+        "Dubai",
+        ["Vue", "TypeScript"],
+    ),
     (
         "yusuf",
         "Yusuf",
@@ -95,6 +106,7 @@ class Command(BaseCommand):
         demo = User.objects.filter(email__endswith=f"@{DOMAIN}")
         if reset:
             Company.objects.filter(members__user__in=demo).delete()
+            Order.objects.filter(Q(buyer__in=demo) | Q(course__instructor__in=demo)).delete()
             for user in demo:
                 user.owned_groups.all().delete()
                 Course.objects.filter(instructor=user).delete()
@@ -232,13 +244,14 @@ class Command(BaseCommand):
                 ),
             ],
         )
-        self.course(
+        testing = self.course(
             u["karim"],
             "Testing Django properly",
             "Factories, fixtures and API tests.",
             "advanced",
             [("The test pyramid, adjusted", "Test the API surface first.", True)],
         )
+        Course.objects.filter(pk=testing.pk).update(price_cents=2900)  # one paid course to buy
         enrollment = learning.enroll(u["lina"], api)
         learning.complete_lesson(u["lina"], api.lessons.get(order=1))
         learning.enroll(u["omar"], sql)
@@ -303,6 +316,14 @@ class Command(BaseCommand):
                 u["sara"], "Looking for a study buddy for the Vue course. Evenings, Dubai time."
             ),
         ]
+        # Something for the moderation queue (sara moderates)
+        spam = community.create_post(
+            u["yusuf"], "Cheap followers and course certificates, message me for a price list!"
+        )
+        moderation.report(
+            u["lina"], "post", spam.pk, "spam", "Posted the same thing in two groups."
+        )
+        moderation.report(u["omar"], "post", spam.pk, "spam")
         post_target, first = registry.resolve("post", posts[0].pk, u["karim"])
         engagement.add_comment(
             u["karim"], post_target, first, "Exactly. Scope first, then permissions."

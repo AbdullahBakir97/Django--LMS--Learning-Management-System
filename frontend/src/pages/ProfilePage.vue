@@ -9,6 +9,7 @@ import ProfileView from '@/features/profile/ProfileView.vue'
 import RecommendationForm from '@/features/profile/RecommendationForm.vue'
 import RecommendationList from '@/features/profile/RecommendationList.vue'
 import RelationshipActions from '@/features/network/RelationshipActions.vue'
+import ReportButton from '@/features/moderation/ReportButton.vue'
 import Alert from '@/components/ui/Alert.vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
@@ -87,6 +88,9 @@ function recommended() {
           <Button size="sm" variant="ghost" @click="dialog = 'ask'">Ask for a recommendation</Button>
         </template>
       </RelationshipActions>
+      <div class="mt-2">
+        <ReportButton kind="user" :object-id="profile.user.id" label="Report this person" />
+      </div>
     </template>
     <template v-if="recommendations.length" #recommendations>
       <Card class="p-5">

@@ -37,6 +37,20 @@ Everything comes from the environment. The ones that matter most:
 | `POSTGRES_PASSWORD` | long and random |
 | `EMAIL_*`, `DEFAULT_FROM_EMAIL` | SMTP for verification, password reset and notification email |
 | `THROTTLE_ANON`, `THROTTLE_USER`, `THROTTLE_AUTH` | rate limits, defaults 60, 600 and 10 per minute |
+| `NUM_PROXIES` | proxies in front of Django, default `1` (nginx in the image); add one per load balancer, or rate limits can be dodged with a forged `X-Forwarded-For` |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | paid courses; leave both empty and every course stays free to join |
+| `PAYMENTS_CURRENCY` | currency for new course prices, default `usd` |
+
+### Paid courses
+
+Payments go through Stripe Checkout: Stripe hosts the card form, so card data never reaches this
+server. In the Stripe dashboard, add a webhook endpoint at `https://<your domain>/api/payments/webhook/`
+for `checkout.session.completed`, `checkout.session.async_payment_succeeded` and
+`charge.refunded`, and put its signing secret in `STRIPE_WEBHOOK_SECRET`. A course unlocks only when a signed event says it is
+paid, never because the browser came back from the payment page. Orders are in the admin site.
+Refunds are made in the Stripe dashboard. A full refund ends the buyer's access and removes
+their progress in that course, while a partial refund changes nothing. Promotion codes are also
+made in the Stripe dashboard, and buyers enter them on the payment page.
 
 ## What production settings enforce
 
@@ -79,6 +93,20 @@ make prod-up      # rebuilds images; the migrate service runs before the app res
 To deploy published images instead of building on the server, replace each `build:` with
 `image: ghcr.io/<owner>/lms-backend:<version>` or `lms-web:<version>`; a `v*` tag publishes both.
 
+### Upgrading from 1.x
+
+`make prod-up` runs the migrations. Before you start:
+
+1. Add the new settings to `.env.production` (all optional, see [Settings](#settings)):
+   `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `PAYMENTS_CURRENCY`, and `NUM_PROXIES` if a load
+   balancer sits in front of nginx.
+2. Keep the new `beat` service running; daily and weekly digests depend on it.
+3. If you sell courses, set up the Stripe webhook as in [Paid courses](#paid-courses).
+4. Give at least one account the admin role, for moderation and the overview.
+5. API clients other than this app: read "Changed (breaking for API clients)" in the
+   [changelog](../CHANGELOG.md). People who are signed in stay signed in; their cookie moves to
+   the new path on the next refresh.
+
 ## Checklist
 
 - [ ] Every value in `.env.production` is set; the secret key and database password are random.
@@ -87,3 +115,18 @@ To deploy published images instead of building on the server, replace each `buil
 - [ ] `GET /api/health/` is healthy through the public URL.
 - [ ] Backups of `pgdata` and `media` run on a schedule, and a restore has been tried.
 - [ ] `seed_demo` was not run (it refuses unless `DEBUG` is on).
+- [ ] At least one account has the admin role, so reports have a moderator; set it in the admin site.
+- [ ] The `beat` service is running, or digests are never sent.
+- [ ] Selling courses: the Stripe webhook is set up and a test-mode purchase unlocks its course.
+- [ ] Whatever sits in front of `web` accepts request bodies of at least 40 MB (a post with four
+      photos); nginx in the image already does.
+
+## Verified by CI on every push
+
+- The main journeys run in a real browser against a seeded backend: search, posting with a photo,
+  moderating a report, opening course analytics, the admin overview, a paid course asking for payment.
+- Every API route answers an anonymous caller without a server error, and the busiest lists keep a
+  constant query count.
+- A deactivated account loses access at once: its access token stops working and its refresh token
+  is refused; its live connection closes on the next reconnect.
+- Production settings pass Django's deployment checklist, and the OpenAPI schema has no warnings.

@@ -19,7 +19,7 @@ def is_member(user, group) -> bool:
 def groups_visible(user):
     """All groups are listed (private ones show their name and description, not their posts)."""
     mine = Membership.objects.filter(group=OuterRef("pk"), user=user)
-    return Group.objects.select_related("owner").annotate(
+    return Group.objects.select_related("owner__profile").annotate(
         member_count=Count("memberships", filter=Q(memberships__status=Active), distinct=True),
         my_status=mine.values("status")[:1],
         my_role=mine.values("role")[:1],
@@ -83,7 +83,7 @@ def events_visible(user):
     going = Attendance.objects.filter(event=OuterRef("pk"), user=user)
     return (
         Event.objects.filter(Q(group__isnull=True) | Q(group_id__in=readable_groups(user)))
-        .select_related("host", "group")
+        .select_related("host__profile", "group")
         .annotate(
             going_count=Count(
                 "attendances", filter=Q(attendances__status=Attendance.Status.GOING), distinct=True
