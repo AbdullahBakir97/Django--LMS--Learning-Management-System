@@ -57,6 +57,9 @@ def update_company(actor, company: Company, **fields) -> Company:
 
 def add_member(actor, company: Company, user, role: str) -> CompanyMember:
     _require_team(actor, company, admin=True)
+    admins = CompanyMember.objects.filter(company=company, role=Role.ADMIN)
+    if role != Role.ADMIN and admins.filter(user=user).exists() and admins.count() == 1:
+        raise ValidationError("A company needs at least one admin.")
     member, _ = CompanyMember.objects.update_or_create(
         company=company, user=user, defaults={"role": role}
     )

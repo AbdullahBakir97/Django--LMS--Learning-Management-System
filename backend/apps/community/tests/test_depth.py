@@ -132,3 +132,32 @@ def test_events_list_counts_stay_right_with_feedback(user, auth_client):
         client_for(u).put(f"/api/events/{event.id}/feedback/", {"rating": 4})
     row = auth_client.get("/api/events/?when=past").data["results"][0]
     assert (row["going_count"], row["rating_count"], row["rating"]) == (3, 3, 4.0)
+
+
+@pytest.mark.django_db
+def test_a_share_hides_the_original_once_its_group_turns_private(user, auth_client):
+    owner = UserFactory()
+    group = Group.objects.create(owner=owner, name="Open", slug="open", privacy="public")
+    post = Post.objects.create(author=owner, group=group, body="secret later")
+    share = auth_client.post(f"/api/posts/{post.id}/share/").data
+    group.privacy = "private"
+    group.save()
+    outsider = client_for(UserFactory())
+    assert outsider.get(f"/api/posts/{share['id']}/").data["shared_from"] is None
+
+
+@pytest.mark.django_db
+def test_huge_canvases_are_refused_before_decoding(auth_client):
+    buf = io.BytesIO()
+    Image.new("1", (9000, 9000)).save(buf, "PNG")  # tiny file, 81 megapixels
+    bomb = SimpleUploadedFile("b.png", buf.getvalue(), content_type="image/png")
+    r = auth_client.post("/api/posts/", {"body": "x", "images": [bomb]}, format="multipart")
+    assert r.status_code == 400
+
+
+@pytest.mark.django_db
+def test_joining_twice_is_one_membership(user, auth_client):
+    group = Group.objects.create(owner=UserFactory(), name="Open", slug="open2")
+    for _ in range(2):
+        assert auth_client.post(f"/api/groups/{group.slug}/join/").status_code in (200, 201)
+    assert Membership.objects.filter(group=group, user=user).count() == 1

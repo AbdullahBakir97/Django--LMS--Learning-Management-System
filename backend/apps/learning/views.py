@@ -40,7 +40,17 @@ class CourseViewSet(viewsets.ModelViewSet):
     ordering_fields = ["published_at", "created_at", "title"]
 
     def get_queryset(self):
+        if self.action == "list":  # the list shows no lessons; don't load them
+            return selectors.visible_courses(self.request.user)
         return selectors.course_with_lessons(self.request.user)
+
+    def perform_destroy(self, course):
+        # Learners keep their progress and certificates, and orders stay on record.
+        if course.enrollments.exists() or course.orders.exists():
+            raise ValidationError(
+                "People have enrolled in or bought this course, so it cannot be deleted."
+            )
+        course.delete()
 
     def get_serializer_class(self):
         return CourseListSerializer if self.action == "list" else CourseDetailSerializer
@@ -52,7 +62,8 @@ class CourseViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def publish(self, request, slug=None):
         course = services.publish_course(request.user, self.get_object())
-        return Response(CourseDetailSerializer(self.get_queryset().get(pk=course.pk)).data)
+        course = self.get_queryset().get(pk=course.pk)
+        return Response(CourseDetailSerializer(course, context=self.get_serializer_context()).data)
 
     @extend_schema(request=None, responses={201: ProgressSerializer})
     @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
@@ -102,6 +113,17 @@ class LessonViewSet(viewsets.ModelViewSet):
             .select_related("course", "quiz")
             .prefetch_related("attachments")
         )
+
+    def list(self, request, *args, **kwargs):
+        """Only the lessons this person may open; the rest are in the course outline."""
+        course = self.get_course()
+        enrollment = selectors.enrollment_for(request.user, course)
+        lessons = [
+            lesson
+            for lesson in self.get_queryset()
+            if selectors.can_view_lesson(request.user, lesson, enrollment)
+        ]
+        return Response(self.get_serializer(lessons, many=True).data)
 
     def retrieve(self, request, *args, **kwargs):
         lesson = self.get_object()
@@ -164,7 +186,10 @@ class QuizView(APIView):
     """GET the quiz (answers hidden) if you may see the lesson; PUT the whole quiz as instructor."""
 
     def _lesson(self, pk):
-        return get_object_or_404(Lesson.objects.select_related("course"), pk=pk)
+        visible = selectors.visible_courses(self.request.user).values("pk")
+        return get_object_or_404(
+            Lesson.objects.select_related("course").filter(course__in=visible), pk=pk
+        )
 
     @extend_schema(responses=QuizPublicSerializer)
     def get(self, request, pk):

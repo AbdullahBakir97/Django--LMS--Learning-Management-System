@@ -41,7 +41,7 @@ def test_register_verify_login_refresh_logout(api_client):
     assert not response.data.get("refresh"), "refresh token must only travel in the cookie"
     refresh_cookie = response.cookies["lms_refresh"]
     assert refresh_cookie["httponly"]
-    assert refresh_cookie["path"] == "/api/auth/token/refresh/"
+    assert refresh_cookie["path"] == "/api/auth/", "logout must receive it to revoke it"
     assert response.data["user"]["role"] == "learner"
 
     api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {response.data['access']}")
@@ -54,9 +54,12 @@ def test_register_verify_login_refresh_logout(api_client):
     assert response.status_code == 200
     assert "access" in response.data
 
+    token = api_client.cookies["lms_refresh"].value
     response = api_client.post("/api/auth/logout/")
     assert response.status_code == 200
     assert api_client.cookies["lms_refresh"].value == ""
+    api_client.cookies["lms_refresh"] = token
+    assert api_client.post("/api/auth/token/refresh/").status_code == 401, "revoked on logout"
 
 
 @pytest.mark.django_db

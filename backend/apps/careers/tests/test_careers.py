@@ -90,6 +90,11 @@ def test_company_team_and_drafts(recruiter, company, auth_client, user):
     assert (
         rc.delete(f"/api/companies/{company['slug']}/members/{recruiter.id}/").status_code == 400
     ), "last admin stays"
+    demote = rc.post(
+        f"/api/companies/{company['slug']}/members/",
+        {"username": recruiter.username, "role": "recruiter"},
+    )
+    assert demote.status_code == 400, "the last admin cannot demote themselves either"
     assert auth_client.get(f"/api/companies/{company['slug']}/members/").status_code == 200
 
 

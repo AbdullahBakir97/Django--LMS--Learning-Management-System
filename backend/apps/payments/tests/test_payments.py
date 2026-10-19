@@ -206,3 +206,17 @@ def test_course_revenue_for_its_instructor(user, auth_client, course, stripe_ses
     ]
     deliver(refunded("pi_cs_test_1"))
     assert c.get(url).json() == [], "refunds come off the total"
+
+
+@pytest.mark.django_db
+def test_no_second_purchase_and_a_duplicate_refund_keeps_access(
+    user, auth_client, course, stripe_session
+):
+    auth_client.post("/api/payments/checkout/", {"course": course.slug})
+    auth_client.post("/api/payments/checkout/", {"course": course.slug})  # a second tab
+    deliver(completed("cs_test_1"))
+    assert auth_client.post("/api/payments/checkout/", {"course": course.slug}).status_code == 400
+    deliver(completed("cs_test_2"))  # the second tab paid too
+    assert Order.objects.filter(status="paid").count() == 2
+    deliver(refunded("pi_cs_test_2"))  # support refunds the duplicate
+    assert Enrollment.objects.filter(student=user, course=course).exists()

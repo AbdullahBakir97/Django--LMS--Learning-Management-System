@@ -1,3 +1,4 @@
+from django.core.validators import FileExtensionValidator
 from rest_framework import serializers
 
 from apps.accounts.serializers import UserSerializer
@@ -15,7 +16,10 @@ from .models import (
 
 
 class LessonSummarySerializer(serializers.ModelSerializer):
-    has_quiz = serializers.BooleanField(read_only=True)
+    has_quiz = serializers.SerializerMethodField()
+
+    def get_has_quiz(self, lesson) -> bool:
+        return hasattr(lesson, "quiz")
 
     class Meta:
         model = Lesson
@@ -64,11 +68,38 @@ class CourseDetailSerializer(CourseListSerializer):
     class Meta(CourseListSerializer.Meta):
         fields = [*CourseListSerializer.Meta.fields, "description", "prerequisites", "lessons"]
 
+    def to_representation(self, course):
+        data = super().to_representation(course)
+        request = self.context.get("request")
+        user = request.user if request else None
+        open_to_all = user and (
+            course.instructor_id == user.id
+            or user.role == "admin"
+            or course.enrollments.filter(student=user).exists()
+        )
+        if not open_to_all:  # the outline is public; videos of locked lessons are not
+            for lesson in data["lessons"]:
+                if not lesson["is_free_preview"]:
+                    lesson["video_url"] = ""
+        return data
+
+
+ATTACHMENT_TYPES = "pdf zip png jpg jpeg gif webp txt md csv docx xlsx pptx py ipynb sql".split()
+ATTACHMENT_MAX_BYTES = 25 * 1024 * 1024  # under nginx's 40 MB body limit
+
 
 class LessonAttachmentSerializer(serializers.ModelSerializer):
+    # No HTML, SVG or scripts: they would run on the site's own origin if someone opened them.
+    file = serializers.FileField(validators=[FileExtensionValidator(ATTACHMENT_TYPES)])
+
     class Meta:
         model = LessonAttachment
         fields = ["id", "title", "file"]
+
+    def validate_file(self, file):
+        if file.size > ATTACHMENT_MAX_BYTES:
+            raise serializers.ValidationError("Attachments can be up to 25 MB.")
+        return file
 
 
 class LessonSerializer(serializers.ModelSerializer):

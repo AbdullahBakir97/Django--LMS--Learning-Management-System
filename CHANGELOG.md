@@ -48,8 +48,37 @@ All notable changes. The project follows [Semantic Versioning](https://semver.or
 - **Browser journeys in CI**: a new job seeds a real backend and runs search, posting with a
   photo, moderation, analytics, the admin overview and a paid course in Chromium on every push.
 
+### Security
+
+From a full audit of the codebase. Each fix has a test.
+
+- Rate limits could be dodged with a forged `X-Forwarded-For` header; they now count the
+  address nginx saw (`NUM_PROXIES`).
+- Signing out now revokes the refresh token (the cookie never reached the logout endpoint).
+- Changing the password asks for the current one, and a new password (change or reset) signs
+  out every other device.
+- The lesson list and the course outline exposed paid lesson text, videos and files to anyone
+  signed in; they now show only what the reader may open.
+- Lesson attachments refuse HTML, SVG and scripts, and nginx always serves them as downloads.
+- Profiles no longer show other people's email addresses, or deactivated accounts.
+- A share no longer shows a post whose group has since turned private.
+- Very large images are refused before they are decoded (a small file could use gigabytes).
+- Quizzes in other people's draft courses are hidden.
+- Removing a connection ends the direct conversation; typing signals are limited per socket.
+- An app opened online without a valid session clears what an earlier user left offline.
+
 ### Fixed
 
+- A buyer could pay twice from two tabs, and refunding the duplicate removed their access.
+- Finishing the last lesson twice at once failed with a server error.
+- Deleting a course with learners or orders failed or erased their certificates; it is now
+  refused.
+- An email held for quiet hours could be sent several times, or after it was read or email was
+  turned off; one failing digest stopped everyone else's.
+- The only admin of a company could demote themselves.
+- Course, company and job lists joined every lesson, enrolment, follower and applicant before
+  counting; the groups, events, feed and moderation lists ran a query per row.
+- The "quiz" tag never showed in course outlines.
 - Errors raised as a plain message (such as "You are already enrolled.") were not shown in the app.
 - nginx refused uploads over 12 MB, so a post with four photos failed in production; it now
   accepts 40 MB and Django still checks each file.

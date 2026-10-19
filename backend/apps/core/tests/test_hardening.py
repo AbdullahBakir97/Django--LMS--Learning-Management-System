@@ -10,10 +10,11 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.careers.models import Company, Job
-from apps.community.models import Event, Post
+from apps.community.models import Event, Group, Membership, Post
 from apps.core.throttling import AuthRateThrottle
 from apps.learning.models import Course, Lesson
 from apps.messaging.models import Conversation, Message, Participant
+from apps.moderation.models import Report
 from apps.network.models import Connection, Follow
 from apps.notifications.models import Notification
 from conftest import UserFactory
@@ -32,6 +33,24 @@ def test_sign_in_is_rate_limited_per_client(monkeypatch):
     limited = client.post("/api/auth/login/", {"email": "x@example.com", "password": "nope"})
     assert limited["Content-Type"].startswith("application/problem+json")
     assert "Retry-After" in limited
+    cache.clear()
+
+
+@pytest.mark.django_db
+def test_a_forged_forwarded_for_does_not_reset_the_limit(monkeypatch):
+    cache.clear()
+    monkeypatch.setattr(AuthRateThrottle, "THROTTLE_RATES", {"auth": "3/min"})
+    client = APIClient()
+    codes = [
+        # nginx appends the real address after whatever the client claimed.
+        client.post(
+            "/api/auth/login/",
+            {"email": "x@example.com", "password": "nope"},
+            HTTP_X_FORWARDED_FOR=f"10.0.0.{n}, 203.0.113.7",
+        ).status_code
+        for n in range(4)
+    ]
+    assert codes == [400, 400, 400, 429]
     cache.clear()
 
 
@@ -128,4 +147,42 @@ def test_notifications_and_events_queries_are_flat(me, client):
             )
 
     _grow(make, client, "/api/notifications/")
-    _grow(lambda n: None, client, "/api/events/")
+
+
+@pytest.mark.django_db
+def test_events_groups_and_group_posts_queries_are_flat(me, client):
+    soon = timezone.now() + timedelta(days=1)
+
+    def make(n):
+        for _ in range(n):
+            host = UserFactory()  # each row a different person: their avatars must not cost a query
+            Event.objects.create(
+                host=host,
+                title="E",
+                starts_at=soon,
+                ends_at=soon + timedelta(hours=1),
+                location="x",
+            )
+            group = Group.objects.create(owner=host, name=f"G{host.id}", slug=f"g{host.id}")
+            Membership.objects.create(group=group, user=me, status="active", role="member")
+            Post.objects.create(author=host, group=group, body="in a group")
+
+    _grow(make, client, "/api/events/")
+    make(0)
+    _grow(make, client, "/api/groups/")
+    _grow(make, client, "/api/posts/")
+
+
+@pytest.mark.django_db
+def test_moderation_queue_queries_are_flat(me, client):
+    me.role = "admin"
+    me.save()
+    post = Post.objects.create(author=UserFactory(), body="spam")
+
+    def make(n):
+        for _ in range(n):
+            Report.objects.create(
+                reporter=UserFactory(), kind="post", object_id=post.id, reason="spam"
+            )
+
+    _grow(make, client, "/api/moderation/queue/")

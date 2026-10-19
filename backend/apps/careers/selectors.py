@@ -1,5 +1,6 @@
-from django.db.models import Count, Exists, OuterRef, Q
+from django.db.models import Exists, OuterRef, Q
 
+from apps.core.stats import count_of
 from apps.profiles.models import ProfileSkill
 
 from .models import (
@@ -24,8 +25,8 @@ def role_in(user, company) -> str | None:
 def companies(user):
     mine = CompanyMember.objects.filter(company=OuterRef("pk"), user=user)
     return Company.objects.annotate(
-        open_jobs=Count("jobs", filter=Q(jobs__status=Job.Status.OPEN), distinct=True),
-        follower_count=Count("followers", distinct=True),
+        open_jobs=count_of(Job.objects.filter(company=OuterRef("pk"), status=Job.Status.OPEN)),
+        follower_count=count_of(CompanyFollower.objects.filter(company=OuterRef("pk"))),
         my_role=mine.values("role")[:1],
         following=Exists(CompanyFollower.objects.filter(company=OuterRef("pk"), user=user)),
     )
@@ -36,17 +37,18 @@ def jobs(user):
     my_skills = ProfileSkill.objects.filter(profile__user=user).values("skill_id")
     team = CompanyMember.objects.filter(user=user).values("company_id")
     mine = Application.objects.filter(job=OuterRef("pk"), applicant=user)
+    job_skills = Job.skills.through.objects.filter(job=OuterRef("pk"))
     return (
         Job.objects.filter(Q(status=Job.Status.OPEN) | Q(company_id__in=team))
         .select_related("company")
         .prefetch_related("skills")
         .annotate(
-            matching_skills=Count("skills", filter=Q(skills__in=my_skills), distinct=True),
-            skill_count=Count("skills", distinct=True),
+            matching_skills=count_of(job_skills.filter(skill_id__in=my_skills)),
+            skill_count=count_of(job_skills),
             saved=Exists(SavedJob.objects.filter(job=OuterRef("pk"), user=user)),
             my_application=mine.values("status")[:1],
             my_application_id=mine.values("id")[:1],
-            applicant_count=Count("applications", distinct=True),
+            applicant_count=count_of(Application.objects.filter(job=OuterRef("pk"))),
             on_team=Exists(CompanyMember.objects.filter(company=OuterRef("company"), user=user)),
         )
     )

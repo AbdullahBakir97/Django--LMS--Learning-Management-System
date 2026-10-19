@@ -7,6 +7,7 @@ and connects to `/ws/events/?ticket=...`. The access token never appears in a UR
 
 import json
 import logging
+import time
 from urllib.parse import parse_qs
 
 from asgiref.sync import async_to_sync
@@ -22,6 +23,7 @@ from django.urls import path
 logger = logging.getLogger(__name__)
 
 _inbound: dict = {}
+TYPING_INTERVAL = 2.0
 
 
 def on_client_message(kind: str):
@@ -105,6 +107,12 @@ class UserEventsConsumer(AsyncJsonWebsocketConsumer):
         handler = _inbound.get(content.get("type")) if isinstance(content, dict) else None
         if handler is None:
             return
+        if content["type"] == "typing":
+            # Each frame costs queries and a fan-out to every participant: one per 2 seconds.
+            now = time.monotonic()
+            if now - getattr(self, "_last_typing", 0.0) < TYPING_INTERVAL:
+                return
+            self._last_typing = now
         try:
             await database_sync_to_async(handler)(self.scope["user"], content)
         except Exception:

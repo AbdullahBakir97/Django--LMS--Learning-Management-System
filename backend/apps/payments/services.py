@@ -34,6 +34,8 @@ def start_checkout(actor, course: Course) -> str:
     learning.check_can_enroll(actor, course)
     if not course.is_paid:
         raise ValidationError("This course is free. Enrol directly.")
+    if Order.objects.filter(buyer=actor, course=course, status=Order.Status.PAID).exists():
+        raise ValidationError("You have already bought this course.")
     order = Order.objects.create(
         buyer=actor, course=course, amount_cents=course.price_cents, currency=course.currency
     )
@@ -113,6 +115,13 @@ def _paid(session) -> None:
     order.payment_intent = session["payment_intent"]
     order.paid_at = timezone.now()
     order.save(update_fields=["status", "paid_cents", "payment_intent", "paid_at", "updated_at"])
+    if (
+        Order.objects.filter(buyer=order.buyer, course=order.course, status=Order.Status.PAID)
+        .exclude(pk=order.pk)
+        .exists()
+    ):
+        # Two checkouts paid (two tabs): keep the money on record and flag it for a refund.
+        log.warning("Order %s pays for a course the buyer already bought; refund it", order.id)
     learning.enroll(order.buyer, order.course, paid=True)
 
 
@@ -132,4 +141,8 @@ def _refunded(charge) -> None:
     order.status = Order.Status.REFUNDED
     order.refunded_at = timezone.now()
     order.save(update_fields=["status", "refunded_at", "updated_at"])
-    learning.unenroll(order.buyer, order.course)
+    still_paid = Order.objects.filter(
+        buyer=order.buyer, course=order.course, status=Order.Status.PAID
+    ).exists()
+    if not still_paid:  # refunding a duplicate payment keeps the access the other one bought
+        learning.unenroll(order.buyer, order.course)

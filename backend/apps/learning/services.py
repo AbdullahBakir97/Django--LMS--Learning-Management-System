@@ -64,7 +64,8 @@ def unenroll(student, course: Course) -> None:
 
 
 def _enrollment_or_403(actor, course: Course) -> Enrollment:
-    enrollment = Enrollment.objects.filter(course=course, student=actor).first()
+    # Locked, so a double click on the last lesson cannot issue two certificates.
+    enrollment = Enrollment.objects.select_for_update().filter(course=course, student=actor).first()
     if enrollment is None:
         raise PermissionDenied("Enrol in this course first.")
     return enrollment
