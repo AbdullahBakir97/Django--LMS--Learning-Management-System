@@ -13,6 +13,7 @@ from .models import (
     Company,
     CompanyFollower,
     CompanyMember,
+    CompanyUpdate,
     Interview,
     Job,
     SavedJob,
@@ -271,3 +272,13 @@ def cancel_interview(actor, interview: Interview) -> Interview:
         interview.save(update_fields=["status", "updated_at"])
         events.publish(names.INTERVIEW_CANCELLED, **_interview_payload(interview))
     return interview
+
+
+def post_update(actor, company: Company, body: str) -> CompanyUpdate:
+    _require_team(actor, company)
+    return CompanyUpdate.objects.create(company=company, author=actor, body=body)
+
+
+def delete_update(actor, update: CompanyUpdate) -> None:
+    _require_team(actor, update.company)
+    update.delete()

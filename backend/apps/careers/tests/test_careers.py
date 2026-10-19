@@ -304,3 +304,23 @@ def test_calendar_escapes_text_and_folds_long_lines(recruiter, application):
     assert "DESCRIPTION:Line one\\nLine two" in text
     assert all(len(line) <= 75 for line in text.split("\r\n"))
     assert text.endswith("END:VCALENDAR\r\n")
+
+
+@pytest.mark.django_db
+def test_company_updates_reach_followers(recruiter, company, user, auth_client):
+    team = client_for(recruiter)
+    url = f"/api/companies/{company['slug']}/updates/"
+    assert auth_client.post(url, {"body": "We are hiring"}).status_code == 403
+    posted = team.post(url, {"body": "We moved to a new office"})
+    assert posted.status_code == 201 and posted.data["can_delete"] is True
+
+    assert auth_client.get("/api/company-updates/").data["results"] == []
+    auth_client.post(f"/api/companies/{company['slug']}/follow/")
+    feed = auth_client.get("/api/company-updates/").data["results"]
+    assert [u["body"] for u in feed] == ["We moved to a new office"]
+    assert feed[0]["can_delete"] is False
+    assert auth_client.get(url).data["results"][0]["company"]["slug"] == company["slug"]
+
+    uid = posted.data["id"]
+    assert auth_client.delete(f"/api/company-updates/{uid}/").status_code == 403
+    assert team.delete(f"/api/company-updates/{uid}/").status_code == 204

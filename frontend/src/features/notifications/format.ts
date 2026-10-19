@@ -13,6 +13,7 @@ import {
   PhHandsClapping,
   PhMedal,
   PhQuotes,
+  PhRepeat,
   PhUserCirclePlus,
   PhUserPlus,
   PhUsersThree,
@@ -38,6 +39,7 @@ export const kindIcon: Record<NotificationKind, typeof PhBell> = {
   achievement: PhMedal,
   interview: PhCalendarDots,
   interview_reply: PhCalendarCheck,
+  post_shared: PhRepeat,
 }
 
 const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })

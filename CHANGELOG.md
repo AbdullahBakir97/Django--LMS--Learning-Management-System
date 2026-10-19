@@ -23,6 +23,12 @@ All notable changes. The project follows [Semantic Versioning](https://semver.or
 - **Search**: one search across people, courses, groups, events, jobs and companies, opened
   with Ctrl/⌘ K or `/`. PostgreSQL full-text search with prefix matching and title-first
   ranking; it reuses each area's visibility rules, so drafts and private groups never leak.
+- **Richer posts**: up to four images per post, re-encoded on upload so phone photos lose
+  their location data; share a post to your profile with a comment (its author is told).
+- **Event feedback**: after an event, people who went rate it from 1 to 5; everyone sees the
+  average, the host reads the comments.
+- **Company updates**: a company's team posts news on its page; followers see it on their home
+  page.
 
 ### Fixed
 

@@ -20,6 +20,7 @@ export type NotificationKind =
   | 'achievement'
   | 'interview'
   | 'interview_reply'
+  | 'post_shared'
 
 export interface AppNotification {
   id: number

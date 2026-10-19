@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { PhGlobe, PhPlus } from '@phosphor-icons/vue'
-import { careers, type Company, type CompanyMember, type Job } from '@/api/careers'
+import { careers, type Company, type CompanyMember, type CompanyUpdate, type Job } from '@/api/careers'
 import { ApiError } from '@/api/client'
 import Alert from '@/components/ui/Alert.vue'
 import Avatar from '@/components/ui/Avatar.vue'
@@ -12,6 +12,7 @@ import Dialog from '@/components/ui/Dialog.vue'
 import Tag from '@/components/ui/Tag.vue'
 import CompanyLogo from '@/features/careers/CompanyLogo.vue'
 import CompanyForm from '@/features/careers/CompanyForm.vue'
+import CompanyUpdateItem from '@/features/careers/CompanyUpdate.vue'
 import JobCard from '@/features/careers/JobCard.vue'
 import JobForm from '@/features/careers/JobForm.vue'
 
@@ -25,6 +26,17 @@ const posting = ref(false)
 const editing = ref(false)
 const invite = ref({ username: '', role: 'recruiter' as 'admin' | 'recruiter' })
 const inviteError = ref('')
+const updates = ref<CompanyUpdate[]>([])
+const news = ref('')
+
+async function postUpdate() {
+  updates.value.unshift(await careers.postCompanyUpdate(props.slug, news.value.trim()))
+  news.value = ''
+}
+async function removeUpdate(u: CompanyUpdate) {
+  await careers.deleteCompanyUpdate(u.id)
+  updates.value = updates.value.filter((x) => x.id !== u.id)
+}
 
 async function load() {
   missing.value = false
@@ -34,7 +46,10 @@ async function load() {
     missing.value = true
     return
   }
-  jobs.value = (await careers.jobs({ company: props.slug })).results
+  ;[jobs.value, updates.value] = await Promise.all([
+    careers.jobs({ company: props.slug }).then((p) => p.results),
+    careers.companyUpdates(props.slug).then((p) => p.results),
+  ])
   members.value = company.value.my_role ? await careers.members(props.slug) : []
 }
 watch(() => props.slug, load, { immediate: true })
@@ -129,7 +144,32 @@ function saved(c: Company) {
           <p v-if="!jobs.length" class="text-muted">No open jobs right now.</p>
         </div>
       </section>
-      <aside v-if="company.my_role" aria-labelledby="team-title">
+      <section aria-labelledby="updates-title" class="min-w-0 lg:col-start-1">
+        <h2 id="updates-title" class="mb-3 text-lg font-semibold">Updates</h2>
+        <Card class="grid gap-5 p-5">
+          <form v-if="company.my_role" class="grid gap-2" @submit.prevent="postUpdate">
+            <label for="company-news" class="sr-only">Share news from {{ company.name }}</label>
+            <textarea
+              id="company-news"
+              v-model="news"
+              rows="2"
+              maxlength="3000"
+              :placeholder="`News from ${company.name}: a launch, an office, a hiring push`"
+              class="w-full resize-y rounded-md bg-page px-3 py-2 text-sm text-ink ring-1 ring-line placeholder:text-muted focus:ring-2 focus:ring-accent focus:outline-none"
+            />
+            <Button type="submit" size="sm" class="w-fit" :disabled="!news.trim()">Post update</Button>
+          </form>
+          <CompanyUpdateItem v-for="u in updates" :key="u.id" :update="u" @remove="removeUpdate(u)" />
+          <p v-if="!updates.length" class="text-sm text-muted">
+            {{ company.my_role ? 'Followers see what you post here on their home page.' : 'No updates yet.' }}
+          </p>
+        </Card>
+      </section>
+      <aside
+        v-if="company.my_role"
+        aria-labelledby="team-title"
+        class="lg:col-start-2 lg:row-span-2 lg:row-start-1"
+      >
         <h2 id="team-title" class="mb-3 text-lg font-semibold">Team</h2>
         <Card class="divide-y divide-line">
           <div v-for="m in members" :key="m.user_id" class="flex items-center gap-3 p-3">

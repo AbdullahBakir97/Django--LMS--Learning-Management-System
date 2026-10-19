@@ -231,3 +231,14 @@ def on_interview_responded(
             url=f"/jobs/{job_id}/applications",
             actor_id=applicant_id,
         )
+
+
+@subscribe("community.post_shared")
+def on_post_shared(*, share_id, author_id, sharer_id, sharer_name, **_):
+    notify(
+        author_id,
+        Kind.POST_SHARED,
+        f"{sharer_name} shared your post",
+        url=f"/posts/{share_id}",
+        actor_id=sharer_id,
+    )

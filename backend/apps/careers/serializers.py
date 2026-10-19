@@ -4,7 +4,7 @@ from rest_framework.reverse import reverse
 
 from apps.engagement.serializers import AuthorSerializer
 
-from .models import Application, Company, CompanyMember, Interview, Job
+from .models import Application, Company, CompanyMember, CompanyUpdate, Interview, Job
 
 
 class CompanySerializer(serializers.ModelSerializer):
@@ -37,6 +37,20 @@ class CompanyRefSerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
         fields = ["slug", "name", "logo", "location"]
+
+
+class CompanyUpdateSerializer(serializers.ModelSerializer):
+    company = CompanyRefSerializer(read_only=True)
+    author = AuthorSerializer(read_only=True)
+    can_delete = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CompanyUpdate
+        fields = ["id", "company", "author", "body", "created_at", "can_delete"]
+        read_only_fields = ["id", "company", "author", "created_at", "can_delete"]
+
+    def get_can_delete(self, obj) -> bool:
+        return obj.id in self.context.get("team_update_ids", ())
 
 
 class CompanyMemberSerializer(serializers.ModelSerializer):

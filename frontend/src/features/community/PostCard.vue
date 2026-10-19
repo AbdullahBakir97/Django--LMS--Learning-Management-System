@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { PhChatCircle, PhLockSimple, PhUsersThree } from '@phosphor-icons/vue'
+import { PhChatCircle, PhLockSimple, PhRepeat, PhUsersThree } from '@phosphor-icons/vue'
 import { community, type Post } from '@/api/community'
 import Avatar from '@/components/ui/Avatar.vue'
 import ReactionBar from '@/features/engagement/ReactionBar.vue'
 import DiscussionThread from '@/features/engagement/DiscussionThread.vue'
 import CommentComposer from '@/features/engagement/CommentComposer.vue'
 import { timeAgo } from '@/features/notifications/format'
+import PostImages from './PostImages.vue'
+import Button from '@/components/ui/Button.vue'
 
 const props = defineProps<{ post: Post; openComments?: boolean; hideGroup?: boolean }>()
 const emit = defineEmits<{ update: [patch: Partial<Post>]; removed: [] }>()
@@ -19,6 +21,21 @@ async function save(body: string) {
   const updated = await community.editPost(props.post.id, body)
   emit('update', { body: updated.body, edited: true })
   editing.value = false
+}
+
+// Share the original, not the share: the server does the same.
+const original = () => props.post.shared_from ?? props.post
+const sharing = ref(false)
+const shareNote = ref('')
+const shared = ref(false)
+const canShare = () => original().group?.privacy !== 'private'
+
+async function share() {
+  await community.sharePost(original().id, shareNote.value.trim())
+  emit('update', { share_count: props.post.share_count + 1 })
+  sharing.value = false
+  shareNote.value = ''
+  shared.value = true
 }
 
 async function remove() {
@@ -76,9 +93,29 @@ async function remove() {
         @submit="save"
         @cancel="editing = false"
       />
-      <p v-else class="text-[15px] leading-relaxed break-words whitespace-pre-line text-ink">
+      <p v-else-if="post.body" class="text-[15px] leading-relaxed break-words whitespace-pre-line text-ink">
         {{ post.body }}
       </p>
+      <PostImages :images="post.images" class="mt-3" />
+      <RouterLink
+        v-if="post.shared_from"
+        :to="{ name: 'post', params: { id: post.shared_from.id } }"
+        class="mt-3 grid gap-2 rounded-md p-3 ring-1 ring-line hover:bg-surface-2"
+      >
+        <span class="flex items-center gap-2 text-sm">
+          <Avatar :name="post.shared_from.author.name" :src="post.shared_from.author.avatar" size="sm" />
+          <span class="font-medium">{{ post.shared_from.author.name }}</span>
+          <time class="font-mono text-xs text-muted" :datetime="post.shared_from.created_at">{{
+            timeAgo(post.shared_from.created_at)
+          }}</time>
+        </span>
+        <span
+          v-if="post.shared_from.body"
+          class="line-clamp-6 text-sm break-words whitespace-pre-line text-ink"
+          >{{ post.shared_from.body }}</span
+        >
+        <PostImages :images="post.shared_from.images" />
+      </RouterLink>
     </div>
 
     <footer class="flex flex-wrap items-center gap-1 px-4 py-3">
@@ -100,6 +137,17 @@ async function remove() {
             : 'Comment'
         }}
       </button>
+      <button
+        v-if="canShare()"
+        type="button"
+        class="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md px-2.5 text-sm text-muted hover:bg-surface-2 hover:text-ink"
+        :aria-expanded="sharing"
+        @click="sharing = !sharing"
+      >
+        <PhRepeat :size="16" weight="light" />
+        {{ post.share_count ? `${post.share_count} share${post.share_count === 1 ? '' : 's'}` : 'Share' }}
+      </button>
+      <span v-if="shared" class="text-sm text-success" role="status">Shared to your profile</span>
       <span class="flex-1" />
       <button
         v-if="post.can_edit && !editing"
@@ -138,6 +186,21 @@ async function remove() {
       </template>
     </footer>
 
+    <form v-if="sharing" class="grid gap-2 border-t border-line p-4" @submit.prevent="share">
+      <label :for="`share-${post.id}`" class="text-sm font-medium">Share to your profile</label>
+      <textarea
+        :id="`share-${post.id}`"
+        v-model="shareNote"
+        rows="2"
+        maxlength="5000"
+        placeholder="Add a thought (optional)"
+        class="w-full resize-y rounded-md bg-page px-3 py-2 text-sm text-ink ring-1 ring-line placeholder:text-muted focus:ring-2 focus:ring-accent focus:outline-none"
+      />
+      <div class="flex gap-2">
+        <Button type="submit" size="sm">Share</Button>
+        <Button type="button" size="sm" variant="ghost" @click="sharing = false">Cancel</Button>
+      </div>
+    </form>
     <div v-if="showComments" class="border-t border-line p-4">
       <DiscussionThread :target="{ key: 'post', id: post.id }" bare />
     </div>

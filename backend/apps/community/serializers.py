@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from apps.engagement.serializers import AuthorSerializer, ReactionSummarySerializer
 
-from .models import Attendance, Event, Group, Membership, Post
+from .models import Attendance, Event, EventFeedback, Group, Membership, Post, PostImage
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -49,6 +49,24 @@ class GroupRefSerializer(serializers.ModelSerializer):
         fields = ["slug", "name", "privacy"]
 
 
+class PostImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostImage
+        fields = ["image", "width", "height"]
+
+
+class SharedPostSerializer(serializers.ModelSerializer):
+    """The original inside a share: enough to show it, without its own counters."""
+
+    author = AuthorSerializer(read_only=True)
+    group = GroupRefSerializer(read_only=True)
+    images = PostImageSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Post
+        fields = ["id", "author", "group", "body", "images", "created_at"]
+
+
 class PostSerializer(serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True)
     group = GroupRefSerializer(read_only=True)
@@ -58,6 +76,9 @@ class PostSerializer(serializers.ModelSerializer):
     comment_count = serializers.SerializerMethodField()
     can_edit = serializers.SerializerMethodField()
     can_delete = serializers.SerializerMethodField()
+    images = PostImageSerializer(many=True, read_only=True)
+    shared_from = SharedPostSerializer(read_only=True)
+    share_count = serializers.IntegerField(read_only=True, default=0)
 
     class Meta:
         model = Post
@@ -73,6 +94,9 @@ class PostSerializer(serializers.ModelSerializer):
             "comment_count",
             "can_edit",
             "can_delete",
+            "images",
+            "shared_from",
+            "share_count",
         ]
 
     def get_edited(self, obj) -> bool:
@@ -95,8 +119,17 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 class PostWriteSerializer(serializers.Serializer):
-    body = serializers.CharField(max_length=5000)
+    body = serializers.CharField(max_length=5000, allow_blank=True, default="")
     group_slug = serializers.SlugField(required=False, allow_null=True)
+    images = serializers.ListField(child=serializers.FileField(), required=False, default=list)
+
+
+class PostEditSerializer(serializers.Serializer):
+    body = serializers.CharField(max_length=5000)
+
+
+class ShareSerializer(serializers.Serializer):
+    body = serializers.CharField(max_length=5000, allow_blank=True, required=False, default="")
 
 
 class EventSerializer(serializers.ModelSerializer):
@@ -106,6 +139,9 @@ class EventSerializer(serializers.ModelSerializer):
     going_count = serializers.IntegerField(read_only=True, default=0)
     my_status = serializers.CharField(read_only=True, default=None, allow_null=True)
     can_edit = serializers.SerializerMethodField()
+    rating = serializers.FloatField(read_only=True, default=None, allow_null=True)
+    rating_count = serializers.IntegerField(read_only=True, default=0)
+    my_rating = serializers.IntegerField(read_only=True, default=None, allow_null=True)
 
     class Meta:
         model = Event
@@ -124,6 +160,9 @@ class EventSerializer(serializers.ModelSerializer):
             "going_count",
             "my_status",
             "can_edit",
+            "rating",
+            "rating_count",
+            "my_rating",
             "created_at",
         ]
 
@@ -141,6 +180,16 @@ class EventSerializer(serializers.ModelSerializer):
         ):
             raise serializers.ValidationError("Give a place or an online link.")
         return attrs
+
+
+class FeedbackSerializer(serializers.ModelSerializer):
+    person = AuthorSerializer(source="user", read_only=True)
+
+    class Meta:
+        model = EventFeedback
+        fields = ["person", "rating", "comment", "created_at"]
+        read_only_fields = ["person", "created_at"]
+        extra_kwargs = {"rating": {"min_value": 1, "max_value": 5}}
 
 
 class RsvpSerializer(serializers.Serializer):

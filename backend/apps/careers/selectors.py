@@ -2,7 +2,15 @@ from django.db.models import Count, Exists, OuterRef, Q
 
 from apps.profiles.models import ProfileSkill
 
-from .models import Application, Company, CompanyFollower, CompanyMember, Job, SavedJob
+from .models import (
+    Application,
+    Company,
+    CompanyFollower,
+    CompanyMember,
+    CompanyUpdate,
+    Job,
+    SavedJob,
+)
 
 
 def role_in(user, company) -> str | None:
@@ -52,3 +60,18 @@ def applications(user):
         .select_related("job__company", "applicant__profile")
         .prefetch_related("interviews")
     )
+
+
+def updates():
+    return CompanyUpdate.objects.select_related("company", "author__profile")
+
+
+def updates_for_follower(user):
+    """News from the companies you follow, newest first."""
+    followed = CompanyFollower.objects.filter(user=user).values("company_id")
+    return updates().filter(company_id__in=followed)
+
+
+def team_update_ids(user, rows) -> set[int]:
+    team = set(CompanyMember.objects.filter(user=user).values_list("company_id", flat=True))
+    return {u.id for u in rows if u.company_id in team or user.role == "admin"}

@@ -10,6 +10,8 @@ import Alert from '@/components/ui/Alert.vue'
 import PostComposer from '@/features/community/PostComposer.vue'
 import PostCard from '@/features/community/PostCard.vue'
 import EventCard from '@/features/community/EventCard.vue'
+import CompanyUpdateItem from '@/features/careers/CompanyUpdate.vue'
+import { careers, type CompanyUpdate } from '@/api/careers'
 
 const session = useSessionStore()
 const posts = ref<Post[]>([])
@@ -17,16 +19,19 @@ const next = ref<string | null>(null)
 const groups = ref<Group[]>([])
 const events = ref<CommunityEvent[]>([])
 const loaded = ref(false)
+const news = ref<CompanyUpdate[]>([])
 
 const failed = ref(false)
 
 onMounted(async () => {
   try {
-    const [feed, mine, upcoming] = await Promise.all([
+    const [feed, mine, upcoming, updates] = await Promise.all([
       community.feed(),
       community.groups({ mine: true }),
       community.events({ when: 'upcoming' }),
+      careers.followedUpdates(),
     ])
+    news.value = updates.results.slice(0, 3)
     posts.value = feed.results
     next.value = feed.next
     groups.value = mine.results.filter((g) => g.my_status === 'active')
@@ -77,6 +82,12 @@ async function more() {
     </div>
 
     <aside class="grid min-w-0 content-start gap-8">
+      <section v-if="news.length" aria-labelledby="news-title">
+        <h2 id="news-title" class="mb-3 font-semibold">From companies you follow</h2>
+        <Card class="grid gap-4 p-4">
+          <CompanyUpdateItem v-for="u in news" :key="u.id" :update="u" show-company />
+        </Card>
+      </section>
       <section aria-labelledby="events-title">
         <div class="mb-3 flex items-baseline justify-between">
           <h2 id="events-title" class="font-semibold">Upcoming events</h2>

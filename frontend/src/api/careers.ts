@@ -130,7 +130,21 @@ const qs = (params: Record<string, string | boolean | undefined>) => {
   return s ? `?${s}` : ''
 }
 
+export interface CompanyUpdate {
+  id: number
+  company: CompanyRef
+  author: Author | null
+  body: string
+  created_at: string
+  can_delete: boolean
+}
+
 export const careers = {
+  companyUpdates: (slug: string) => api<Page<CompanyUpdate>>(`/companies/${slug}/updates/`),
+  postCompanyUpdate: (slug: string, body: string) =>
+    api<CompanyUpdate>(`/companies/${slug}/updates/`, { method: 'POST', body: { body } }),
+  followedUpdates: () => api<Page<CompanyUpdate>>('/company-updates/'),
+  deleteCompanyUpdate: (id: number) => api<void>(`/company-updates/${id}/`, { method: 'DELETE' }),
   jobs: (f: JobFilters = {}) => api<Page<Job>>(`/jobs/${qs({ ...f })}`),
   job: (id: number) => api<Job>(`/jobs/${id}/`),
   createJob: (body: JobInput) => api<Job>('/jobs/', { method: 'POST', body }),

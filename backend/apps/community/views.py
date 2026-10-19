@@ -7,6 +7,7 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -16,12 +17,15 @@ from . import selectors, services
 from .models import Event, Group, Membership, Post
 from .serializers import (
     EventSerializer,
+    FeedbackSerializer,
     GroupMemberSerializer,
     GroupSerializer,
+    PostEditSerializer,
     PostSerializer,
     PostWriteSerializer,
     RoleSerializer,
     RsvpSerializer,
+    ShareSerializer,
 )
 
 User = get_user_model()
@@ -174,15 +178,30 @@ class PostViewSet(viewsets.ModelViewSet):
         data.is_valid(raise_exception=True)
         slug = data.validated_data.get("group_slug")
         group = group_for(request, slug) if slug else None
-        post = services.create_post(request.user, data.validated_data["body"], group)
+        post = services.create_post(
+            request.user, data.validated_data["body"], group, data.validated_data["images"]
+        )
+        return self._created(request, post)
+
+    def _created(self, request, post):
+        post = self.get_queryset().get(pk=post.pk)  # with its images and counters
         return Response(
             PostSerializer(post, context=post_context(request, [post])).data,
             status=status.HTTP_201_CREATED,
         )
 
-    @extend_schema(request=PostWriteSerializer, responses=PostSerializer)
+    @extend_schema(request=ShareSerializer, responses={201: PostSerializer})
+    @action(detail=True, methods=["post"])
+    def share(self, request, pk=None):
+        """Share this post to your profile, with an optional comment."""
+        data = ShareSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        share = services.share_post(request.user, self.get_object(), data.validated_data["body"])
+        return self._created(request, share)
+
+    @extend_schema(request=PostEditSerializer, responses=PostSerializer)
     def partial_update(self, request, pk=None):
-        data = PostWriteSerializer(data=request.data)
+        data = PostEditSerializer(data=request.data)
         data.is_valid(raise_exception=True)
         post = services.edit_post(request.user, self.get_object(), data.validated_data["body"])
         return Response(PostSerializer(post, context=post_context(request, [post])).data)
@@ -244,6 +263,22 @@ class EventViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         services.delete_event(self.request.user, instance)
+
+    @extend_schema(request=FeedbackSerializer, responses=FeedbackSerializer, methods=["PUT"])
+    @extend_schema(responses=FeedbackSerializer(many=True), methods=["GET"])
+    @action(detail=True, methods=["get", "put"], pagination_class=None)
+    def feedback(self, request, pk=None):
+        """PUT your rating once the event is over. GET: the host reads every comment."""
+        event = self.get_object()
+        if request.method == "PUT":
+            data = FeedbackSerializer(data=request.data)
+            data.is_valid(raise_exception=True)
+            feedback = services.give_feedback(request.user, event, **data.validated_data)
+            return Response(FeedbackSerializer(feedback).data)
+        if event.host_id != request.user.id and request.user.role != "admin":
+            raise PermissionDenied("Only the host reads the comments.")
+        rows = event.feedback.select_related("user__profile")
+        return Response(FeedbackSerializer(rows, many=True).data)
 
     @extend_schema(request=RsvpSerializer, responses=EventSerializer, methods=["PUT"])
     @extend_schema(request=None, responses=EventSerializer, methods=["DELETE"])

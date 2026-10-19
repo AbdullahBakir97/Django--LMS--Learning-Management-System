@@ -8,6 +8,7 @@ import Avatar from '@/components/ui/Avatar.vue'
 import Button from '@/components/ui/Button.vue'
 import Card from '@/components/ui/Card.vue'
 import EventCard from '@/features/community/EventCard.vue'
+import EventFeedback from '@/features/community/EventFeedback.vue'
 
 const props = defineProps<{ id: string }>()
 const router = useRouter()
@@ -23,6 +24,10 @@ watch(
   },
   { immediate: true },
 )
+
+async function refresh() {
+  event.value = await community.event(Number(props.id))
+}
 
 async function cancel() {
   await community.deleteEvent(Number(props.id))
@@ -67,6 +72,7 @@ async function cancel() {
           The online link appears once you are going.
         </p>
       </Card>
+      <EventFeedback :event="event" @rated="refresh" />
       <div v-if="event.can_edit">
         <Button v-if="!confirming" variant="danger" size="sm" @click="confirming = true">Cancel event</Button>
         <span v-else class="inline-flex flex-wrap items-center gap-2 text-sm">

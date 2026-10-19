@@ -389,6 +389,13 @@ class Command(BaseCommand):
                 level="entry",
             ),
         )
+        careers.follow(u["lina"], nahla)
+        careers.post_update(
+            u["rana"],
+            nahla,
+            "We are hiring two backend engineers this quarter. Django and PostgreSQL, "
+            "hybrid in Amman.",
+        )
         lina_applied = careers.apply(
             u["lina"],
             backend,
