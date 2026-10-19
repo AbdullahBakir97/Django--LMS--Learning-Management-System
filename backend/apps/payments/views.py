@@ -1,13 +1,15 @@
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.learning.models import Course
 
-from . import services
+from . import selectors, services
+from .serializers import RevenueSerializer
 
 CheckoutIn = inline_serializer("CheckoutRequest", {"course": serializers.SlugField()})
 CheckoutOut = inline_serializer("CheckoutPage", {"url": serializers.URLField()})
@@ -21,6 +23,17 @@ class CheckoutView(APIView):
         slug = serializers.SlugField().run_validation(request.data.get("course"))
         course = get_object_or_404(Course, slug=slug, status=Course.Status.PUBLISHED)
         return Response({"url": services.start_checkout(request.user, course)})
+
+
+class CourseRevenueView(APIView):
+    """For the course's instructor and admins: what the course earned, per currency."""
+
+    @extend_schema(responses=RevenueSerializer(many=True))
+    def get(self, request, slug):
+        course = get_object_or_404(Course, slug=slug)
+        if course.instructor_id != request.user.id and request.user.role != "admin":
+            raise PermissionDenied("Only the course's instructor sees its revenue.")
+        return Response(RevenueSerializer(selectors.revenue(course.orders), many=True).data)
 
 
 class WebhookView(APIView):

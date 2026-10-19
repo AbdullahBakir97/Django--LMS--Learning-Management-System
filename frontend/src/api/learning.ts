@@ -110,6 +110,14 @@ export interface CertificateRecord {
 
 type CourseInput = Pick<Course, 'title' | 'summary' | 'description' | 'level' | 'language' | 'price_cents'>
 
+/** Paid orders in one currency, net of refunds. `recent_cents` is the last 30 days. */
+export interface Revenue {
+  currency: string
+  total_cents: number
+  recent_cents: number
+  orders: number
+}
+
 export const money = (cents: number, currency: string) =>
   new Intl.NumberFormat('en', { style: 'currency', currency }).format(cents / 100)
 
@@ -155,6 +163,7 @@ export const learning = {
   },
   course: (slug: string) => api<Course>(`${c(slug)}/`),
   analytics: (slug: string) => api<CourseAnalytics>(`${c(slug)}/analytics/`),
+  revenue: (slug: string) => api<Revenue[]>(`/payments/courses/${encodeURIComponent(slug)}/revenue/`),
   createCourse: (data: Partial<CourseInput>) => api<Course>('/courses/', { method: 'POST', body: data }),
   updateCourse: (slug: string, data: Partial<CourseInput>) =>
     api<Course>(`${c(slug)}/`, { method: 'PATCH', body: data }),

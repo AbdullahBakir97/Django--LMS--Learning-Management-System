@@ -44,10 +44,12 @@ Everything comes from the environment. The ones that matter most:
 
 Payments go through Stripe Checkout: Stripe hosts the card form, so card data never reaches this
 server. In the Stripe dashboard, add a webhook endpoint at `https://<your domain>/api/payments/webhook/`
-for `checkout.session.completed` and `checkout.session.async_payment_succeeded`, and put its
-signing secret in `STRIPE_WEBHOOK_SECRET`. A course unlocks only when a signed event says it is
+for `checkout.session.completed`, `checkout.session.async_payment_succeeded` and
+`charge.refunded`, and put its signing secret in `STRIPE_WEBHOOK_SECRET`. A course unlocks only when a signed event says it is
 paid, never because the browser came back from the payment page. Orders are in the admin site.
-Refunds are made in the Stripe dashboard and do not remove access.
+Refunds are made in the Stripe dashboard. A full refund ends the buyer's access and removes
+their progress in that course, while a partial refund changes nothing. Promotion codes are also
+made in the Stripe dashboard, and buyers enter them on the payment page.
 
 ## What production settings enforce
 

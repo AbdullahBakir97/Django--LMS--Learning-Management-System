@@ -2,7 +2,7 @@
 
 from datetime import timedelta
 
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Q
 from django.utils import timezone
 
 from apps.accounts.models import User
@@ -11,7 +11,7 @@ from apps.community.models import Post
 from apps.core.stats import weekly_counts
 from apps.learning.models import Course, Enrollment
 from apps.moderation.models import Report
-from apps.payments.models import Order
+from apps.payments import selectors as payments
 
 RECENT = timedelta(days=30)
 TOP_COURSES = 5
@@ -26,7 +26,6 @@ def overview() -> dict:
         recent=Count("id", filter=Q(created_at__gte=since)),
         completed=Count("id", filter=Q(status=Enrollment.Status.COMPLETED)),
     )
-    paid = Order.objects.filter(status=Order.Status.PAID)
     top = (
         Course.objects.filter(status=Course.Status.PUBLISHED)
         .annotate(
@@ -52,15 +51,7 @@ def overview() -> dict:
         .values("kind", "object_id")
         .distinct()
         .count(),
-        "revenue": list(
-            paid.values("currency")
-            .annotate(
-                total_cents=Sum("amount_cents"),
-                recent_cents=Sum("amount_cents", filter=Q(paid_at__gte=since), default=0),
-                orders=Count("id"),
-            )
-            .order_by("-total_cents")
-        ),
+        "revenue": payments.revenue(),
         "weekly_signups": weekly_counts(User.objects.all(), field="date_joined"),
         "weekly_enrolments": weekly_counts(enrolments),
         "top_courses": [
