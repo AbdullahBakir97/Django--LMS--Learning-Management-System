@@ -15,7 +15,14 @@ import Tag from '@/components/ui/Tag.vue'
 const props = defineProps<{ slug?: string }>()
 const router = useRouter()
 const course = ref<Course | null>(null)
-const form = reactive({ title: '', summary: '', description: '', level: 'beginner', language: 'en' })
+const form = reactive({
+  title: '',
+  summary: '',
+  description: '',
+  level: 'beginner',
+  language: 'en',
+  price: '',
+})
 const errors = reactive<Record<string, string | undefined>>({})
 const message = ref('')
 const busy = ref(false)
@@ -30,6 +37,7 @@ async function load() {
     description: course.value.description,
     level: course.value.level,
     language: course.value.language,
+    price: course.value.price_cents ? (course.value.price_cents / 100).toFixed(2) : '',
   })
 }
 watch(() => props.slug, load, { immediate: true })
@@ -38,16 +46,21 @@ async function saveCourse() {
   busy.value = true
   message.value = ''
   Object.keys(errors).forEach((k) => (errors[k] = undefined))
+  const { price, ...details } = form
+  const body = { ...details, price_cents: Math.round((Number(price) || 0) * 100) } as never
   try {
     if (isNew.value) {
-      const created = await learning.createCourse(form as never)
+      const created = await learning.createCourse(body)
       router.replace({ name: 'course-editor', params: { slug: created.slug } })
     } else {
-      course.value = await learning.updateCourse(props.slug!, form as never)
+      course.value = await learning.updateCourse(props.slug!, body)
       message.value = 'Saved.'
     }
   } catch (e) {
-    if (e instanceof ApiError) for (const k of Object.keys(form)) errors[k] = e.field(k)
+    if (e instanceof ApiError) {
+      for (const k of Object.keys(form)) errors[k] = e.field(k)
+      errors.price = e.field('price_cents')
+    }
   } finally {
     busy.value = false
   }
@@ -183,6 +196,13 @@ async function closeQuiz() {
         </select>
       </label>
       <TextField v-model="form.language" label="Language code" hint="e.g. en, de, ar" />
+      <TextField
+        v-model="form.price"
+        label="Price"
+        type="number"
+        :hint="`In ${(course?.currency ?? 'the site currency').toUpperCase()}. Leave empty for a free course.`"
+        :error="errors.price"
+      />
       <TextField
         v-model="form.description"
         label="Description (markdown)"

@@ -7,6 +7,10 @@ from django.utils.text import slugify
 from apps.core.models import TimeStampedModel
 
 
+def default_currency() -> str:
+    return settings.PAYMENTS_CURRENCY
+
+
 class Course(TimeStampedModel):
     class Level(models.TextChoices):
         BEGINNER = "beginner", "Beginner"
@@ -28,6 +32,9 @@ class Course(TimeStampedModel):
     level = models.CharField(max_length=16, choices=Level.choices, default=Level.BEGINNER)
     language = models.CharField(max_length=8, default="en")
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.DRAFT)
+    # In the currency's smallest unit (cents). 0 is a free course.
+    price_cents = models.PositiveIntegerField(default=0)
+    currency = models.CharField(max_length=3, default=default_currency)
     published_at = models.DateTimeField(null=True, blank=True)
     prerequisites = models.ManyToManyField(
         "self", symmetrical=False, blank=True, related_name="unlocks"
@@ -53,6 +60,10 @@ class Course(TimeStampedModel):
     @property
     def is_published(self) -> bool:
         return self.status == self.Status.PUBLISHED
+
+    @property
+    def is_paid(self) -> bool:
+        return self.price_cents > 0
 
 
 class Lesson(TimeStampedModel):

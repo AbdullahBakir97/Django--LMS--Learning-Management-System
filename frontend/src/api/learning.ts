@@ -18,6 +18,9 @@ export interface CourseSummary {
   level: Level
   language: string
   status: 'draft' | 'published'
+  /** Smallest currency unit; 0 means free. */
+  price_cents: number
+  currency: string
   published_at: string | null
   instructor: User
   lesson_count: number
@@ -105,7 +108,13 @@ export interface CertificateRecord {
   pdf: string | null
 }
 
-type CourseInput = Pick<Course, 'title' | 'summary' | 'description' | 'level' | 'language'>
+type CourseInput = Pick<Course, 'title' | 'summary' | 'description' | 'level' | 'language' | 'price_cents'>
+
+export function price(course: Pick<CourseSummary, 'price_cents' | 'currency'>): string {
+  if (!course.price_cents) return 'Free'
+  const money = new Intl.NumberFormat('en', { style: 'currency', currency: course.currency })
+  return money.format(course.price_cents / 100)
+}
 type LessonInput = Pick<Lesson, 'title' | 'order' | 'content' | 'video_url' | 'is_free_preview'>
 
 const c = (slug: string) => `/courses/${encodeURIComponent(slug)}`
@@ -153,6 +162,9 @@ export const learning = {
   publish: (slug: string) => api<Course>(`${c(slug)}/publish/`, { method: 'POST' }),
   enroll: (slug: string) => api<Progress>(`${c(slug)}/enroll/`, { method: 'POST' }),
   progress: (slug: string) => api<Progress | undefined>(`${c(slug)}/progress/`),
+  /** Paid courses: a hosted payment page. The course unlocks when the payment is confirmed. */
+  checkout: (slug: string) =>
+    api<{ url: string }>('/payments/checkout/', { method: 'POST', body: { course: slug } }),
 
   lesson: (slug: string, id: number) => api<Lesson>(`${c(slug)}/lessons/${id}/`),
   createLesson: (slug: string, data: Partial<LessonInput>) =>

@@ -35,11 +35,16 @@ All notable changes. The project follows [Semantic Versioning](https://semver.or
 - **Course analytics**: each instructor sees, per course, enrolments per week, completion rate
   and average time to finish, how many learners finished each lesson (where they stop), quiz
   pass rates and scores, and the learners with no progress in 14 days.
+- **Paid courses**: an instructor sets a price; learners pay on a Stripe Checkout page and the
+  course unlocks when Stripe's signed webhook confirms the payment (retries are harmless).
+  Free preview lessons stay open to everyone. Without Stripe keys, every course stays free.
+  Demo: "Testing Django properly" costs $29.
 - **Browser journeys in CI**: a new job seeds a real backend and runs search, posting with a
   photo, moderation and analytics in Chromium on every push.
 
 ### Fixed
 
+- Errors raised as a plain message (such as "You are already enrolled.") were not shown in the app.
 - nginx refused uploads over 12 MB, so a post with four photos failed in production; it now
   accepts 40 MB and Django still checks each file.
 - A moderator could deactivate another admin from a report; admin accounts are now managed only

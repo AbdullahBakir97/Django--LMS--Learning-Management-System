@@ -80,7 +80,10 @@ async function submit() {
     <TextField v-model="form.capacity" type="number" label="Capacity" hint="Leave empty for no limit" />
     <TextField v-model="form.description" textarea label="Description" />
     <Alert
-      v-if="errors?.problem.errors?.non_field_errors || (errors && !errors.problem.errors)"
+      v-if="
+        errors &&
+        (errors.field('non_field_errors') || !errors.problem.errors || Array.isArray(errors.problem.errors))
+      "
       tone="danger"
       >{{ errors?.nonField }}</Alert
     >

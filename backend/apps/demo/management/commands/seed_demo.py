@@ -16,6 +16,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.accounts.models import User
@@ -29,6 +30,7 @@ from apps.learning.models import Choice, Course, Lesson, Question, Quiz
 from apps.messaging import services as messaging
 from apps.moderation import services as moderation
 from apps.network import services as network
+from apps.payments.models import Order
 from apps.profiles.models import PortfolioItem
 from apps.profiles.services import add_skill
 
@@ -104,6 +106,7 @@ class Command(BaseCommand):
         demo = User.objects.filter(email__endswith=f"@{DOMAIN}")
         if reset:
             Company.objects.filter(members__user__in=demo).delete()
+            Order.objects.filter(Q(buyer__in=demo) | Q(course__instructor__in=demo)).delete()
             for user in demo:
                 user.owned_groups.all().delete()
                 Course.objects.filter(instructor=user).delete()
@@ -241,13 +244,14 @@ class Command(BaseCommand):
                 ),
             ],
         )
-        self.course(
+        testing = self.course(
             u["karim"],
             "Testing Django properly",
             "Factories, fixtures and API tests.",
             "advanced",
             [("The test pyramid, adjusted", "Test the API surface first.", True)],
         )
+        Course.objects.filter(pk=testing.pk).update(price_cents=2900)  # one paid course to buy
         enrollment = learning.enroll(u["lina"], api)
         learning.complete_lesson(u["lina"], api.lessons.get(order=1))
         learning.enroll(u["omar"], sql)

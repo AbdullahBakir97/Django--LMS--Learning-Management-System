@@ -6,7 +6,7 @@ export interface Problem {
   title: string
   status: number
   detail?: string
-  errors?: Record<string, string[] | string>
+  errors?: Record<string, string[] | string> | string[]
 }
 
 export class ApiError extends Error {
@@ -15,11 +15,14 @@ export class ApiError extends Error {
   }
   /** First message for a field, or the general detail. */
   field(name: string): string | undefined {
-    const value = this.problem.errors?.[name]
+    const errors = this.problem.errors
+    const value = Array.isArray(errors) ? undefined : errors?.[name]
     return Array.isArray(value) ? value[0] : value
   }
   get nonField(): string | undefined {
-    const value = this.problem.errors?.non_field_errors
+    // A service's ValidationError("…") arrives as a bare list.
+    const errors = this.problem.errors
+    const value = Array.isArray(errors) ? errors : errors?.non_field_errors
     return (Array.isArray(value) ? value[0] : value) ?? this.problem.detail
   }
 }

@@ -37,6 +37,17 @@ Everything comes from the environment. The ones that matter most:
 | `POSTGRES_PASSWORD` | long and random |
 | `EMAIL_*`, `DEFAULT_FROM_EMAIL` | SMTP for verification, password reset and notification email |
 | `THROTTLE_ANON`, `THROTTLE_USER`, `THROTTLE_AUTH` | rate limits, defaults 60, 600 and 10 per minute |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | paid courses; leave both empty and every course stays free to join |
+| `PAYMENTS_CURRENCY` | currency for new course prices, default `usd` |
+
+### Paid courses
+
+Payments go through Stripe Checkout: Stripe hosts the card form, so card data never reaches this
+server. In the Stripe dashboard, add a webhook endpoint at `https://<your domain>/api/payments/webhook/`
+for `checkout.session.completed` and `checkout.session.async_payment_succeeded`, and put its
+signing secret in `STRIPE_WEBHOOK_SECRET`. A course unlocks only when a signed event says it is
+paid, never because the browser came back from the payment page. Orders are in the admin site.
+Refunds are made in the Stripe dashboard and do not remove access.
 
 ## What production settings enforce
 
@@ -89,6 +100,7 @@ To deploy published images instead of building on the server, replace each `buil
 - [ ] `seed_demo` was not run (it refuses unless `DEBUG` is on).
 - [ ] At least one account has the admin role, so reports have a moderator; set it in the admin site.
 - [ ] The `beat` service is running, or digests are never sent.
+- [ ] Selling courses: the Stripe webhook is set up and a test-mode purchase unlocks its course.
 - [ ] Whatever sits in front of `web` accepts request bodies of at least 40 MB (a post with four
       photos); nginx in the image already does.
 
