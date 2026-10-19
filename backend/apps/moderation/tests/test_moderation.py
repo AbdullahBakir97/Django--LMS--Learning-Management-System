@@ -111,3 +111,37 @@ def test_comments_are_soft_deleted(post, user, auth_client, moderator):
     comment.refresh_from_db()
     assert comment.deleted_at is not None and comment.body == ""
     assert report(client_for(UserFactory()), "comment", comment.id).status_code == 404
+
+
+@pytest.mark.django_db
+def test_a_deactivated_account_loses_access_at_once(moderator, auth_client):
+    from allauth.account.models import EmailAddress
+
+    person = UserFactory(username="troll")
+    EmailAddress.objects.create(user=person, email=person.email, verified=True, primary=True)
+    browser = APIClient()
+    signed_in = browser.post(
+        "/api/auth/login/", {"email": person.email, "password": "pass-word-123"}
+    )
+    assert signed_in.status_code == 200, signed_in.data
+    access = signed_in.data["access"]
+
+    report(auth_client, "user", person.id, reason="harassment")
+    client_for(moderator).post(f"/api/moderation/user/{person.id}/resolve/", {"action": "remove"})
+
+    browser.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
+    assert browser.get("/api/auth/user/").status_code == 401, "the access token stops working"
+    browser.credentials()
+    assert browser.post("/api/auth/token/refresh/").status_code == 401, "and cannot be renewed"
+
+
+@pytest.mark.django_db
+def test_admins_cannot_be_deactivated_from_reports(moderator, auth_client):
+    other_admin = UserFactory(role="admin")
+    report(auth_client, "user", other_admin.id, reason="other")
+    r = client_for(moderator).post(
+        f"/api/moderation/user/{other_admin.id}/resolve/", {"action": "remove"}
+    )
+    assert r.status_code == 400
+    other_admin.refresh_from_db()
+    assert other_admin.is_active

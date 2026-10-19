@@ -81,6 +81,62 @@ jobs:
       - name: Browser smoke test
         run: pnpm exec playwright install --with-deps chromium && pnpm test:e2e
 
+  e2e:
+    # The main journeys in a real browser against a real, seeded backend.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: lms
+          POSTGRES_USER: lms
+          POSTGRES_PASSWORD: lms
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U lms" --health-interval 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+    env:
+      DJANGO_SECRET_KEY: ci-only-not-a-real-secret
+      DJANGO_SETTINGS_MODULE: config.settings.local
+      POSTGRES_HOST: 127.0.0.1
+      DEMO_PASSWORD: ci-demo-password-1
+      THROTTLE_AUTH: 1000/min # the journeys sign in more often than a person would
+      E2E_BACKEND: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Backend up with demo data
+        working-directory: backend
+        run: |
+          pip install -r requirements.txt
+          python manage.py migrate --noinput
+          python manage.py seed_demo
+          python manage.py runserver 8000 > ../runserver.log 2>&1 &
+          for i in $(seq 30); do curl -sf localhost:8000/api/health/ && break; sleep 1; done
+      - name: Journeys
+        working-directory: frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+          pnpm test:e2e
+      - name: Server log on failure
+        if: failure()
+        run: cat runserver.log
+
   images:
     runs-on: ubuntu-latest
     timeout-minutes: 20

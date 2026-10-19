@@ -109,6 +109,7 @@ const indexOf = (hit: Hit) => flat.value.indexOf(hit)
         type="text"
         enterkeyhint="search"
         role="combobox"
+        aria-label="Search everything"
         aria-autocomplete="list"
         aria-controls="search-results"
         :aria-expanded="flat.length > 0"

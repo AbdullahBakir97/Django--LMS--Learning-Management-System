@@ -87,3 +87,17 @@ To deploy published images instead of building on the server, replace each `buil
 - [ ] `GET /api/health/` is healthy through the public URL.
 - [ ] Backups of `pgdata` and `media` run on a schedule, and a restore has been tried.
 - [ ] `seed_demo` was not run (it refuses unless `DEBUG` is on).
+- [ ] At least one account has the admin role, so reports have a moderator; set it in the admin site.
+- [ ] The `beat` service is running, or digests are never sent.
+- [ ] Whatever sits in front of `web` accepts request bodies of at least 40 MB (a post with four
+      photos); nginx in the image already does.
+
+## Verified by CI on every push
+
+- The main journeys run in a real browser against a seeded backend: search, posting with a photo,
+  moderating a report, opening course analytics.
+- Every API route answers an anonymous caller without a server error, and the busiest lists keep a
+  constant query count.
+- A deactivated account loses access at once: its access token stops working and its refresh token
+  is refused; its live connection closes on the next reconnect.
+- Production settings pass Django's deployment checklist, and the OpenAPI schema has no warnings.

@@ -38,6 +38,9 @@ def resolve(moderator, kind: str, object_id: int, remove: bool, note: str = "") 
         raise ValidationError("Nothing open to resolve here.")
     if remove:
         obj = KINDS[kind].fetch(object_id)
+        if kind == "user" and obj is not None and obj.role == "admin":
+            # One moderator must not be able to lock out another; the admin site handles staff.
+            raise ValidationError("Admin accounts are managed in the admin site, not from reports.")
         if obj is not None:
             KINDS[kind].remove(moderator, obj)
     status = Report.Status.REMOVED if remove else Report.Status.DISMISSED
