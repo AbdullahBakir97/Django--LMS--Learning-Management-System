@@ -19,6 +19,11 @@ urlpatterns = [
         views.LessonAttachmentDeleteView.as_view(),
         name="attachment-delete",
     ),
+    path(
+        "attachments/<int:pk>/file/",
+        views.LessonAttachmentFileView.as_view(),
+        name="attachment-file",
+    ),
     path("me/enrollments/", views.MyEnrollmentsView.as_view(), name="my-enrollments"),
     path(
         "certificates/<uuid:code>/",

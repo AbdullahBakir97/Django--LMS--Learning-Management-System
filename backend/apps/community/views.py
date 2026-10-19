@@ -11,6 +11,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.core.pagination import CursorPagination
 from apps.engagement import selectors as engagement
 
 from . import selectors, services
@@ -50,6 +51,10 @@ def post_context(request, posts) -> dict:
 
 def group_for(request, slug) -> Group:
     return get_object_or_404(selectors.groups_visible(request.user), slug=slug)
+
+
+class MembersPagination(CursorPagination):
+    ordering = "created_at"  # who joined first, so the owner leads
 
 
 class GroupViewSet(viewsets.ModelViewSet):
@@ -95,7 +100,7 @@ class GroupViewSet(viewsets.ModelViewSet):
         responses=GroupMemberSerializer(many=True),
         parameters=[OpenApiParameter("status", OpenApiTypes.STR, enum=["active", "pending"])],
     )
-    @action(detail=True, methods=["get"], pagination_class=None)
+    @action(detail=True, methods=["get"], pagination_class=MembersPagination)
     def members(self, request, slug=None):
         group = self.get_object()
         wanted = request.query_params.get("status", "active")
@@ -103,12 +108,9 @@ class GroupViewSet(viewsets.ModelViewSet):
             raise Http404
         if wanted == "pending":
             services._require_manager(request.user, group)
-        rows = (
-            Membership.objects.filter(group=group, status=wanted)
-            .select_related("user__profile")
-            .order_by("role", "created_at")
-        )
-        return Response(GroupMemberSerializer(rows, many=True).data)
+        rows = Membership.objects.filter(group=group, status=wanted).select_related("user__profile")
+        page = self.paginate_queryset(rows)
+        return self.get_paginated_response(GroupMemberSerializer(page, many=True).data)
 
     @extend_schema(responses=PostSerializer(many=True))
     @action(detail=True, methods=["get"])

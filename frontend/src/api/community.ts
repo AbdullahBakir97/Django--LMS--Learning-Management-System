@@ -124,8 +124,8 @@ export const community = {
   deleteGroup: (slug: string) => api<void>(`/groups/${slug}/`, { method: 'DELETE' }),
   join: (slug: string) => api<Group>(`/groups/${slug}/join/`, { method: 'POST' }),
   leave: (slug: string) => api<Group>(`/groups/${slug}/leave/`, { method: 'POST' }),
-  members: (slug: string, status: 'active' | 'pending' = 'active') =>
-    api<Member[]>(`/groups/${slug}/members/?status=${status}`),
+  members: (slug: string, status: 'active' | 'pending' = 'active', cursor?: string) =>
+    api<Page<Member>>(`/groups/${slug}/members/${qs({ status, cursor })}`),
   approve: (slug: string, userId: number) =>
     api<Member>(`/groups/${slug}/members/${userId}/approve/`, { method: 'POST' }),
   removeMember: (slug: string, userId: number) =>

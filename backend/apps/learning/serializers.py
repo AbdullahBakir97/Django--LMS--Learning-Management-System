@@ -1,4 +1,5 @@
 from django.core.validators import FileExtensionValidator
+from django.urls import reverse
 from rest_framework import serializers
 
 from apps.accounts.serializers import UserSerializer
@@ -90,11 +91,17 @@ ATTACHMENT_MAX_BYTES = 25 * 1024 * 1024  # under nginx's 40 MB body limit
 
 class LessonAttachmentSerializer(serializers.ModelSerializer):
     # No HTML, SVG or scripts: they would run on the site's own origin if someone opened them.
-    file = serializers.FileField(validators=[FileExtensionValidator(ATTACHMENT_TYPES)])
+    file = serializers.FileField(
+        write_only=True, validators=[FileExtensionValidator(ATTACHMENT_TYPES)]
+    )
+    url = serializers.SerializerMethodField(help_text="Download with the access token.")
 
     class Meta:
         model = LessonAttachment
-        fields = ["id", "title", "file"]
+        fields = ["id", "title", "file", "url"]
+
+    def get_url(self, attachment) -> str:
+        return reverse("attachment-file", args=[attachment.pk])
 
     def validate_file(self, file):
         if file.size > ATTACHMENT_MAX_BYTES:

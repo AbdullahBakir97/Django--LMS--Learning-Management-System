@@ -25,6 +25,7 @@ const tab = ref<'posts' | 'members' | 'events'>('posts')
 const posts = ref<Post[]>([])
 const next = ref<string | null>(null)
 const members = ref<Member[]>([])
+const nextMembers = ref<string | null>(null)
 const pending = ref<Member[]>([])
 const events = ref<CommunityEvent[]>([])
 const error = ref('')
@@ -58,9 +59,11 @@ async function load() {
   ])
   posts.value = p.results
   next.value = p.next
-  members.value = m
+  members.value = m.results
+  nextMembers.value = m.next
   events.value = e.results
-  pending.value = canManage.value ? await community.members(props.slug, 'pending') : []
+  // shortcut: shows the first page of requests only; page them too if queues grow past 20.
+  pending.value = canManage.value ? (await community.members(props.slug, 'pending')).results : []
 }
 watch(() => props.slug, load, { immediate: true })
 
@@ -75,6 +78,12 @@ async function act(fn: () => Promise<Group | void>) {
   } finally {
     busy.value = false
   }
+}
+
+async function moreMembers() {
+  const page = await community.members(props.slug, 'active', cursorOf(nextMembers.value))
+  members.value = [...members.value, ...page.results]
+  nextMembers.value = page.next
 }
 
 async function morePosts() {
@@ -233,6 +242,9 @@ async function deleteGroup() {
             >
           </div>
         </Card>
+        <div v-if="nextMembers" class="flex justify-center">
+          <Button variant="ghost" @click="moreMembers">Show more</Button>
+        </div>
       </div>
 
       <div v-else class="mt-6 grid max-w-2xl gap-4" role="tabpanel">

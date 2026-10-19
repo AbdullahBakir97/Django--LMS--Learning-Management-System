@@ -70,7 +70,7 @@ def test_private_group_requests_need_approval(owner, user, auth_client, run_even
     assert auth_client.get(f"/api/groups/{slug}/posts/").status_code == 404
 
     assert auth_client.get(f"/api/groups/{slug}/members/?status=pending").status_code == 404
-    pending = client_for(owner).get(f"/api/groups/{slug}/members/?status=pending").data
+    pending = client_for(owner).get(f"/api/groups/{slug}/members/?status=pending").data["results"]
     assert [m["user_id"] for m in pending] == [user.id]
     stranger = client_for(UserFactory())
     assert stranger.post(f"/api/groups/{slug}/members/{user.id}/approve/").status_code == 403
@@ -239,3 +239,17 @@ def test_group_events_follow_group_privacy(owner, user, auth_client):
         == 403
     )
     assert Event.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_group_members_come_in_pages(user, auth_client):
+    from apps.community.models import Group, Membership
+
+    group = Group.objects.create(owner=user, name="Big", slug="big")
+    Membership.objects.create(group=group, user=user, status="active", role="owner")
+    for _ in range(25):
+        Membership.objects.create(group=group, user=UserFactory(), status="active")
+    first = auth_client.get("/api/groups/big/members/").json()
+    assert len(first["results"]) == 20 and first["next"]
+    assert first["results"][0]["role"] == "owner", "who joined first leads"
+    assert len(auth_client.get(first["next"]).json()["results"]) == 6
