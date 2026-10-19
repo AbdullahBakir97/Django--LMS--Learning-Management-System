@@ -2,6 +2,17 @@
 
 All notable changes. The project follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Changed
+
+- Lesson files are downloaded through the API after the same check as the lesson
+  (`GET /api/attachments/{id}/file/`); nginx no longer serves them. Attachments now carry `url`
+  instead of `file`.
+- Group members come in pages of 20 (`GET /api/groups/{slug}/members/` returns `results` and
+  `next`), with "Show more" in the app.
+- The admin overview is cached for two minutes.
+
 ## 2.0.0 (2026-10-18)
 
 Paid courses, analytics for instructors and admins, moderation, search, an installable app,

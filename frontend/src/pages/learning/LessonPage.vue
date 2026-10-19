@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { PhArrowLeft, PhCheck, PhCheckCircle, PhCircle, PhPaperclip } from '@phosphor-icons/vue'
 import { learning, type Course, type Lesson, type Progress, type Quiz } from '@/api/learning'
-import { ApiError } from '@/api/client'
+import { ApiError, apiBlob } from '@/api/client'
 import { renderMarkdown } from '@/features/learning/markdown'
 import QuizRunner from '@/features/learning/QuizRunner.vue'
 import ProgressBar from '@/features/learning/ProgressBar.vue'
@@ -58,6 +58,14 @@ async function complete() {
 async function refreshProgress() {
   progress.value = (await learning.progress(props.slug)) ?? null
 }
+
+// Files sit behind the API's permission check, so they are fetched with the token.
+async function download(a: Lesson['attachments'][number]) {
+  const url = URL.createObjectURL(await apiBlob(a.url))
+  const link = Object.assign(document.createElement('a'), { href: url, download: a.title })
+  link.click()
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+}
 </script>
 
 <template>
@@ -103,14 +111,13 @@ async function refreshProgress() {
 
         <ul v-if="lesson.attachments.length" class="mt-6 grid gap-2">
           <li v-for="a in lesson.attachments" :key="a.id">
-            <a
-              :href="a.file"
-              class="inline-flex items-center gap-2 text-sm text-accent hover:underline"
-              target="_blank"
-              rel="noopener"
+            <button
+              type="button"
+              class="inline-flex cursor-pointer items-center gap-2 text-sm text-accent hover:underline"
+              @click="download(a)"
             >
               <PhPaperclip :size="16" weight="light" />{{ a.title }}
-            </a>
+            </button>
           </li>
         </ul>
 

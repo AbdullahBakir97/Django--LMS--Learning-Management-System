@@ -78,8 +78,8 @@ flowchart LR
     learning -- 24 --> core
     careers -- 22 --> core
     profiles -- 20 --> core
+    community -- 18 --> core
     community -- 16 --> engagement
-    community -- 15 --> core
     network -- 13 --> core
     messaging -- 11 --> core
     engagement -- 10 --> core
@@ -102,7 +102,7 @@ flowchart LR
     messaging -. events .-> notifications
   end
   subgraph Frontend
-    pages -- 176 --> api
+    pages -- 179 --> api
     features -- 158 --> api
     pages -- 101 --> components
     pages -- 75 --> features
@@ -163,10 +163,7 @@ in [docs/deployment.md](docs/deployment.md).
 
 Chosen on purpose, each with the point where it should change:
 
-- Lesson attachments are public URLs that only readers of the lesson see. Serve them through a
-  permission check, as résumés are, if a course's files must never leave it.
-- The admin overview is counted on each request. Cache it for a few minutes when it gets slow.
-- Group member lists are not paged. Page them before groups reach thousands of members.
+- The admin overview is cached for two minutes, so a new sale can take that long to show.
 - Sign-up says when an email address is already registered; rate limits keep that slow to probe.
 
 ## Contributing

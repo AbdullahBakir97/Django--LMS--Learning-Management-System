@@ -50,7 +50,8 @@ export interface Lesson {
   content: string
   video_url: string
   is_free_preview: boolean
-  attachments: { id: number; title: string; file: string }[]
+  /** `url` is an API path: fetch it with the access token (see `apiBlob`). */
+  attachments: { id: number; title: string; url: string }[]
   has_quiz: boolean
 }
 

@@ -11,6 +11,13 @@ from apps.payments.models import Order
 from conftest import UserFactory
 
 
+@pytest.fixture(autouse=True)
+def fresh_cache():
+    from django.core.cache import cache
+
+    cache.clear()
+
+
 @pytest.fixture
 def admin_client(db):
     c = APIClient()

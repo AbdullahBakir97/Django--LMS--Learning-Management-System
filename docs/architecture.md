@@ -104,7 +104,7 @@ Search vectors are computed per query, which is fast enough at this size. When a
 
 ## Overview
 
-`apps/insights` is read-only and has no models. It sits at the top with search, and counts across every context for the admin overview. Weekly series come from `core.stats.weekly_counts`, which course analytics also uses. The counts run per request. When the overview gets slow, cache it for a few minutes, because nobody needs it to the second.
+`apps/insights` is read-only and has no models. It sits at the top with search, and counts across every context for the admin overview. Weekly series come from `core.stats.weekly_counts`, which course analytics also uses. The result is cached for two minutes, since nobody needs it to the second.
 
 ## Payments
 

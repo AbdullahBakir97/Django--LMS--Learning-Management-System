@@ -1,4 +1,6 @@
+from django.http import FileResponse
 from django.shortcuts import get_object_or_404
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
@@ -180,6 +182,29 @@ class LessonAttachmentDeleteView(generics.DestroyAPIView):
         )
         self.check_object_permissions(self.request, attachment.lesson)
         return attachment
+
+
+class LessonAttachmentFileView(APIView):
+    """The file itself, for people who may open its lesson. nginx never serves these directly."""
+
+    @extend_schema(responses={(200, "application/octet-stream"): OpenApiTypes.BINARY})
+    def get(self, request, pk):
+        visible = selectors.visible_courses(request.user).values("pk")
+        attachment = get_object_or_404(
+            LessonAttachment.objects.select_related("lesson__course").filter(
+                lesson__course__in=visible
+            ),
+            pk=pk,
+        )
+        lesson = attachment.lesson
+        enrollment = selectors.enrollment_for(request.user, lesson.course)
+        if not selectors.can_view_lesson(request.user, lesson, enrollment):
+            raise PermissionDenied("Enrol to download this file.")
+        return FileResponse(
+            attachment.file.open("rb"),
+            as_attachment=True,
+            filename=attachment.file.name.rsplit("/", 1)[-1],
+        )
 
 
 class QuizView(APIView):

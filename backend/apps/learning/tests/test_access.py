@@ -59,3 +59,19 @@ def test_attachments_refuse_pages_and_scripts(paid):
     assert owner.post(url, {"title": "x", "file": page}, format="multipart").status_code == 400
     pdf = SimpleUploadedFile("notes.pdf", b"%PDF-1.4", content_type="application/pdf")
     assert owner.post(url, {"title": "Notes", "file": pdf}, format="multipart").status_code == 201
+
+
+@pytest.mark.django_db
+def test_attachments_download_only_for_readers_of_the_lesson(paid):
+    lesson = paid.lessons.get(order=2)
+    pdf = SimpleUploadedFile("notes.pdf", b"%PDF-1.4 notes", content_type="application/pdf")
+    owner = client_for(paid.instructor)
+    url = f"/api/courses/{paid.slug}/lessons/{lesson.id}/attachments/"
+    created = owner.post(url, {"title": "Notes", "file": pdf}, format="multipart").json()
+    assert "file" not in created and created["url"] == f"/api/attachments/{created['id']}/file/"
+    assert client_for(UserFactory()).get(created["url"]).status_code == 403
+    learner = UserFactory()
+    Enrollment.objects.create(course=paid, student=learner)
+    r = client_for(learner).get(created["url"])
+    assert r.status_code == 200 and b"".join(r.streaming_content) == b"%PDF-1.4 notes"
+    assert r["Content-Disposition"].startswith("attachment")
