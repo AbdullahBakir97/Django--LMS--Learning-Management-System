@@ -58,3 +58,18 @@ test('an instructor opens course analytics', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Where learners stop' })).toBeVisible()
   await expect(page.getByText('Enrolled', { exact: true })).toBeVisible()
 })
+
+test('an admin reads the platform overview', async ({ page }) => {
+  await signIn(page, 'sara')
+  await page.getByRole('link', { name: 'Overview' }).click()
+  await expect(page.getByRole('heading', { name: 'Courses in demand' })).toBeVisible()
+  await expect(page.getByRole('main').getByText('People', { exact: true })).toBeVisible()
+})
+
+test('a paid course asks for payment instead of enrolling', async ({ page }) => {
+  await signIn(page, 'omar')
+  await page.goto('/courses')
+  await page.getByRole('link', { name: /Testing Django properly/ }).click()
+  await expect(page.getByText('$29.00')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Buy course' })).toBeVisible()
+})

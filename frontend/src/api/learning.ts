@@ -110,11 +110,11 @@ export interface CertificateRecord {
 
 type CourseInput = Pick<Course, 'title' | 'summary' | 'description' | 'level' | 'language' | 'price_cents'>
 
-export function price(course: Pick<CourseSummary, 'price_cents' | 'currency'>): string {
-  if (!course.price_cents) return 'Free'
-  const money = new Intl.NumberFormat('en', { style: 'currency', currency: course.currency })
-  return money.format(course.price_cents / 100)
-}
+export const money = (cents: number, currency: string) =>
+  new Intl.NumberFormat('en', { style: 'currency', currency }).format(cents / 100)
+
+export const price = (course: Pick<CourseSummary, 'price_cents' | 'currency'>) =>
+  course.price_cents ? money(course.price_cents, course.currency) : 'Free'
 type LessonInput = Pick<Lesson, 'title' | 'order' | 'content' | 'video_url' | 'is_free_preview'>
 
 const c = (slug: string) => `/courses/${encodeURIComponent(slug)}`

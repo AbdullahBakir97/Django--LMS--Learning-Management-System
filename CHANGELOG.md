@@ -39,8 +39,11 @@ All notable changes. The project follows [Semantic Versioning](https://semver.or
   course unlocks when Stripe's signed webhook confirms the payment (retries are harmless).
   Free preview lessons stay open to everyone. Without Stripe keys, every course stays free.
   Demo: "Testing Django properly" costs $29.
+- **Platform overview** for admins (`/overview`): people and sign-ups per week, enrolments
+  per week and completion rate, revenue per currency for 30 days and all time, the courses with
+  the most new learners, new posts, open jobs, and how many reported items wait for review.
 - **Browser journeys in CI**: a new job seeds a real backend and runs search, posting with a
-  photo, moderation and analytics in Chromium on every push.
+  photo, moderation, analytics, the admin overview and a paid course in Chromium on every push.
 
 ### Fixed
 

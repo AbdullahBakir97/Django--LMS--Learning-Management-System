@@ -102,6 +102,10 @@ The session store uses the cached user only when the browser reports it is offli
 
 Search vectors are computed per query, which is fast enough at this size. When a search starts taking more than about 100 ms, store a `SearchVectorField` with a GIN index on the large tables.
 
+## Overview
+
+`apps/insights` is read-only and has no models. It sits at the top with search, and counts across every context for the admin overview. Weekly series come from `core.stats.weekly_counts`, which course analytics also uses. The counts run per request. When the overview gets slow, cache it for a few minutes, because nobody needs it to the second.
+
 ## Payments
 
 `apps/payments` sits above learning and calls it, never the other way round. `learning.services.enroll` refuses a paid course with `402 Payment Required`. `payments.start_checkout` runs the same enrolment checks, records a pending `Order` that copies the price, and opens a Stripe Checkout session tied to it. The webhook verifies Stripe's signature, then in one transaction locks the order, checks the amount and currency, marks it paid and calls `enroll(..., paid=True)`. A repeated delivery finds the order already paid and does nothing. The success page in the app only polls progress. Coming back from Stripe unlocks nothing by itself.
