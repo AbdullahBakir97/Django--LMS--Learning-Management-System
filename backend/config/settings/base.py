@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "apps.careers",
     "apps.messaging",
     "apps.search",
+    "apps.moderation",
     "apps.demo",
     "apps.notifications",
 ]
@@ -224,6 +225,8 @@ SPECTACULAR_SETTINGS = {
         "ProfileSkillLevelEnum": "apps.profiles.models.ProfileSkill.Level",
         "ConnectionStatusEnum": "apps.network.models.Connection.Status",
         "NotificationKindEnum": "apps.notifications.models.Notification.Kind",
+        "ReportKindEnum": "apps.moderation.models.Report.Kind",
+        "ReportReasonEnum": "apps.moderation.models.Report.Reason",
         "CompanySizeEnum": "apps.careers.models.Company.Size",
         "CompanyMemberRoleEnum": "apps.careers.models.CompanyMember.Role",
         "JobStatusEnum": "apps.careers.models.Job.Status",

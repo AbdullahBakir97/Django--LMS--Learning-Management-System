@@ -27,6 +27,7 @@ from apps.engagement import services as engagement
 from apps.learning import services as learning
 from apps.learning.models import Choice, Course, Lesson, Question, Quiz
 from apps.messaging import services as messaging
+from apps.moderation import services as moderation
 from apps.network import services as network
 from apps.profiles.models import PortfolioItem
 from apps.profiles.services import add_skill
@@ -62,7 +63,15 @@ PEOPLE = [
         ["Django", "Python", "SQL"],
     ),
     ("omar", "Omar", "Saleh", "learner", "Data analyst at Nahla", "Zarqa", ["SQL", "Python"]),
-    ("sara", "Sara", "Mansour", "learner", "Frontend engineer", "Dubai", ["Vue", "TypeScript"]),
+    (
+        "sara",
+        "Sara",
+        "Mansour",
+        "admin",
+        "Frontend engineer, community moderator",
+        "Dubai",
+        ["Vue", "TypeScript"],
+    ),
     (
         "yusuf",
         "Yusuf",
@@ -303,6 +312,14 @@ class Command(BaseCommand):
                 u["sara"], "Looking for a study buddy for the Vue course. Evenings, Dubai time."
             ),
         ]
+        # Something for the moderation queue (sara moderates)
+        spam = community.create_post(
+            u["yusuf"], "Cheap followers and course certificates, message me for a price list!"
+        )
+        moderation.report(
+            u["lina"], "post", spam.pk, "spam", "Posted the same thing in two groups."
+        )
+        moderation.report(u["omar"], "post", spam.pk, "spam")
         post_target, first = registry.resolve("post", posts[0].pk, u["karim"])
         engagement.add_comment(
             u["karim"], post_target, first, "Exactly. Scope first, then permissions."

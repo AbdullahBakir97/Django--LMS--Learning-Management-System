@@ -21,6 +21,7 @@ export type NotificationKind =
   | 'interview'
   | 'interview_reply'
   | 'post_shared'
+  | 'report_reviewed'
 
 export interface AppNotification {
   id: number

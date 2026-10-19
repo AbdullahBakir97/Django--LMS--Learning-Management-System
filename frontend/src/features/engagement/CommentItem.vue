@@ -6,10 +6,13 @@ import Avatar from '@/components/ui/Avatar.vue'
 import { timeAgo } from '@/features/notifications/format'
 import ReactionBar from './ReactionBar.vue'
 import CommentComposer from './CommentComposer.vue'
+import ReportButton from '@/features/moderation/ReportButton.vue'
+import { useSessionStore } from '@/stores/session'
 
 const props = defineProps<{ comment: Reply; canReply?: boolean }>()
 const emit = defineEmits<{ reply: []; removed: []; update: [patch: Partial<Reply>] }>()
 const editing = ref(false)
+const session = useSessionStore()
 const confirming = ref(false)
 
 async function save(body: string) {
@@ -67,6 +70,12 @@ async function remove() {
           >
             Reply
           </button>
+          <ReportButton
+            v-if="comment.author.username !== session.user?.username"
+            kind="comment"
+            :object-id="comment.id"
+            compact
+          />
           <button
             v-if="comment.can_edit"
             type="button"

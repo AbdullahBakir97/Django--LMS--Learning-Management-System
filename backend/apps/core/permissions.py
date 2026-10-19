@@ -14,3 +14,10 @@ class IsOwnerOrReadOnly(BasePermission):
 class ReadOnly(BasePermission):
     def has_permission(self, request, view):
         return request.method in SAFE_METHODS
+
+
+class IsAdminRole(BasePermission):
+    """Signed in with the admin role: moderators and operators."""
+
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and request.user.role == "admin")

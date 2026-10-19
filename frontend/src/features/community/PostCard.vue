@@ -9,11 +9,14 @@ import DiscussionThread from '@/features/engagement/DiscussionThread.vue'
 import CommentComposer from '@/features/engagement/CommentComposer.vue'
 import { timeAgo } from '@/features/notifications/format'
 import PostImages from './PostImages.vue'
+import ReportButton from '@/features/moderation/ReportButton.vue'
+import { useSessionStore } from '@/stores/session'
 import Button from '@/components/ui/Button.vue'
 
 const props = defineProps<{ post: Post; openComments?: boolean; hideGroup?: boolean }>()
 const emit = defineEmits<{ update: [patch: Partial<Post>]; removed: [] }>()
 const showComments = ref(props.openComments ?? false)
+const session = useSessionStore()
 const editing = ref(false)
 const confirming = ref(false)
 
@@ -149,6 +152,7 @@ async function remove() {
       </button>
       <span v-if="shared" class="text-sm text-success" role="status">Shared to your profile</span>
       <span class="flex-1" />
+      <ReportButton v-if="post.author.username !== session.user?.username" kind="post" :object-id="post.id" />
       <button
         v-if="post.can_edit && !editing"
         type="button"
